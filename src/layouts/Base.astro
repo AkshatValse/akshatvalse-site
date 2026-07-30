@@ -1,0 +1,117 @@
+---
+import { Font } from 'astro:assets';
+import '../styles/global.css';
+import 'katex/dist/katex.min.css';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Overrides the <h1> shown in the masthead; the landing page uses the name. */
+  ogType?: string;
+}
+
+const { title, description, ogType = 'website' } = Astro.props;
+const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', Astro.site);
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+
+const NAV = [
+  { href: '/', label: 'index' },
+  { href: '/research', label: 'research' },
+  { href: '/notes', label: 'notes' },
+  { href: '/cv', label: 'cv' },
+];
+
+const ld = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Akshat Valse',
+  url: Astro.site?.href,
+  email: 'mailto:avalse@iastate.edu',
+  affiliation: { '@type': 'CollegeOrUniversity', name: 'Iowa State University' },
+  knowsAbout: [
+    'Stochastic differential equations',
+    'Diffusion models and score-based generative modeling',
+    'Langevin dynamics and Markov chain Monte Carlo',
+    'Large deviations and mean-field interacting particle systems',
+    'Machine learning theory',
+    'Numerical analysis of learned PDE solvers',
+  ],
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical.href} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical.href} />
+    <meta name="twitter:card" content="summary" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <Font cssVariable="--font-body" preload />
+    <Font cssVariable="--font-display" preload />
+    <Font cssVariable="--font-body-italic" />
+    <Font cssVariable="--font-mono" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="masthead shell">
+      <div class="row">
+        <div class="rail" aria-hidden="true"></div>
+        <div>
+          <p class="name">
+            {path === '/' ? 'Akshat Valse' : <a href="/">Akshat Valse</a>}
+          </p>
+          <p class="tagline">stochastic foundations of machine learning &middot; Iowa State University</p>
+          <nav class="nav" aria-label="Primary">
+            {NAV.map((item) => (
+              <a href={item.href} aria-current={path === item.href ? 'page' : undefined}>
+                {item.label}
+              </a>
+            ))}
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <slot name="hero" />
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="footer shell">
+      <div class="row">
+        <div class="rail"><span class="rail-label">contact</span></div>
+        <div>
+          <p>
+            <a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a>
+            &middot;
+            <a href="https://github.com/AkshatValse" rel="me">github.com/AkshatValse</a>
+          </p>
+          <p>
+            Outside of research I fly (private pilot, high-performance endorsement) and
+            volunteer with <a href="https://www.pilotsnpaws.org/">Pilots N Paws</a>.
+          </p>
+          <p class="colophon">
+            Set in Archivo, Source Serif&nbsp;4 and IBM Plex Mono; mathematics in KaTeX.
+            Every figure is a live simulation, each checked against a closed form.
+            Source and checks live in <code>src/sim</code> and
+            <code>scripts/verify-*</code>.
+          </p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

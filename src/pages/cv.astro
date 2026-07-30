@@ -1,0 +1,37 @@
+---
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import Base from '../layouts/Base.astro';
+
+/**
+ * `/cv` is a stable URL: it goes on applications and must not break when the
+ * file is renamed. public/_redirects issues a real 302 on hosts that support
+ * it; this page is the fallback for hosts that do not, and it degrades to a
+ * plain contact line if the PDF has not been dropped in yet.
+ */
+const pdf = '/cv.pdf';
+const present = existsSync(fileURLToPath(new URL('../../public/cv.pdf', import.meta.url)));
+---
+
+<Base title="CV · Akshat Valse" description="Curriculum vitae.">
+  {present && <meta http-equiv="refresh" content={`0; url=${pdf}`} slot="head" />}
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail"><span class="rail-label">cv</span></div>
+      <div>
+        <h1 class="page-title">Curriculum vitae</h1>
+        {present ? (
+          <p>
+            Redirecting to <a href={pdf}>cv.pdf</a>. If nothing happens, follow the link.
+          </p>
+        ) : (
+          <p>
+            Not posted yet. Write to
+            <a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a> and I will send it.
+          </p>
+        )}
+      </div>
+    </div>
+  </section>
+</Base>

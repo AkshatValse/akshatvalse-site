@@ -1,0 +1,219 @@
+---
+import Base from '../layouts/Base.astro';
+import DiffusivityFigure from '../components/DiffusivityFigure.astro';
+import Tex from '../components/Tex.astro';
+
+/** String.raw keeps TeX backslashes intact: a quoted attribute would
+ *  have JS eat them, and one of them is an invalid escape. */
+const tex = String.raw;
+---
+
+<Base
+  title="Research · Akshat Valse"
+  description="Langevin sampling and transport coefficients; large deviations for mean-field interacting systems and their role in learning theory; stability certificates for neural PDE solvers."
+>
+  <section class="section shell">
+    <div class="row">
+      <div class="rail"><span class="rail-label">research</span></div>
+      <div>
+        <h1 class="page-title">Research</h1>
+        <p class="lede">
+          Three projects, ordered by how central they are to one question: what can be
+          proved about the stochastic objects machine learning already runs on. The
+          answer is usually less than one would hope, and more than gets checked.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail">
+        <dl>
+          <dt>advisor</dt><dd>Herzog</dd>
+          <dt>dept</dt><dd>Mathematics</dd>
+          <dt>status</dt><dd>ongoing</dd>
+        </dl>
+        <hr class="rail-rule" />
+        <dl>
+          <dt>bears on</dt>
+          <dd>SGLD · annealed Langevin · diffusion correctors</dd>
+        </dl>
+      </div>
+      <div>
+        <article class="entry">
+          <h2 class="entry-title">
+            Langevin dynamics: sampling, discretisation bias, transport coefficients
+          </h2>
+          <p class="entry-meta">Herzog · Mathematics, Iowa State University · ongoing</p>
+          <p>
+            The overdamped diffusion
+            <Tex src={tex`dX_t = \nabla \log \pi(X_t)\,dt + \sqrt{2}\,dW_t`} />
+            leaves <Tex src={tex`\pi`} /> invariant, so discretising it gives a sampler.
+            That sampler is not a niche method. Stochastic gradient Langevin dynamics is
+            its Euler–Maruyama discretisation with a minibatch gradient; the inner loop
+            of annealed Langevin sampling is the same chain at a fixed noise level; the
+            corrector step of a predictor–corrector diffusion sampler is the same chain
+            against a learned score. In all three the Metropolis correction is dropped,
+            usually without comment, and the invariant law that results is
+            <Tex src={tex`\pi_h \neq \pi`} />.
+          </p>
+          <p>
+            I measure that gap where it is computable rather than bounding it. On an
+            anisotropic Gaussian the unadjusted chain is a coordinatewise AR(1) whose
+            stationary variance solves exactly,
+            <Tex src={tex`v(h) = \frac{s^2}{1 - h/2s^2}, \qquad W_2(\pi_h, \pi) = \tfrac{h}{4}\Big(\textstyle\sum_i s_i^{-2}\Big)^{1/2} + O(h^2),`} block />
+            so a measured bias that disagrees indicts the sampler, not the theory. On a
+            two-component mixture the crossing rate follows Kramers' law with fitted
+            slopes <Tex src={tex`-0.948`} /> and <Tex src={tex`-1.032`} /> against the
+            predicted <Tex src={tex`-1`} />. Together the two results are the argument
+            for noise schedules. Bias is polynomial in <Tex src={tex`h`} /> and can be
+            halved by halving the step; mixing is exponential in the barrier, and no
+            step size buys back an exponential.
+          </p>
+        </article>
+
+        <p class="figure-lead">
+          The second thread is transport coefficients: how fast a sampler actually
+          covers a rough landscape, as against how fast it would move on a flat one.
+        </p>
+
+        <DiffusivityFigure />
+
+        <p>
+          In one periodic dimension this is not an asymptotic bound but an identity.
+          Lifson–Jackson gives
+          <Tex src={tex`D_{\mathrm{eff}} = \frac{D_0}{\langle e^{\beta V}\rangle\,\langle e^{-\beta V}\rangle},`} block />
+          the averages taken over one period. For <Tex src={tex`V(x) = \cos x`} /> both
+          are <Tex src={tex`I_0(\beta)`} />, so at <Tex src={tex`\beta = 1`} />, where
+          <Tex src={tex`D_0 = \beta^{-1} = 1`} />, the answer is
+          <Tex src={tex`D_{\mathrm{eff}} = I_0(1)^{-2} = 0.6238603604\ldots`} />, and the
+          simulation either finds it or is wrong. Any Langevin sampler, including the
+          inner loop of a score-based one, can be pointed at this potential and required
+          to return that number. One that gets the invariant measure right and the
+          diffusivity wrong has a bug in its time discretisation.
+          <a href="/notes/effective-diffusivity-cosine-potential">Derivation and check.</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail">
+        <dl>
+          <dt>advisor</dt><dd>Wu</dd>
+          <dt>dept</dt><dd>Mathematics</dd>
+          <dt>status</dt><dd>ongoing</dd>
+        </dl>
+        <hr class="rail-rule" />
+        <dl>
+          <dt>bears on</dt>
+          <dd>PAC-Bayes · mean-field limits of training · SGD escape</dd>
+        </dl>
+      </div>
+      <div>
+        <article class="entry">
+          <h2 class="entry-title">
+            Large-deviation asymptotics for mean-field interacting systems
+          </h2>
+          <p class="entry-meta">Wu · Mathematics, Iowa State University · ongoing</p>
+          <p>
+            Large deviations sits underneath a good deal of learning theory. Sanov's
+            theorem and the Donsker–Varadhan variational formula for relative entropy
+            are the machinery behind PAC-Bayes generalisation bounds and variational
+            mutual-information estimators. Freidlin–Wentzell small-noise theory is how
+            escape times from saddles and shallow basins are analysed for SGD and for
+            Langevin-based optimisers. And the empirical-measure LDP for a mean-field
+            interacting particle system is structurally the same construction that sits
+            one level above the mean-field limit of wide-network training.
+          </p>
+          <p>
+            I work on rate functionals and the variational characterisation of rare
+            events for the empirical measure
+            <Tex src={tex`\mu^N_t = \tfrac{1}{N}\sum_{i} \delta_{X^{i,N}_t}`} /> of such
+            a system, currently in the setting of load balancing. The object is a
+            large-deviation principle on path space; the rate functional then supplies
+            the change of measure for an importance-sampling estimator of rare events,
+            benchmarked against the analytic rate function by exact and Monte Carlo
+            numerics. The application domain is queueing, but the technique carries
+            well past it.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail">
+        <dl>
+          <dt>advisor</dt><dd>Yan</dd>
+          <dt>dept</dt><dd>Mathematics</dd>
+          <dt>status</dt><dd>ongoing</dd>
+        </dl>
+        <hr class="rail-rule" />
+        <dl>
+          <dt>bears on</dt>
+          <dd>learned operators · neural surrogates · rollout stability</dd>
+        </dl>
+      </div>
+      <div>
+        <article class="entry">
+          <h2 class="entry-title">Stability certificates for neural PDE solvers</h2>
+          <p class="entry-meta">Yan · Mathematics, Iowa State University · ongoing</p>
+          <p>
+            A cell-average neural network solver learns a one-step finite-volume
+            operator
+            <Tex src={tex`\bar v_j^{\,n+1} = \bar v_j^{\,n} - \tfrac{\Delta t}{\Delta x}\big[\mathcal{N}(V_{j+1/2};\Theta) - \mathcal{N}(V_{j-1/2};\Theta)\big],`} block />
+            a learned surrogate for a numerical flux. The training loss has many global
+            minima and they are not equally stable: solvers whose training error is
+            indistinguishable at <Tex src={tex`10^{-11}`} /> either diverge or survive
+            under long rollouts. It is the autoregressive-surrogate failure mode, in the
+            simplest setting where classical numerical analysis can still say something
+            about it.
+          </p>
+          <p>
+            I establish an a-posteriori criterion that separates them. Freezing the state
+            gives a circulant Jacobian with symbol
+            <Tex src={tex`g(\xi; u) = 1 - \lambda(1 - e^{-i\xi})\sum_o D_o(u)e^{io\xi}`} />,
+            whose spectral radius over the states a rollout actually visits is the
+            certificate; conservation pins the invariant mean, so for relaxing dynamics
+            the binding quantity is <Tex src={tex`\rho(\bar u)`} /> at that mean. The
+            corollary is a learned analogue of the CFL condition, reducing to the
+            classical bound for upwind and Lax–Friedrichs schemes. It also explains why
+            perturbed-input training helps: the injected noise moves the certificate
+            while leaving the loss essentially where it was.
+          </p>
+          <p class="entry-meta">
+            Joint with Jue Yan and Mengyuan Yang. Manuscript in preparation.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail"><span class="rail-label">preprints</span></div>
+      <div>
+        <p class="pending">Preprints will be posted here as they become available.</p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .figure-lead { color: var(--ink-2); margin-top: 1.6rem; margin-bottom: 0; }
+  .pending {
+    color: var(--ink-2);
+    font-size: var(--step--1);
+    font-family: var(--font-mono), monospace;
+  }
+</style>

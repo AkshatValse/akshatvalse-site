@@ -1,0 +1,62 @@
+---
+/**
+ * Full-bleed hero: overdamped Langevin dynamics in V(x,y) = cos x + cos y.
+ *
+ * The markup paints a correct picture before any script runs. The <picture>
+ * carries a build-time poster of the same simulation at the same simulated
+ * time the live loop starts from, with explicit intrinsic dimensions, so the
+ * band never reflows when the canvas takes over.
+ */
+const label =
+  'Live simulation: 648 particles undergoing overdamped Langevin dynamics ' +
+  'in the periodic potential V(x, y) = cos x + cos y at inverse temperature ' +
+  'beta = 2. The particles concentrate in the potential wells, which is the ' +
+  'Gibbs measure proportional to exp(-beta V), and occasionally hop between ' +
+  'neighbouring wells. Colour encodes the local potential energy on the ' +
+  'cividis colormap. Faint contours of V are drawn underneath.';
+---
+
+<div class="hero" data-sim="hero" role="img" aria-label={label}>
+  <picture data-poster>
+    <source
+      media="(prefers-color-scheme: dark)"
+      type="image/avif"
+      sizes="100vw"
+      srcset="/poster/hero-dark-720.avif 720w, /poster/hero-dark-1080.avif 1080w, /poster/hero-dark-1440.avif 1440w"
+    />
+    <source
+      media="(prefers-color-scheme: dark)"
+      type="image/webp"
+      sizes="100vw"
+      srcset="/poster/hero-dark-720.webp 720w, /poster/hero-dark-1080.webp 1080w, /poster/hero-dark-1440.webp 1440w"
+    />
+    <source
+      type="image/avif"
+      sizes="100vw"
+      srcset="/poster/hero-light-720.avif 720w, /poster/hero-light-1080.avif 1080w, /poster/hero-light-1440.avif 1440w"
+    />
+    <img
+      src="/poster/hero-light-1440.webp"
+      srcset="/poster/hero-light-720.webp 720w, /poster/hero-light-1080.webp 1080w, /poster/hero-light-1440.webp 1440w"
+      sizes="100vw"
+      width="1440"
+      height="480"
+      alt=""
+      fetchpriority="high"
+      decoding="async"
+    />
+  </picture>
+
+  <canvas data-layer="contours" hidden aria-hidden="true"></canvas>
+  <canvas data-layer="particles" hidden aria-hidden="true"></canvas>
+
+  <div class="readout" data-readout aria-hidden="true">
+    <span>t&nbsp;=&nbsp;<b data-t>2.0</b></span>
+    <span>N&nbsp;=&nbsp;<b data-n>648</b></span>
+    <span>β&nbsp;=&nbsp;<b data-beta>2.0</b></span>
+  </div>
+</div>
+
+<script>
+  import '../scripts/hero.client.js';
+</script>

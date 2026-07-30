@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://akshatvalse.com/sitemap-index.xml

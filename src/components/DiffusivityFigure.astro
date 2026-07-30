@@ -1,0 +1,60 @@
+---
+/**
+ * The checkable number: the mean-squared-displacement estimator of the
+ * effective diffusivity for dX = -sin... (V(x) = cos x) at beta = 1, run live
+ * against the Lifson-Jackson closed form 1/I_0(1)^2.
+ *
+ * The poster is inlined SVG rather than a raster: it stays sharp, keeps its
+ * tick labels as real text, costs no extra request, and inherits the page's
+ * colour tokens so one file serves both schemes.
+ */
+import poster from '../generated/diffusivity-poster.svg?raw';
+
+const label =
+  'Plot of the estimated effective diffusivity D-hat(t) = E[(X_t - X_0)^2]/2t ' +
+  'for overdamped Langevin dynamics in V(x) = cos x at beta = 1, against ' +
+  'simulated time on a logarithmic axis from 0.2 to 1000. The estimate starts ' +
+  'near the free diffusivity 1 and relaxes onto the Lifson-Jackson value ' +
+  '1/I_0(1)^2 = 0.62386, shown as a dashed horizontal reference. A shaded ' +
+  'band gives plus or minus one standard error from four disjoint replica ' +
+  'groups.';
+---
+
+<figure class="figure">
+  <div class="figure-frame diffusivity" data-sim="diffusivity" role="img" aria-label={label}>
+    <div class="poster-svg" data-poster set:html={poster} />
+    <canvas data-layer="plot" hidden aria-hidden="true"></canvas>
+    <div class="readout" data-readout aria-hidden="true">
+      <span>t&nbsp;=&nbsp;<b data-t>1000</b></span>
+      <span>D_hat&nbsp;=&nbsp;<b data-d>0.6120</b></span>
+    </div>
+  </div>
+  <figcaption class="figure-caption">
+    <b>Fig. 3.</b> Effective diffusivity in the cosine potential, <span class="nowrap">β = 1</span>,
+    1024 independent replicas, Euler–Maruyama at <span class="nowrap">h = 0.01</span>.
+    The dashed line is the Lifson–Jackson value <span class="nowrap">D<sub>eff</sub> = 1/I₀(1)² = 0.6238603604…</span>,
+    computed from the Bessel series and cross-checked against quadrature. Nothing here
+    is fitted, and the trace is unsmoothed: the residual at
+    <span class="nowrap">t = 1000</span> is the transient, not Monte Carlo error, and the
+    band is ±1 s.e. across four disjoint replica groups.
+  </figcaption>
+</figure>
+
+<style>
+  .diffusivity { aspect-ratio: 2 / 1; }
+  /* Top-right: the trace occupies the lower right at long times and the upper
+     left at short ones, so this corner is free for the whole run. */
+  .diffusivity .readout {
+    bottom: auto; left: auto; top: 0; right: 0;
+    border-top: 0; border-right: 0;
+    border-bottom: 1px solid var(--rule);
+    border-left: 1px solid var(--rule);
+  }
+  .diffusivity .poster-svg { display: block; line-height: 0; }
+  .diffusivity :global(svg) { display: block; width: 100%; height: auto; }
+  .nowrap { white-space: nowrap; }
+</style>
+
+<script>
+  import '../scripts/diffusivity.client.js';
+</script>

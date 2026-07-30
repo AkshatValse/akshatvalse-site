@@ -1,0 +1,233 @@
+---
+import Base from '../layouts/Base.astro';
+import HeroSim from '../components/HeroSim.astro';
+import DiffusionSampler from '../components/DiffusionSampler.astro';
+import Tex from '../components/Tex.astro';
+import { getCollection } from 'astro:content';
+
+/** String.raw keeps TeX backslashes intact: a quoted attribute would
+ *  have JS eat them, and one of them is an invalid escape. */
+const tex = String.raw;
+
+const notes = (await getCollection('notes'))
+  .filter((n) => !n.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', timeZone: 'UTC' });
+
+const research = [
+  {
+    title: 'Langevin dynamics: sampling, discretisation bias, transport coefficients',
+    meta: 'Herzog · Mathematics · ongoing',
+    blurb:
+      'The sampler underneath score-based generative models and stochastic-gradient Langevin dynamics, analysed where its errors are computable: discretisation bias against exact stationary laws, and estimator design for effective diffusivity and mobility.',
+  },
+  {
+    title: 'Large-deviation asymptotics for mean-field interacting systems',
+    meta: 'Wu · Mathematics · ongoing',
+    blurb:
+      'Rate functionals and the variational characterisation of rare events for the empirical measure of a mean-field particle system. This is the construction that sits one level above the mean-field limit of wide-network training, and the machinery underneath PAC-Bayes.',
+  },
+  {
+    title: 'Stability certificates for neural PDE solvers',
+    meta: 'Yan · Mathematics · ongoing',
+    blurb:
+      'Trained solvers with indistinguishable loss diverge or survive under long rollouts. A frozen-state von Neumann analysis of the learned update predicts which, and yields a learned analogue of the CFL condition.',
+  },
+];
+---
+
+<Base
+  title="Akshat Valse · stochastic foundations of machine learning"
+  description="Undergraduate researcher at Iowa State University working on the stochastic foundations of machine learning: diffusion models as reverse-time SDEs, Langevin sampling and its discretisation bias, large deviations for mean-field systems, and the stability of learned PDE solvers."
+>
+  <HeroSim slot="hero" />
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail">
+        <span class="rail-label">Fig. 1</span>
+        <hr class="rail-rule" />
+        <dl>
+          <dt>object</dt>
+          <dd>overdamped Langevin</dd>
+          <dt>potential</dt>
+          <dd>V = cos x + cos y</dd>
+          <dt>integrator</dt>
+          <dd>Euler–Maruyama, h = 0.004</dd>
+          <dt>checked</dt>
+          <dd>TV 1.0×10⁻³ vs Gibbs</dd>
+        </dl>
+        <div class="legend" aria-hidden="true">
+          <span>−2</span><span class="legend-ramp"></span><span>+2</span>
+        </div>
+        <p class="legend-note">colour: V</p>
+      </div>
+
+      <div>
+        <p class="lede">
+          I work on the stochastic foundations of machine learning: the theory of
+          stochastic differential equations, applied to the algorithms that now
+          generate and sample. A diffusion model is a reverse-time SDE, stochastic
+          gradient descent and its Langevin variants are diffusions in a rough loss
+          landscape, and a PAC-Bayes bound is the Donsker–Varadhan formula applied to a
+          posterior over hypotheses. My work concerns the long-time behaviour of
+          Langevin dynamics and its discretisations, estimator design for transport
+          coefficients, large-deviation asymptotics for mean-field interacting systems,
+          and the stability of learned PDE solvers under long rollouts. The connecting
+          question is what can actually be proved about the objects practitioners
+          already use: rates, stability, and error bounds in place of heuristics.
+          Everything moving on this page is one of those objects, running live and
+          graded against a closed-form answer.
+        </p>
+
+        <p>
+          The band above is running in your browser from a fixed seed. It integrates
+          <Tex src={tex`dX_t = -\nabla V(X_t)\,dt + \sqrt{2\beta^{-1}}\,dW_t`} block />
+          on the torus. Annealed Langevin sampling runs this same dynamics at each noise
+          level, and it is the continuous-time limit of SGLD when <Tex src={tex`V`} /> is
+          the loss. Replace <Tex src={tex`\nabla V`} /> by a learned score and you have a
+          generative model. Because the score here is exact, the answer can be checked.
+          Particles collect where <Tex src={tex`e^{-\beta V}`} /> is large and hop
+          between wells at the Kramers rate, and across 48 bins the empirical measure
+          sits within a total variation of <Tex src={tex`1.0\times 10^{-3}`} /> of the
+          Gibbs law, with a discretisation bias of <Tex src={tex`9\times 10^{-4}`} /> on
+          <Tex src={tex`\mathbb{E}[\cos X]`} /> against the closed form
+          <Tex src={tex`-I_1(\beta)/I_0(\beta)`} />.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail">
+        <span class="rail-label">Fig. 2</span>
+        <hr class="rail-rule" />
+        <dl>
+          <dt>object</dt>
+          <dd>VP-SDE, reverse time</dd>
+          <dt>score</dt>
+          <dd>exact, not learned</dd>
+          <dt>steps</dt>
+          <dd>320 Euler–Maruyama</dd>
+          <dt>graded on</dt>
+          <dd>mode coverage</dd>
+        </dl>
+      </div>
+      <div>
+        <h2 class="section-title">A diffusion model with an answer key</h2>
+        <p>
+          Generative models are hard to evaluate because the target is unknown, so a
+          sampler can only be judged on whether its output looks plausible. Make the
+          target a Gaussian mixture and that changes. The mixture is closed under the
+          variance-preserving forward kernel, so every marginal <Tex src={tex`p_t`} /> is
+          again a mixture and the score <Tex src={tex`\nabla\log p_t`} /> is available in
+          closed form. Anderson's time reversal
+          <Tex src={tex`dX = \big[-\tfrac{1}{2}\beta(t)X - \beta(t)\nabla\log p_t(X)\big]dt + \sqrt{\beta(t)}\,d\bar{W}`} block />
+          then runs with an oracle score, so whatever error remains belongs to the
+          sampler and not to a network. The weights below are deliberately unequal,
+          which is what makes mode collapse detectable at all. A sampler that drops the
+          0.08 component still emits individually plausible points, and only the
+          proportions give it away.
+        </p>
+
+        <DiffusionSampler />
+
+        <p>
+          Over 16,384 samples the recovered weights match to
+          <Tex src={tex`\max_k|\hat{w}_k - w_k| = 0.006`} /> against a Monte Carlo
+          standard error of <Tex src={tex`0.0035`} />, the component means to
+          <Tex src={tex`0.010`} />, and the within-component spread to
+          <Tex src={tex`0.262`} /> against <Tex src={tex`\sigma = 0.26`} />. This is what
+          a toy target with a closed form buys you. The sampler either returns the
+          weights or it does not, and no quantity of plausible-looking output makes up
+          the difference.
+          <a href="/notes/grading-a-diffusion-model">The full check is here.</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail"><span class="rail-label">research</span></div>
+      <div>
+        <h2 class="section-title">Research</h2>
+        {research.map((r) => (
+          <article class="entry">
+            <h3 class="entry-title">{r.title}</h3>
+            <p class="entry-meta">{r.meta}</p>
+            <p>{r.blurb}</p>
+          </article>
+        ))}
+        <p class="more"><a href="/research">Full descriptions →</a></p>
+      </div>
+    </div>
+  </section>
+
+  {notes.length > 0 && (
+    <section class="section shell">
+      <div class="row">
+        <div class="rail"><span class="rail-label">notes</span></div>
+        <div>
+          <h2 class="section-title">Notes</h2>
+          <ul class="note-list">
+            {notes.map((n) => (
+              <li>
+                <a href={`/notes/${n.id}`}>{n.data.title}</a>
+                <span class="note-date">{fmt(n.data.date)}</span>
+                <p class="note-blurb">{n.data.summary}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail"><span class="rail-label">elsewhere</span></div>
+      <div>
+        <h2 class="section-title">Elsewhere</h2>
+        <dl class="links">
+          <dt>email</dt>
+          <dd><a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a></dd>
+          <dt>github</dt>
+          <dd><a href="https://github.com/AkshatValse" rel="me">AkshatValse</a></dd>
+          <dt>cv</dt>
+          <dd><a href="/cv">/cv</a></dd>
+        </dl>
+        <p class="pending">Preprints will be posted here as they become available.</p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .legend-note {
+    font-family: var(--font-mono), monospace;
+    font-size: var(--step--1);
+    color: var(--ink-2);
+    margin: 0.3rem 0 0;
+  }
+  .note-list { list-style: none; padding: 0; margin: 0; }
+  .note-list > li + li { margin-top: 1.5rem; }
+  .note-date {
+    font-family: var(--font-mono), monospace;
+    font-size: var(--step--1);
+    color: var(--ink-2);
+    margin-left: 0.6rem;
+    white-space: nowrap;
+  }
+  .note-blurb { margin: 0.25rem 0 0; }
+  .more { margin-top: 2rem; }
+  .pending {
+    margin-top: 1.6rem;
+    color: var(--ink-2);
+    font-size: var(--step--1);
+    font-family: var(--font-mono), monospace;
+  }
+</style>

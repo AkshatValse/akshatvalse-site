@@ -1,0 +1,60 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const notes = await getCollection('notes');
+  return notes
+    .filter((n) => !n.data.draft)
+    .map((note) => ({ params: { id: note.id }, props: { note } }));
+}
+
+const { note } = Astro.props;
+const { Content } = await render(note);
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+---
+
+<Base title={`${note.data.title} · Akshat Valse`} description={note.data.summary} ogType="article">
+  <article class="section shell">
+    <div class="row">
+      <div class="rail">
+        <span class="rail-label">note</span>
+        <hr class="rail-rule" />
+        <dl>
+          <dt>posted</dt><dd>{fmt(note.data.date)}</dd>
+          {note.data.updated && (<><dt>updated</dt><dd>{fmt(note.data.updated)}</dd></>)}
+          {note.data.pdf && (<><dt>pdf</dt><dd><a href={note.data.pdf}>download</a></dd></>)}
+        </dl>
+        <hr class="rail-rule" />
+        <p><a href="/notes">← all notes</a></p>
+      </div>
+      <div class="prose">
+        <h1 class="page-title">{note.data.title}</h1>
+        <p class="lede">{note.data.summary}</p>
+        <Content />
+      </div>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .prose :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono), monospace;
+    font-size: var(--step--1);
+    font-variant-numeric: tabular-nums;
+    margin: 1.5rem 0;
+    display: block;
+    overflow-x: auto;
+  }
+  .prose :global(th), .prose :global(td) {
+    border-bottom: 1px solid var(--rule);
+    padding: 0.35rem 0.7rem 0.35rem 0;
+    text-align: left;
+  }
+  .prose :global(th) { color: var(--ink-2); font-weight: 500; }
+  .prose :global(thead th) { border-bottom-width: 1px; }
+</style>

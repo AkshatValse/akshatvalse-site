@@ -1,0 +1,26 @@
+{
+  "name": "akshatvalse-site",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "node scripts/gen-posters.mjs && astro build",
+    "preview": "astro preview",
+    "posters": "node scripts/gen-posters.mjs",
+    "verify": "node scripts/verify-gibbs.mjs && node scripts/verify-diffusivity.mjs"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.3.6",
+    "@astrojs/sitemap": "^3.6.0",
+    "astro": "^5.14.1",
+    "katex": "^0.16.22",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "sharp": "^0.34.4"
+  },
+  "devDependencies": {
+    "lighthouse": "^13.4.1",
+    "puppeteer-core": "^25.4.0"
+  }
+}

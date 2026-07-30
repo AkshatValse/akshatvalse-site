@@ -1,0 +1,30 @@
+---
+/**
+ * Server-rendered KaTeX for .astro templates. Markdown notes get the same
+ * output through remark-math + rehype-katex; this is the equivalent for
+ * hand-written pages. Rendering happens at build time, so no KaTeX JavaScript
+ * is ever sent to the browser, only its stylesheet and font subsets.
+ */
+import katex from 'katex';
+
+interface Props {
+  /** TeX source. */
+  src: string;
+  block?: boolean;
+}
+
+const { src, block = false } = Astro.props;
+
+const html = katex.renderToString(src, {
+  displayMode: block,
+  output: 'html',
+  throwOnError: true,
+  strict: 'ignore',
+});
+---
+
+{block ? <div class="katex-display-wrap" set:html={html} /> : <Fragment set:html={html} />}
+
+<style>
+  .katex-display-wrap { overflow-x: auto; overflow-y: hidden; }
+</style>

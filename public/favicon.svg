@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    :root { --i: #101619; --g: #f0f2f2; }
+    @media (prefers-color-scheme: dark) { :root { --i: #ede8e2; --g: #1a1f22; } }
+    rect { fill: var(--g); }
+    path { fill: none; stroke: var(--i); stroke-width: 1.15; }
+  </style>
+  <rect width="32" height="32"/>
+  <!-- Level sets of V(x,y) = cos x + cos y around one well: nested squircles. -->
+  <path d="M16 3 C22 3 29 10 29 16 C29 22 22 29 16 29 C10 29 3 22 3 16 C3 10 10 3 16 3Z"/>
+  <path d="M16 7.5 C20 7.5 24.5 12 24.5 16 C24.5 20 20 24.5 16 24.5 C12 24.5 7.5 20 7.5 16 C7.5 12 12 7.5 16 7.5Z"/>
+  <path d="M16 12 C18.4 12 20 13.6 20 16 C20 18.4 18.4 20 16 20 C13.6 20 12 18.4 12 16 C12 13.6 13.6 12 16 12Z"/>
+</svg>

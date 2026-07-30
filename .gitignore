@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.astro/
+
+# Generated at build time by scripts/gen-posters.mjs
+src/generated/
+public/poster/
+
+# Local planning notes, not part of the site
+CONTENT_KIT.md
+DESIGN_BRIEF.md
+shots/
+
+.env
+.env.*
