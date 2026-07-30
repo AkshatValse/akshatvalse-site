@@ -172,27 +172,28 @@ const tex = String.raw;
             A cell-average neural network solver learns a one-step finite-volume
             operator
             <Tex src={tex`\bar v_j^{\,n+1} = \bar v_j^{\,n} - \tfrac{\Delta t}{\Delta x}\big[\mathcal{N}(V_{j+1/2};\Theta) - \mathcal{N}(V_{j-1/2};\Theta)\big],`} block />
-            a learned surrogate for a numerical flux. The training loss has many global
-            minima and they are not equally stable: solvers whose training error is
-            indistinguishable at <Tex src={tex`10^{-11}`} /> either diverge or survive
-            under long rollouts. It is the autoregressive-surrogate failure mode, in the
-            simplest setting where classical numerical analysis can still say something
-            about it.
+            a learned surrogate for a numerical flux. Conservation comes for free: the
+            same network is evaluated at both faces of a cell, so the update telescopes
+            whatever the weights turn out to be. Stability does not. Networks trained
+            identically up to the random seed, reaching losses you cannot tell apart,
+            behave completely differently under long rollouts, and since the losses are
+            indistinguishable the loss cannot tell you which one you have. It is the
+            autoregressive-surrogate failure mode, in the simplest setting where
+            classical numerical analysis can still say something about it.
           </p>
           <p>
-            I establish an a-posteriori criterion that separates them. Freezing the state
-            gives a circulant Jacobian with symbol
-            <Tex src={tex`g(\xi; u) = 1 - \lambda(1 - e^{-i\xi})\sum_o D_o(u)e^{io\xi}`} />,
-            whose spectral radius over the states a rollout actually visits is the
-            certificate; conservation pins the invariant mean, so for relaxing dynamics
-            the binding quantity is <Tex src={tex`\rho(\bar u)`} /> at that mean. The
-            corollary is a learned analogue of the CFL condition, reducing to the
-            classical bound for upwind and Lax–Friedrichs schemes. It also explains why
-            perturbed-input training helps: the injected noise moves the certificate
-            while leaving the loss essentially where it was.
+            A trained solver is still a numerical scheme: its weights are frozen once
+            training ends, so what you have is a fixed deterministic update rule that
+            happened to be fitted rather than derived. Numerical analysis has a long
+            history of asking whether update rules of that kind are stable. I am adapting
+            von Neumann analysis to this setting, deriving the linearised amplification
+            factor of the learned time-stepping scheme and characterising how
+            perturbations propagate through it, toward a condition on the weights alone
+            that can be checked before committing to an expensive rollout.
           </p>
           <p class="entry-meta">
-            Joint with Mengyuan Yang. Manuscript in preparation.
+            Joint with Mengyuan Yang. Approach and results held back pending submission;
+            manuscript targeted for the end of Summer 2026.
           </p>
         </article>
       </div>
