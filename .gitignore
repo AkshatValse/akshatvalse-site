@@ -21,3 +21,10 @@ cv/*.out
 cv/*.fls
 cv/*.fdb_latexmk
 cv/*.synctex.gz
+
+# Working documents. The repo is public; these discuss application timing,
+# GPA reconciliation and contact details, which is not material for a
+# prospective advisor to read.
+claude-code-site-guide.md
+AUDIT.md
+CONSISTENCY.md
