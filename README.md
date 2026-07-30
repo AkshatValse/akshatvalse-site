@@ -64,9 +64,21 @@ throttling.
 
 ## Deploying
 
-Static output in `dist/`. Cloudflare Pages: build command `npm run build`,
-output directory `dist`. `public/_redirects` keeps `/cv` pointing at the current
-CV file, so the URL on applications does not break when the file is renamed.
+Static output in `dist/`. On Cloudflare Pages both of these must be set
+explicitly under Settings → Build → Build configuration:
+
+```
+Build command           npm run build
+Build output directory  dist
+```
+
+Leaving them blank does not fail the build. Pages falls back to uploading the
+repository root, which serves the source tree at the project URL and returns 404
+for every page of the actual site. Framework preset "Astro" fills in the same
+two values if you would rather pick it from the list.
+
+`public/_redirects` keeps `/cv` pointing at the current CV file, so the URL on
+applications does not break when the file is renamed.
 
 Set `SITE_URL` if the domain changes; it feeds the sitemap, canonical URLs, and
 `robots.txt`.
