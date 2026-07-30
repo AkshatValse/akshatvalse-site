@@ -1,0 +1,52 @@
+name: verify
+
+# Every figure on the site quotes a number, and every one of those numbers is
+# owned by a script in scripts/. This runs all of them and fails on a tolerance
+# breach, so the footer's claim that each figure is checked against a closed
+# form is machine-enforced rather than asserted.
+#
+# The weekly cron matters more than it looks: these are Monte Carlo checks with
+# fixed seeds, so a scheduled run catches a regression introduced by a Node or
+# dependency upgrade rather than by a commit.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '17 6 * * 1' # Mondays, 06:17 UTC
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      # SciPy is the external ground truth for the Gaussian tail. Without it
+      # verify-raretail falls back to an internal consistency check and says so.
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Fast checks
+        run: |
+          node scripts/verify-diffusion.mjs
+          node scripts/verify-raretail.mjs
+
+      - name: Slow checks
+        run: |
+          node scripts/verify-diffusivity.mjs
+          node scripts/verify-gibbs.mjs
+
+      - name: Build
+        run: npm run build
+
+      - name: Note contract
+        run: node scripts/lint-notes.mjs

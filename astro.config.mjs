@@ -15,11 +15,7 @@ export default defineConfig({
   trailingSlash: 'never',
   build: { format: 'file' },
 
-  integrations: [
-    mdx(),
-    // /cv redirects, so it does not belong in a sitemap of indexable pages.
-    sitemap({ filter: (page) => !page.endsWith('/cv') }),
-  ],
+  integrations: [mdx(), sitemap()],
 
   markdown: {
     remarkPlugins: [remarkMath],

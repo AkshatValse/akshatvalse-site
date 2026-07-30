@@ -4,34 +4,237 @@ import { fileURLToPath } from 'node:url';
 import Base from '../layouts/Base.astro';
 
 /**
- * `/cv` is a stable URL: it goes on applications and must not break when the
- * file is renamed. public/_redirects issues a real 302 on hosts that support
- * it; this page is the fallback for hosts that do not, and it degrades to a
- * plain contact line if the PDF has not been dropped in yet.
+ * HTML CV.
+ *
+ * The PDF remains the artifact a committee files; this page is what a crawler
+ * reads and what opens without a download on a phone. The two are generated
+ * from the same facts, so they must be edited together: cv/cv.tex is the source
+ * of record for the PDF, this file for the page.
  */
 const pdf = '/cv.pdf';
-const present = existsSync(fileURLToPath(new URL('../../public/cv.pdf', import.meta.url)));
+const hasPdf = existsSync(fileURLToPath(new URL('../../public/cv.pdf', import.meta.url)));
+
+const coursework = {
+  completed: [
+    ['Theory of Probability and Statistics', 'STAT 5430'],
+    ['Stochastic Process Models', 'STAT 5540'],
+    ['Multivariate Analysis', 'STAT 5750'],
+    ['Categorical Data Analysis', 'STAT 5770'],
+    ['Empirical Methods for the Computational Sciences', 'STAT 5830'],
+    ['Statistical Computing', 'STAT 5860'],
+    ['Numerical Methods for Differential Equations', 'MATH 5810'],
+    ['Analysis I', 'MATH 4140'],
+    ['Partial Differential Equations', 'MATH 3850'],
+    ['Theory of Linear Algebra, honors', 'MATH 3170'],
+    ['Concepts and Applications of Machine Learning, honors', 'DS 3030'],
+  ],
+  inProgress: [
+    ['Foundations of Probability Theory, measure-theoretic', 'STAT 6541'],
+    ['High-Dimensional Probability', 'MATH 6230'],
+    ['Graduate Real Analysis I', 'MATH 5150'],
+    ['Bayesian Statistics', 'STAT 5644'],
+    ['Advanced Topics in Machine Learning', 'COM S 6730'],
+    ['Convex Optimization', 'E E 5710'],
+    ['Introduction to Tensors', 'HON 3210'],
+  ],
+};
+
+const manuscripts = [
+  {
+    title:
+      'Large-Deviation-Guided Importance Sampling for Rare Events in the Mean-Field Join-the-Shortest-Queue Model',
+    meta: 'With R. Wu. arXiv preprint forthcoming, end of 2026.',
+  },
+  {
+    title:
+      'Langevin dynamics and transport-coefficient estimation for molecular systems',
+    meta: 'In preparation with D. Herzog. Target: journal submission, end of Summer 2026.',
+  },
+  {
+    title:
+      'Sparse nonlinear Bayesian inference via Gaussian processes with spike-and-slab priors',
+    meta: 'In preparation with P. Ma.',
+  },
+];
+
+const research = [
+  {
+    title: 'Langevin Sampling and Diffusion Estimation for Molecular Systems',
+    dates: 'May 2026 – present',
+    role: 'Research Collaborator, Department of Mathematics, Iowa State University. Advisor: Prof. David Herzog.',
+    bullets: [
+      'Built an end-to-end Python simulation pipeline implementing MALA and projected Euler–Maruyama samplers for overdamped Langevin dynamics, staged from a one-dimensional periodic potential up to a solvated ion in a three-dimensional Lennard-Jones bath; estimated self-diffusion and mobility coefficients from long-run trajectory data.',
+      'Derived the closed-form Lifson–Jackson diffusivity D = 1/I₀(1)² ≈ 0.62386 as an exact benchmark, validating the estimators against it before scaling to three dimensions and reproducing published solvated-ion results.',
+      "Delivered weekly technical reports, including a companion note supporting the team's CLT-based error analysis.",
+    ],
+  },
+  {
+    title: 'Large Deviation Theory for Rare-Event Analysis in Queueing Systems',
+    dates: 'Nov. 2024 – present',
+    role: "Undergraduate Research Fellow, Department of Mathematics, Iowa State University. Advisor: Prof. Ruoyu Wu. Dean's High Impact Research Award.",
+    bullets: [
+      'Developed the first importance-sampling methodology for rare-event estimation in the mean-field join-the-shortest-queue model, deriving state-dependent exponential tilting from the Budhiraja–Friedlander–Wu (2021) large-deviation rate function; stated a logarithmic-efficiency conjecture with a proof sketch via the Dupuis–Wang subsolution framework.',
+      'Built a reproducible simulation framework (Python prototype, ported to C for performance; Xoshiro256** with deterministic seeding) validated across 27 configurations (n ≤ 100, ρ ∈ {0.7, 0.9, 0.95}): estimates agree with crude Monte Carlo within 95% confidence intervals wherever crude Monte Carlo succeeds, and extend to probabilities as small as 10⁻³¹, where it fails entirely.',
+      'Designed and benchmarked two heuristic tilting families (rate-reversal, level-weighted) with pilot-run selection; diagnosed over-tilting at extreme rarity through likelihood-ratio calibration statistics, motivating ongoing computation of the optimal state-dependent tilt.',
+    ],
+  },
+  {
+    title: 'Stability Analysis of Cell-Average Neural Networks for PDEs',
+    dates: 'May 2026 – present',
+    role: 'Undergraduate Researcher, Department of Mathematics, Iowa State University. Advisor: Prof. Jue Yan. Funded by the NSF D4 NRT.',
+    bullets: [
+      'Adapting von Neumann stability analysis to neural-network PDE solvers: deriving the linearized network amplification factor and characterizing how perturbations propagate through the learned time-stepping scheme, toward stability conditions analogous to those of classical finite-difference methods.',
+      "Porting the group's MATLAB solver to Python to enable systematic stability experiments across schemes and step sizes. Publication targeted for the end of Summer 2026.",
+    ],
+  },
+];
 ---
 
-<Base title="CV · Akshat Valse" description="Curriculum vitae.">
-  {present && <meta http-equiv="refresh" content={`0; url=${pdf}`} slot="head" />}
+<Base
+  title="CV · Akshat Sachin Valse"
+  description="Curriculum vitae. Undergraduate researcher in stochastic analysis at Iowa State University: Langevin sampling, large deviations for mean-field systems, and the stability of learned PDE solvers."
+>
+  <section class="section shell">
+    <div class="row">
+      <div class="rail"><span class="rail-label">CV</span></div>
+      <div>
+        <h1 class="page-title">Curriculum vitae</h1>
+        <p class="lede">
+          {hasPdf ? (
+            <><a href={pdf}>Download as PDF</a>. Updated July 2026.</>
+          ) : (
+            <>PDF not posted yet. Write to <a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a>.</>
+          )}
+        </p>
+      </div>
+    </div>
+  </section>
 
   <section class="section shell">
     <div class="row">
-      <div class="rail"><span class="rail-label">cv</span></div>
+      <div class="rail"><span class="rail-label">Education</span></div>
       <div>
-        <h1 class="page-title">Curriculum vitae</h1>
-        {present ? (
+        <h2 class="section-title">Education</h2>
+        <article class="entry">
+          <h3 class="entry-title">Iowa State University, Honors Program</h3>
+          <p class="entry-meta">Aug. 2024 – May 2028 (expected) · Cumulative GPA 3.85 / 4.00</p>
           <p>
-            Redirecting to <a href={pdf}>cv.pdf</a>. If nothing happens, follow the link.
+            B.S. Statistics · B.S. Mathematics · B.A. Computer Science · B.S. Data Science
           </p>
-        ) : (
-          <p>
-            Not posted yet. Write to
-            <a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a> and I will send it.
-          </p>
-        )}
+          <h4 class="sub">Graduate and advanced coursework, completed</h4>
+          <ul class="courses">
+            {coursework.completed.map(([name, code]) => (
+              <li>{name} <span class="code">{code}</span></li>
+            ))}
+          </ul>
+          <h4 class="sub">In progress, Fall 2026</h4>
+          <ul class="courses">
+            {coursework.inProgress.map(([name, code]) => (
+              <li>{name} <span class="code">{code}</span></li>
+            ))}
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail"><span class="rail-label">Manuscripts</span></div>
+      <div>
+        <h2 class="section-title">Preprints and manuscripts</h2>
+        <ol class="manuscripts">
+          {manuscripts.map((m) => (
+            <li>
+              <span class="mtitle">{m.title}</span>
+              <span class="entry-meta">{m.meta}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail"><span class="rail-label">Research</span></div>
+      <div>
+        <h2 class="section-title">Research experience</h2>
+        {research.map((r) => (
+          <article class="entry">
+            <h3 class="entry-title">{r.title}</h3>
+            <p class="entry-meta">{r.dates} · {r.role}</p>
+            <ul>
+              {r.bullets.map((b) => <li>{b}</li>)}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail"><span class="rail-label">Awards</span></div>
+      <div>
+        <h2 class="section-title">Awards and honors</h2>
+        <ul>
+          <li>Dean's High Impact Undergraduate Research Award, Iowa State University, 2026.</li>
+          <li>Schillmoeller Family Scholarship in Statistics.</li>
+          <li>James L. Cornette Mathematics and Interdisciplinary Studies Award.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail"><span class="rail-label">Skills</span></div>
+      <div>
+        <h2 class="section-title">Technical skills</h2>
+        <p>
+          Python (NumPy, SciPy, PyTorch, matplotlib), C, R, LaTeX, git, MATLAB. Simulations
+          are kept as staged pipelines with recorded seeds and parameter sidecars, so every
+          figure regenerates from saved results without rerunning the sampler.
+        </p>
+        <h2 class="section-title service">Service and other</h2>
+        <ul>
+          <li>Research Ambassador, Iowa State University Honors Program.</li>
+          <li>
+            FAA Private Pilot Certificate, high-performance endorsement, 2025. Volunteer
+            pilot and recruitment advisor, Pilots N Paws animal-rescue flights.
+          </li>
+        </ul>
       </div>
     </div>
   </section>
 </Base>
+
+<style>
+  .sub {
+    font-family: var(--font-mono), monospace;
+    font-size: var(--step--1);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--ink-2);
+    font-weight: 500;
+    margin: 1.4rem 0 0.5rem;
+  }
+  .courses { list-style: none; padding: 0; margin: 0; }
+  .courses li { margin-bottom: 0.2em; }
+  .code {
+    font-family: var(--font-mono), monospace;
+    font-size: var(--step--1);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .manuscripts { padding-left: 1.2rem; }
+  .manuscripts li { margin-bottom: 1rem; }
+  .mtitle { display: block; font-style: italic; }
+  .manuscripts .entry-meta { display: block; margin: 0.15rem 0 0; }
+  .service { margin-top: 2.5rem; }
+  @media print {
+    .rail { display: none; }
+    .section { padding-block: 0.6rem; }
+  }
+</style>

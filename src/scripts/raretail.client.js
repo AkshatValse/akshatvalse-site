@@ -16,6 +16,20 @@ const N_MAX = 8_000_000;
 /** Color maps relative standard error over three decades. */
 const RSE_MIN = 1e-3, RSE_MAX = 1;
 
+/**
+ * If a simulation throws, stop the loop and put the poster back rather than
+ * leaving a half-drawn or frozen canvas. A reader should never be able to tell
+ * that anything failed; the console should always be able to.
+ */
+function failSafe(root, label, err) {
+  console.error(`[${label}] simulation stopped:`, err);
+  for (const c of root.querySelectorAll('canvas')) c.hidden = true;
+  const poster = root.querySelector('[data-poster]');
+  if (poster) poster.style.display = '';
+  const readout = root.querySelector('[data-readout]');
+  if (readout) readout.hidden = true;
+}
+
 export function mountRareTail(root) {
   const canvas = root.querySelector('canvas[data-layer="plot"]');
   const poster = root.querySelector('[data-poster]');
@@ -231,4 +245,10 @@ export function mountRareTail(root) {
   });
 }
 
-for (const el of document.querySelectorAll('[data-sim="raretail"]')) mountRareTail(el);
+for (const el of document.querySelectorAll('[data-sim="raretail"]')) {
+  try {
+    mountRareTail(el);
+  } catch (err) {
+    failSafe(el, 'raretail', err);
+  }
+}

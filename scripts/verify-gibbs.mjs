@@ -29,6 +29,7 @@
  */
 
 import { HeroSim, HERO_DEFAULTS, TWO_PI } from '../src/sim/hero.js';
+import { assertAtMost, finish } from './assert.mjs';
 
 /** I_nu(z) for integer nu >= 0 by power series; exact to double precision for z <= 4. */
 function besselI(nu, z) {
@@ -217,3 +218,19 @@ console.log('\n   Euler-Maruyama has an O(h) bias in the invariant law, so bias/
 console.log('   be roughly constant. At the shipped step size the bias is the last row.');
 
 console.log(`\nelapsed ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+
+// --- contract ---------------------------------------------------------------
+// The site quotes TV 1.0e-3 against the Gibbs marginal and a 9e-4 bias on
+// E[cos X]. Measured 2026-07-30: TV(1D) 1.021e-3, TV(2D) 3.945e-3, bias at the
+// shipped h = 0.004 was 9.25e-4 with a standard error of 3.9e-4. The bias
+// tolerance is 3e-3, roughly three times the measured value and well inside the
+// O(h) budget; a doubling of the step size would show as ~1.9e-3 and still pass,
+// while a broken integrator moves it by orders of magnitude.
+const shipped = biases[biases.length - 1];
+console.log('\nCONTRACT');
+assertAtMost('total variation, 1D marginal', A.tv1, 3e-3, '(measured 1.02e-3)');
+assertAtMost('total variation, 2D joint', A.tv2, 1e-2, '(measured 3.95e-3)');
+assertAtMost('max standardized deviation, 1D', A.maxZ1, 6, '(measured 3.04 sd)');
+assertAtMost(`|bias| on E[cos X] at h = ${shipped.h}`,
+  Math.abs(shipped.bias), 3e-3, '(measured 9.25e-4)');
+finish('verify-gibbs');

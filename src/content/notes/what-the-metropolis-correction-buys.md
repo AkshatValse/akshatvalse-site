@@ -11,7 +11,7 @@ restores exactness at the cost of an accept/reject step.
 
 ULA deserves naming, because it is not a niche MCMC method.
 Stochastic gradient Langevin dynamics is ULA with the gradient replaced by a
-minibatch estimate; the inner loop of annealed Langevin sampling is ULA at a
+minibatch estimate; the inner loop of [annealed Langevin sampling](/research) is ULA at a
 fixed noise level; the corrector step of a predictor–corrector diffusion sampler
 is ULA against the current marginal's score. In every one of those the
 Metropolis correction is dropped, usually without comment, and the discretization

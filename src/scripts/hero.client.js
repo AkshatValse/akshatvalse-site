@@ -23,6 +23,14 @@ const START_TIME = 2.0;
 const TRAIL_FADE = 0.085;
 const RAMP_STEPS = 96;
 const MAX_STEPS_PER_FRAME = 24;
+/**
+ * Render at most 30 fps. The physics accumulator keeps `last` untouched until a
+ * frame is actually drawn, so the integrator sees the full elapsed time and the
+ * dynamics are identical on a 60 Hz and a 120 Hz display. On the latter this
+ * halves the work for no visible difference in an ensemble of hundreds.
+ */
+const MIN_FRAME_MS = 1000 / 30;
+
 
 function parseRGB(str) {
   const m = str.trim().match(/^#?([0-9a-f]{6})$/i);
@@ -32,6 +40,20 @@ function parseRGB(str) {
   }
   const nums = str.match(/[\d.]+/g);
   return nums ? nums.slice(0, 3).map(Number) : [128, 128, 128];
+}
+
+/**
+ * If a simulation throws, stop the loop and put the poster back rather than
+ * leaving a half-drawn or frozen canvas. A reader should never be able to tell
+ * that anything failed; the console should always be able to.
+ */
+function failSafe(root, label, err) {
+  console.error(`[${label}] simulation stopped:`, err);
+  for (const c of root.querySelectorAll('canvas')) c.hidden = true;
+  const poster = root.querySelector('[data-poster]');
+  if (poster) poster.style.display = '';
+  const readout = root.querySelector('[data-readout]');
+  if (readout) readout.hidden = true;
 }
 
 export function mountHero(root) {
@@ -174,6 +196,8 @@ export function mountHero(root) {
 
   function frame(now) {
     if (!running) return;
+    raf = requestAnimationFrame(frame);
+    if (now - last < MIN_FRAME_MS) return;
     // Clamp the wall-clock delta: after a stall, catch up a little, never
     // replay the whole gap. The timestep itself never changes.
     const dtWall = Math.min(0.05, (now - last) / 1000);
@@ -182,7 +206,6 @@ export function mountHero(root) {
     if (steps > 0) sim.advance(steps);
     draw();
     updateReadout(now);
-    raf = requestAnimationFrame(frame);
   }
 
   function start() {
@@ -239,4 +262,10 @@ export function mountHero(root) {
   });
 }
 
-for (const el of document.querySelectorAll('[data-sim="hero"]')) mountHero(el);
+for (const el of document.querySelectorAll('[data-sim="hero"]')) {
+  try {
+    mountHero(el);
+  } catch (err) {
+    failSafe(el, 'hero', err);
+  }
+}

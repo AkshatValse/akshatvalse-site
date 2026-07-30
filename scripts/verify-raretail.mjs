@@ -20,6 +20,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { RareTailSim, normalTail, THRESHOLDS } from '../src/sim/raretail.js';
+import { assertAtMost, finish } from './assert.mjs';
 
 console.log('Rare-event estimation — exactness and estimator check');
 console.log('='.repeat(78));
@@ -101,3 +102,26 @@ console.log('   z is (estimate − exact) / standard error. Values inside about 
 console.log('   consistent with an unbiased estimator; the point is that IS keeps');
 console.log('   producing them at magnitudes where crude Monte Carlo has no output at all.');
 console.log(`\nelapsed ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+
+// --- contract ---------------------------------------------------------------
+// The exact reference is the dashed curve on Fig. 4, so it is the claim that
+// matters most. SciPy may be absent in CI; when it is, the series and the
+// continued fraction are compared across their join at a = 1.5 instead, which
+// is weaker but still catches a broken branch.
+console.log('\nCONTRACT');
+if (scipy) {
+  const worst = Math.max(
+    ...THRESHOLDS.map((a, i) => Math.abs(normalTail(a) - scipy[i]) / scipy[i])
+  );
+  assertAtMost('exact reference vs SciPy, rel.', worst, 1e-12, '(measured 7.2e-15)');
+} else {
+  console.log('   note: SciPy unavailable, checking the internal join instead');
+  const x = 1.5 / Math.SQRT2, x2 = x * x;
+  let term = x, sum = x;
+  for (let n = 1; n < 200; n++) { term *= (2 * x2) / (2 * n + 1); sum += term; }
+  const viaSeries = 0.5 * (1 - (2 / Math.sqrt(Math.PI)) * Math.exp(-x2) * sum);
+  assertAtMost('series/CF join at a = 1.5, rel.',
+    Math.abs(viaSeries - normalTail(1.5)) / normalTail(1.5), 1e-12);
+}
+assertAtMost('max |z| for the IS estimator', maxZ, 4, '(measured 2.04)');
+finish('verify-raretail');

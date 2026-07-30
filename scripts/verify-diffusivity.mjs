@@ -18,6 +18,7 @@
  */
 
 import { DiffusivitySim, D_EFF_EXACT, I0_AT_1 } from '../src/sim/diffusivity.js';
+import { assertAtMost, assertNear, finish } from './assert.mjs';
 
 function besselI0Series(z) {
   const q = (z * z) / 4;
@@ -64,6 +65,7 @@ console.log('  as t -> 0 and relaxes down to 0.6239.');
 const R = 4096, GROUPS = 4, DT = 0.01, T_MAX = 2000;
 const sim = new DiffusivitySim({ replicas: R, beta: 1, dt: DT, seed: 'verify/diffusivity' });
 
+let finalD = NaN;
 const checkpoints = [0.1, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 1500, 2000];
 console.log('\n' + '-'.repeat(72));
 console.log(`${R} replicas, h = ${DT}, X_0 ~ exp(-beta cos x) on [0, 2pi)`);
@@ -83,6 +85,7 @@ while (sim.t < T_MAX + DT / 2) {
     const sd = Math.sqrt(per.reduce((a, v) => a + (v - m) ** 2, 0) / (GROUPS - 1));
     const se = sd / Math.sqrt(GROUPS);
     const rel = (all - D_EFF_EXACT) / D_EFF_EXACT;
+    finalD = all;
     console.log(
       `  ${t.toFixed(0).padStart(6)}     ${all.toFixed(5)}     ±${se.toFixed(5)}     ` +
       `${(rel >= 0 ? '+' : '')}${(rel * 100).toFixed(2)}%`
@@ -98,3 +101,17 @@ console.log('  on the barrier-crossing timescale, not like 1/t, and the residual
 console.log('  t = 2000 is the transient, not Monte Carlo error. The site plots this');
 console.log('  unsmoothed.');
 console.log(`\nelapsed ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+
+// --- contract ---------------------------------------------------------------
+// Two separate claims. First that the constant on the page is the constant the
+// code uses, which is exact arithmetic and gets a machine-precision tolerance.
+// Second that the estimator finds it: measured D_hat(2000) = 0.6218 with a
+// standard error of 0.0098, so 0.03 is about three standard errors.
+console.log('\nCONTRACT');
+assertAtMost('I_0(1): series vs quadrature, abs.',
+  Math.abs(I0series - I0quad), 1e-14, '(measured 2.2e-16)');
+assertNear('D_EFF_EXACT vs 1/I_0(1)^2',
+  D_EFF_EXACT, 1 / (I0series * I0series), 1e-15);
+assertNear('D_hat at t = 2000 vs exact', finalD, D_EFF_EXACT, 0.03,
+  '(measured 0.6218, s.e. 0.0098)');
+finish('verify-diffusivity');

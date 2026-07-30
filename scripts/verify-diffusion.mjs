@@ -23,6 +23,7 @@
 
 import { DiffusionSampler } from '../src/sim/diffusion.js';
 import { MEANS, WEIGHTS, SIGMA, K, nearestMode } from '../src/sim/mixture.js';
+import { assertAtMost, finish } from './assert.mjs';
 
 function run({ n, steps, seed }) {
   const s = new DiffusionSampler({ n, steps, seed });
@@ -96,3 +97,16 @@ for (const steps of [40, 80, 160, 320, 640]) {
 console.log('\n   Monte Carlo floor on max |w_hat - w| at n = 8192 is about');
 console.log(`   ${Math.sqrt((0.28 * 0.72) / 8192).toFixed(4)}, so rows near that value are noise, not bias.`);
 console.log(`\nelapsed ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+
+// --- contract ---------------------------------------------------------------
+// Measured 2026-07-30 at n = 16384: maxW 0.0060, maxMu 0.0096, sd 0.2616-0.2711.
+// The Monte Carlo s.e. on the largest weight is 0.0035, so 0.02 is about six of
+// them: wide enough that sampling noise cannot trip it, tight enough that a
+// sampler which drops a mode will.
+console.log('\nCONTRACT');
+assertAtMost('max |w_hat - w|', r.maxW, 0.02, '(measured 0.0060, MC s.e. 0.0035)');
+assertAtMost('total variation, weights', r.tv, 0.03, '(measured 0.0060)');
+assertAtMost('max |mu_hat - mu|', r.maxMu, 0.05, '(measured 0.0096)');
+assertAtMost('max |sd_hat - sigma|',
+  Math.max(...r.rows.map((x) => Math.abs(x.sd - SIGMA))), 0.03, `(sigma = ${SIGMA})`);
+finish('verify-diffusion');

@@ -30,6 +30,20 @@ const schedule = Array.from({ length: SAMPLES }, (_, i) =>
   Math.exp(Math.log(T_MIN) + ((Math.log(T_MAX) - Math.log(T_MIN)) * i) / (SAMPLES - 1))
 );
 
+/**
+ * If a simulation throws, stop the loop and put the poster back rather than
+ * leaving a half-drawn or frozen canvas. A reader should never be able to tell
+ * that anything failed; the console should always be able to.
+ */
+function failSafe(root, label, err) {
+  console.error(`[${label}] simulation stopped:`, err);
+  for (const c of root.querySelectorAll('canvas')) c.hidden = true;
+  const poster = root.querySelector('[data-poster]');
+  if (poster) poster.style.display = '';
+  const readout = root.querySelector('[data-readout]');
+  if (readout) readout.hidden = true;
+}
+
 export function mountDiffusivity(root) {
   const canvas = root.querySelector('canvas[data-layer="plot"]');
   const poster = root.querySelector('[data-poster]');
@@ -274,4 +288,10 @@ export function mountDiffusivity(root) {
   });
 }
 
-for (const el of document.querySelectorAll('[data-sim="diffusivity"]')) mountDiffusivity(el);
+for (const el of document.querySelectorAll('[data-sim="diffusivity"]')) {
+  try {
+    mountDiffusivity(el);
+  } catch (err) {
+    failSafe(el, 'diffusivity', err);
+  }
+}

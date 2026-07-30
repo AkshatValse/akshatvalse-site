@@ -6,13 +6,28 @@ import 'katex/dist/katex.min.css';
 interface Props {
   title: string;
   description: string;
-  /** Overrides the <h1> shown in the masthead; the landing page uses the name. */
   ogType?: string;
+  /** Absolute path to a per-page social card; falls back to the site card. */
+  ogImage?: string;
+  ogImageAlt?: string;
+  /** Extra JSON-LD blocks emitted alongside the Person graph. */
+  jsonLd?: unknown[];
 }
 
-const { title, description, ogType = 'website' } = Astro.props;
-const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', Astro.site);
-const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const { title, description, ogType = 'website', ogImage, ogImageAlt, jsonLd } = Astro.props;
+
+/**
+ * Under `build.format: 'file'` Astro serves clean URLs but reports
+ * `Astro.url.pathname` as `/research.html`. Left alone that produces a
+ * canonical pointing at a URL the host immediately 308s away, and a nav whose
+ * aria-current never matches. Strip the extension once, use it for both.
+ */
+const path =
+  Astro.url.pathname
+    .replace(/\.html$/, '')
+    .replace(/\/index$/, '')
+    .replace(/\/$/, '') || '/';
+const canonical = new URL(path, Astro.site);
 
 const NAV = [
   { href: '/', label: 'Home' },
@@ -65,15 +80,25 @@ const ld = {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical.href} />
-    <meta property="og:image" content={new URL('/og.png', Astro.site).href} />
+    <meta property="og:image" content={new URL(ogImage ?? '/og.png', Astro.site).href} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Akshat Sachin Valse — stochastic foundations of machine learning, Iowa State University. Above the name, a field of particles undergoing Langevin dynamics collected into the wells of a periodic potential." />
+    <meta
+      property="og:image:alt"
+      content={ogImageAlt ??
+        'Akshat Sachin Valse — stochastic foundations of machine learning, Iowa State University. Above the name, a field of particles undergoing Langevin dynamics collected into the wells of a periodic potential.'}
+    />
     <meta property="og:site_name" content="Akshat Sachin Valse" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content={new URL('/og.png', Astro.site).href} />
+    <meta name="twitter:image" content={new URL(ogImage ?? '/og.png', Astro.site).href} />
     <meta name="author" content="Akshat Sachin Valse" />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="Notes — Akshat Sachin Valse"
+      href={new URL('/rss.xml', Astro.site).href}
+    />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
     <Font cssVariable="--font-body" preload />
@@ -82,6 +107,9 @@ const ld = {
     <Font cssVariable="--font-mono" />
 
     <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+    {jsonLd?.map((block) => (
+      <script type="application/ld+json" set:html={JSON.stringify(block)} />
+    ))}
   </head>
 
   <body>
@@ -133,7 +161,9 @@ const ld = {
             Set in Archivo, Source Serif&nbsp;4 and IBM Plex Mono; mathematics in KaTeX.
             Every figure is a live simulation, each checked against a closed form.
             <a href="https://github.com/AkshatValse/akshatvalse-site">Source and checks</a>
-            live in <code>src/sim</code> and <code>scripts/verify-*</code>.
+            live in <code>src/sim</code> and <code>scripts/verify-*</code>; the
+            tolerances run on every push
+            (<a href="https://github.com/AkshatValse/akshatvalse-site/actions/workflows/verify.yml">checks</a>).
           </p>
         </div>
       </div>
