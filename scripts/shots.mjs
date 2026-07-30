@@ -1,5 +1,5 @@
 /**
- * Visual check harness. Renders the built site across the breakpoints, colour
+ * Visual check harness. Renders the built site across the breakpoints, color
  * schemes and accessibility settings the design brief asks to be verified.
  *
  * Note on `fullPage`: Chrome resizes the viewport to capture it, which fires

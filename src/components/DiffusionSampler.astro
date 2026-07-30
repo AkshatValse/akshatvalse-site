@@ -11,7 +11,7 @@ const label =
   'variance-preserving diffusion model, integrated from t = 1 to t = 0. The ' +
   'samples begin as an isotropic Gaussian and separate onto the six modes of ' +
   'the target Gaussian mixture, in proportion to its unequal mixture weights ' +
-  '0.28, 0.22, 0.17, 0.14, 0.11 and 0.08. Colour encodes the data-space ' +
+  '0.28, 0.22, 0.17, 0.14, 0.11 and 0.08. Color encodes the data-space ' +
   'energy minus log p-zero on the cividis colormap, and faint contours of the ' +
   'same energy are drawn underneath. At the end of each pass the recovered ' +
   'mixture weights are compared with the true ones.';
@@ -38,11 +38,11 @@ const label =
     forward variance-preserving SDE noises a six-component Gaussian mixture into
     <span class="nowrap">𝒩(0, I)</span>; the reverse SDE carries 640 samples back over 320
     Euler–Maruyama steps. Because a mixture stays a mixture under the VP kernel, the
-    score used here is exact rather than learned, which leaves discretisation as the
+    score used here is exact rather than learned, which leaves discretization as the
     only source of error and turns the mixture weights into something gradable. True
     weights <span class="nowrap">({WEIGHTS.join(', ')})</span>; the readout reports
     <span class="nowrap">max<sub>k</sub> |ŵ<sub>k</sub> − w<sub>k</sub>|</span> at the end of
-    each pass, against a Monte Carlo floor of 0.018 at n = 640. Colour and contours
+    each pass, against a Monte Carlo floor of 0.018 at n = 640. Color and contours
     encode <span class="nowrap">−log p₀</span>.
   </figcaption>
 </figure>

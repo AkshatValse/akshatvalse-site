@@ -18,7 +18,7 @@
  *     D_hat(t) = E[(X_t - X_0)^2] / 2t,
  *
  * over independent replicas, with X unwrapped (never reduced mod 2pi) and
- * X_0 drawn from the periodised Gibbs measure. Using the displacement rather
+ * X_0 drawn from the periodized Gibbs measure. Using the displacement rather
  * than Var(X_t) matters for the figure: displacement gives D_hat(0+) = D_0 = 1
  * exactly, so the curve reads as free diffusion relaxing onto the trapped
  * value, whereas Var(X_t) carries an O(1)/2t offset from the spread of X_0

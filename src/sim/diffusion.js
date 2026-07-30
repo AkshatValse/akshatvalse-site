@@ -6,17 +6,17 @@
  *
  *     dX = [ -\tfrac12 \beta(t) X - \beta(t) \nabla\log p_t(X) ] dt + \sqrt{\beta(t)}\, d\bar W,
  *
- * integrated from t = 1 down to t \approx 0. Discretising with Euler-Maruyama
+ * integrated from t = 1 down to t \approx 0. Discretizing with Euler-Maruyama
  * on a uniform grid in t and stepping backwards by \Delta > 0 gives
  *
  *     X \leftarrow X + \Delta\big[\tfrac12 \beta(t) X + \beta(t) s(X, t)\big] + \sqrt{\beta(t)\Delta}\,\xi,
  *
  * which is the predictor of predictor-corrector samplers and is DDPM's update
- * in the continuum limit. Initialisation is X ~ N(0, I), the prior the forward
+ * in the continuum limit. Initialization is X ~ N(0, I), the prior the forward
  * process converges to.
  *
  * Because s is the true score rather than a learned one, the only sources of
- * error are the discretisation and the prior mismatch at t = 1. That makes the
+ * error are the discretization and the prior mismatch at t = 1. That makes the
  * recovered mixture weights a genuine grade for the sampler.
  */
 

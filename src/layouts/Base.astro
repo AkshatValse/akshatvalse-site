@@ -15,19 +15,33 @@ const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', Astro.si
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 
 const NAV = [
-  { href: '/', label: 'index' },
-  { href: '/research', label: 'research' },
-  { href: '/notes', label: 'notes' },
-  { href: '/cv', label: 'cv' },
+  { href: '/', label: 'Home' },
+  { href: '/research', label: 'Research' },
+  { href: '/notes', label: 'Notes' },
+  { href: '/cv', label: 'CV' },
 ];
 
 const ld = {
   '@context': 'https://schema.org',
   '@type': 'Person',
-  name: 'Akshat Valse',
+  name: 'Akshat Sachin Valse',
+  // People search the full legal name; the site uses the short one everywhere else.
+  alternateName: ['Akshat Valse', 'A. S. Valse'],
   url: Astro.site?.href,
   email: 'mailto:avalse@iastate.edu',
+  jobTitle: 'Undergraduate researcher',
+  description:
+    'Undergraduate researcher at Iowa State University working on the stochastic ' +
+    'foundations of machine learning: Langevin sampling and its discretization bias, ' +
+    'large deviations for mean-field interacting systems, and the stability of learned ' +
+    'PDE solvers.',
+  // sameAs is what lets a search engine decide these accounts are one person.
+  sameAs: [
+    'https://github.com/AkshatValse',
+    'https://linkedin.com/in/akshat-sachin-valse',
+  ],
   affiliation: { '@type': 'CollegeOrUniversity', name: 'Iowa State University' },
+  alumniOf: { '@type': 'CollegeOrUniversity', name: 'Iowa State University' },
   knowsAbout: [
     'Stochastic differential equations',
     'Diffusion models and score-based generative modeling',
@@ -51,7 +65,14 @@ const ld = {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical.href} />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content={new URL('/og.png', Astro.site).href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Akshat Sachin Valse — stochastic foundations of machine learning, Iowa State University. Above the name, a field of particles undergoing Langevin dynamics collected into the wells of a periodic potential." />
+    <meta property="og:site_name" content="Akshat Sachin Valse" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={new URL('/og.png', Astro.site).href} />
+    <meta name="author" content="Akshat Sachin Valse" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
@@ -73,7 +94,7 @@ const ld = {
           <p class="name">
             {path === '/' ? 'Akshat Valse' : <a href="/">Akshat Valse</a>}
           </p>
-          <p class="tagline">stochastic foundations of machine learning &middot; Iowa State University</p>
+          <p class="tagline">Stochastic foundations of machine learning &middot; Iowa State University</p>
           <nav class="nav" aria-label="Primary">
             {NAV.map((item) => (
               <a href={item.href} aria-current={path === item.href ? 'page' : undefined}>
@@ -95,6 +116,10 @@ const ld = {
       <div class="row">
         <div class="rail"><span class="rail-label">contact</span></div>
         <div>
+          <p>
+            <span class="fullname">Akshat Sachin Valse</span>,
+            Department of Mathematics, Iowa State University.
+          </p>
           <p>
             <a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a>
             &middot;

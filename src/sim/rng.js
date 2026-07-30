@@ -38,7 +38,7 @@ export function seedWords(str) {
 
 /**
  * Box-Muller normal generator with the second variate cached, so the
- * amortised cost is one uniform pair and one sqrt/log per two normals.
+ * amortized cost is one uniform pair and one sqrt/log per two normals.
  */
 export function makeNormal(rand) {
   let spare = null;

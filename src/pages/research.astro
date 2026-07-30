@@ -33,28 +33,28 @@ const tex = String.raw;
     <div class="row">
       <div class="rail">
         <dl>
-          <dt>advisor</dt><dd>David Herzog</dd>
-          <dt>dept</dt><dd>Mathematics</dd>
-          <dt>status</dt><dd>ongoing</dd>
+          <dt>Advisor</dt><dd>David Herzog</dd>
+          <dt>Department</dt><dd>Mathematics</dd>
+          <dt>Status</dt><dd>Ongoing</dd>
         </dl>
         <hr class="rail-rule" />
         <dl>
-          <dt>bears on</dt>
+          <dt>Bears on</dt>
           <dd>SGLD · annealed Langevin · diffusion correctors</dd>
         </dl>
       </div>
       <div>
         <article class="entry">
           <h2 class="entry-title">
-            Langevin dynamics: sampling, discretisation bias, transport coefficients
+            Langevin dynamics: sampling, discretization bias, transport coefficients
           </h2>
           <p class="entry-meta">David Herzog · Mathematics, Iowa State University · ongoing</p>
           <p>
             The overdamped diffusion
             <Tex src={tex`dX_t = \nabla \log \pi(X_t)\,dt + \sqrt{2}\,dW_t`} />
-            leaves <Tex src={tex`\pi`} /> invariant, so discretising it gives a sampler.
+            leaves <Tex src={tex`\pi`} /> invariant, so discretizing it gives a sampler.
             That sampler is not a niche method. Stochastic gradient Langevin dynamics is
-            its Euler–Maruyama discretisation with a minibatch gradient; the inner loop
+            its Euler–Maruyama discretization with a minibatch gradient; the inner loop
             of annealed Langevin sampling is the same chain at a fixed noise level; the
             corrector step of a predictor–corrector diffusion sampler is the same chain
             against a learned score. In all three the Metropolis correction is dropped,
@@ -94,7 +94,7 @@ const tex = String.raw;
           simulation either finds it or is wrong. Any Langevin sampler, including the
           inner loop of a score-based one, can be pointed at this potential and required
           to return that number. One that gets the invariant measure right and the
-          diffusivity wrong has a bug in its time discretisation.
+          diffusivity wrong has a bug in its time discretization.
           <a href="/notes/effective-diffusivity-cosine-potential">Derivation and check.</a>
         </p>
         <p class="entry-meta">
@@ -111,13 +111,13 @@ const tex = String.raw;
     <div class="row">
       <div class="rail">
         <dl>
-          <dt>advisor</dt><dd>Ruoyu Wu</dd>
-          <dt>dept</dt><dd>Mathematics</dd>
-          <dt>status</dt><dd>ongoing</dd>
+          <dt>Advisor</dt><dd>Ruoyu Wu</dd>
+          <dt>Department</dt><dd>Mathematics</dd>
+          <dt>Status</dt><dd>Ongoing</dd>
         </dl>
         <hr class="rail-rule" />
         <dl>
-          <dt>bears on</dt>
+          <dt>Bears on</dt>
           <dd>PAC-Bayes · mean-field limits of training · SGD escape</dd>
         </dl>
       </div>
@@ -130,15 +130,15 @@ const tex = String.raw;
           <p>
             Large deviations sits underneath a good deal of learning theory. Sanov's
             theorem and the Donsker–Varadhan variational formula for relative entropy
-            are the machinery behind PAC-Bayes generalisation bounds and variational
+            are the machinery behind PAC-Bayes generalization bounds and variational
             mutual-information estimators. Freidlin–Wentzell small-noise theory is how
-            escape times from saddles and shallow basins are analysed for SGD and for
-            Langevin-based optimisers. And the empirical-measure LDP for a mean-field
+            escape times from saddles and shallow basins are analyzed for SGD and for
+            Langevin-based optimizers. And the empirical-measure LDP for a mean-field
             interacting particle system is structurally the same construction that sits
             one level above the mean-field limit of wide-network training.
           </p>
           <p>
-            I work on rate functionals and the variational characterisation of rare
+            I work on rate functionals and the variational characterization of rare
             events for the empirical measure
             <Tex src={tex`\mu^N_t = \tfrac{1}{N}\sum_{i} \delta_{X^{i,N}_t}`} /> of such
             a system, currently in the setting of load balancing. The object is a
@@ -179,13 +179,13 @@ const tex = String.raw;
     <div class="row">
       <div class="rail">
         <dl>
-          <dt>advisor</dt><dd>Jue Yan</dd>
-          <dt>dept</dt><dd>Mathematics</dd>
-          <dt>status</dt><dd>ongoing</dd>
+          <dt>Advisor</dt><dd>Jue Yan</dd>
+          <dt>Department</dt><dd>Mathematics</dd>
+          <dt>Status</dt><dd>Ongoing</dd>
         </dl>
         <hr class="rail-rule" />
         <dl>
-          <dt>bears on</dt>
+          <dt>Bears on</dt>
           <dd>learned operators · neural surrogates · rollout stability</dd>
         </dl>
       </div>
@@ -212,7 +212,7 @@ const tex = String.raw;
             happened to be fitted rather than derived. Numerical analysis has a long
             history of asking whether update rules of that kind are stable. I am adapting
             von Neumann analysis to this setting, deriving the linearised amplification
-            factor of the learned time-stepping scheme and characterising how
+            factor of the learned time-stepping scheme and characterizing how
             perturbations propagate through it, toward a condition on the weights alone
             that can be checked before committing to an expensive rollout.
           </p>

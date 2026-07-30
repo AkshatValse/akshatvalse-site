@@ -13,12 +13,12 @@
  *
  *   A. Histogram agreement. The 1D marginal over 48 bins and the 2D joint
  *      over 24x24 bins, reported as total variation and as the largest
- *      *standardised* deviation. Raw relative deviation is not reported for
+ *      *standardized* deviation. Raw relative deviation is not reported for
  *      the tail bins: at beta = 2 the density spans a factor of e^{8} ≈ 3000,
  *      so the corner bins hold a few dozen counts and their relative error is
  *      Monte Carlo noise, not bias.
  *
- *   B. Discretisation bias, measured on E[cos X]. This has the closed form
+ *   B. Discretization bias, measured on E[cos X]. This has the closed form
  *          E_pi[cos X] = -I_1(beta) / I_0(beta),
  *      and far lower variance than any bin mass, so the O(h) bias of
  *      Euler-Maruyama is resolvable against Monte Carlo error. Standard
@@ -100,7 +100,7 @@ function histogramTest({ n, dt, steps, burnIn, thin, seed, bins1d, bins2d }) {
     const mass = binMass(b * w1, w1);
     const obs = h1[b] / s1;
     tv1 += Math.abs(obs - mass);
-    // Standardised by the binomial sd of the bin count (independence assumed;
+    // Standardized by the binomial sd of the bin count (independence assumed;
     // correlation inflates this, so it is a floor on the true tolerance).
     const sd = Math.sqrt((mass * (1 - mass)) / s1);
     maxZ1 = Math.max(maxZ1, Math.abs(obs - mass) / sd);
@@ -131,7 +131,7 @@ function histogramTest({ n, dt, steps, burnIn, thin, seed, bins1d, bins2d }) {
 }
 
 // ---------------------------------------------------------------------------
-// B. Discretisation bias on E[cos X]
+// B. Discretization bias on E[cos X]
 // ---------------------------------------------------------------------------
 
 function meanCosTest({ n, dt, simTime, burnInTime, thin, seed, batches }) {
@@ -189,15 +189,15 @@ for (let i = 0; i < A.rows.length; i += 4) {
 console.log('');
 console.log(`   total variation, 1D marginal (${bins1d} bins)        ${A.tv1.toExponential(3)}`);
 console.log(`   total variation, 2D joint (${bins2d}x${bins2d} bins)      ${A.tv2.toExponential(3)}`);
-console.log(`   max standardised deviation, 1D              ${A.maxZ1.toFixed(2)} sd`);
-console.log(`   max standardised deviation, 2D              ${A.maxZ2.toFixed(2)} sd`);
+console.log(`   max standardized deviation, 1D              ${A.maxZ1.toFixed(2)} sd`);
+console.log(`   max standardized deviation, 2D              ${A.maxZ2.toFixed(2)} sd`);
 console.log(`   max rel. dev. over 2D bins with >=1000 exp. counts   ${(A.maxRelDense * 100).toFixed(2)}%  (${A.denseBins}/${bins2d * bins2d} bins)`);
-console.log('   Standardisation assumes independent samples, so these sd counts are');
+console.log('   Standardization assumes independent samples, so these sd counts are');
 console.log('   a lower bound on the true tolerance; snapshots 0.8 time units apart');
 console.log('   are correlated within a well.');
 
 console.log('\n' + '-'.repeat(76));
-console.log('B. DISCRETISATION BIAS,  E[cos X] = -I_1(beta)/I_0(beta)');
+console.log('B. Discretization BIAS,  E[cos X] = -I_1(beta)/I_0(beta)');
 console.log(`   exact value  ${COS_EXACT.toFixed(9)}\n`);
 console.log('      h        estimate      std.err.     bias        bias/h');
 const biases = [];

@@ -14,7 +14,27 @@ const { Content } = await render(note);
 
 const fmt = (d: Date) =>
   d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+
+const articleLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ScholarlyArticle',
+  headline: note.data.title,
+  abstract: note.data.summary,
+  datePublished: note.data.date.toISOString().slice(0, 10),
+  ...(note.data.updated && { dateModified: note.data.updated.toISOString().slice(0, 10) }),
+  author: {
+    '@type': 'Person',
+    name: 'Akshat Sachin Valse',
+    url: Astro.site?.href,
+    affiliation: { '@type': 'CollegeOrUniversity', name: 'Iowa State University' },
+  },
+  inLanguage: 'en',
+  isAccessibleForFree: true,
+  mainEntityOfPage: new URL(Astro.url.pathname, Astro.site).href,
+};
 ---
+
+<script type="application/ld+json" set:html={JSON.stringify(articleLd)} is:inline />
 
 <Base title={`${note.data.title} · Akshat Valse`} description={note.data.summary} ogType="article">
   <article class="section shell">
@@ -23,12 +43,12 @@ const fmt = (d: Date) =>
         <span class="rail-label">note</span>
         <hr class="rail-rule" />
         <dl>
-          <dt>posted</dt><dd>{fmt(note.data.date)}</dd>
-          {note.data.updated && (<><dt>updated</dt><dd>{fmt(note.data.updated)}</dd></>)}
-          {note.data.pdf && (<><dt>pdf</dt><dd><a href={note.data.pdf}>download</a></dd></>)}
+          <dt>Posted</dt><dd>{fmt(note.data.date)}</dd>
+          {note.data.updated && (<><dt>Updated</dt><dd>{fmt(note.data.updated)}</dd></>)}
+          {note.data.pdf && (<><dt>PDF</dt><dd><a href={note.data.pdf}>Download</a></dd></>)}
         </dl>
         <hr class="rail-rule" />
-        <p><a href="/notes">← all notes</a></p>
+        <p><a href="/notes">← All notes</a></p>
       </div>
       <div class="prose">
         <h1 class="page-title">{note.data.title}</h1>

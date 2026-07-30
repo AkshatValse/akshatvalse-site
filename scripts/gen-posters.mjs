@@ -7,13 +7,13 @@
  * for reduced motion and never starts a loop, and the one with JavaScript
  * disabled entirely.
  *
- * The hero is a raster (WebP, one per colour scheme) because it is a dense
+ * The hero is a raster (WebP, one per color scheme) because it is a dense
  * field. The diffusivity figure is emitted as SVG instead: it is a line chart,
  * so SVG is smaller, stays sharp, keeps its tick labels as real selectable
- * text, and picks up the page's own colour tokens, which means one file covers
+ * text, and picks up the page's own color tokens, which means one file covers
  * both schemes.
  *
- * Colour tokens are parsed out of src/styles/global.css rather than restated
+ * Color tokens are parsed out of src/styles/global.css rather than restated
  * here, so the poster and the live canvas cannot drift apart.
  *
  * Run: node scripts/gen-posters.mjs   (also runs as part of `npm run build`)
@@ -63,7 +63,7 @@ function tokens(scheme) {
 
 function hex(s) {
   const m = s.match(/^#([0-9a-f]{6})$/i);
-  if (!m) throw new Error(`expected a 6-digit hex colour, got "${s}"`);
+  if (!m) throw new Error(`expected a 6-digit hex color, got "${s}"`);
   const n = parseInt(m[1], 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
@@ -317,7 +317,7 @@ function rareTailPoster() {
     exact += `${i ? 'L' : 'M'}${n2(rtX(a))} ${n2(rtY(normalTail(a)))}`;
   }
 
-  // The two colour schemes differ only in the ramp direction, so the markers
+  // The two color schemes differ only in the ramp direction, so the markers
   // are emitted twice and CSS shows one set.
   const markers = (reverse) => {
     let s = '';

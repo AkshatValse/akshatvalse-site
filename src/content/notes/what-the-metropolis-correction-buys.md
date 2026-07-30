@@ -4,9 +4,9 @@ summary: The unadjusted Langevin algorithm is SGLD without the minibatch noise. 
 date: 2026-07-30
 ---
 
-The unadjusted Langevin algorithm is the Euler–Maruyama discretisation of a
+The unadjusted Langevin algorithm is the Euler–Maruyama discretization of a
 diffusion that leaves the target invariant. It is ergodic, it is cheap, and it
-is wrong: its invariant law is not the target. Metropolising the same proposal
+is wrong: its invariant law is not the target. Metropolizing the same proposal
 restores exactness at the cost of an accept/reject step.
 
 ULA deserves naming, because it is not a niche MCMC method.
@@ -14,7 +14,7 @@ Stochastic gradient Langevin dynamics is ULA with the gradient replaced by a
 minibatch estimate; the inner loop of annealed Langevin sampling is ULA at a
 fixed noise level; the corrector step of a predictor–corrector diffusion sampler
 is ULA against the current marginal's score. In every one of those the
-Metropolis correction is dropped, usually without comment, and the discretisation
+Metropolis correction is dropped, usually without comment, and the discretization
 bias is inherited. What that costs is therefore a practical question, and it is
 almost never measured, because measuring it seems to require knowing the target.
 
@@ -100,12 +100,12 @@ all 32 chains still in the well they started in, and MALA is equally stuck.
 The Metropolis correction buys nothing here, and the reason is worth stating
 precisely. MALA is unbiased *in stationarity*. A chain that has not crossed the
 barrier is nowhere near stationarity, so the guarantee is vacuous: it certifies a
-limit the run never approaches. Correcting the discretisation does not make the
+limit the run never approaches. Correcting the discretization does not make the
 chain mix.
 
 ## What to take from it
 
-Bias is polynomial in $h$ and fixable: halve the step, or Metropolise, or use a
+Bias is polynomial in $h$ and fixable: halve the step, or Metropolize, or use a
 higher-order scheme. Mixing is exponential in the barrier, and none of those
 touch it. The two failure modes call for different tools, and the ones that work
 on mixing are preconditioning, tempering, replica exchange, or a better proposal,
@@ -116,7 +116,7 @@ problem and says nothing about the second. A run can report $0.6$ acceptance,
 pass every marginal check, and be reporting the well it was started in.
 
 It is also, in miniature, the argument for noise schedules in generative
-modelling. A diffusion model does not sample its target with a single Langevin
+modeling. A diffusion model does not sample its target with a single Langevin
 chain, and could not: the data distribution is exactly the metastable case, with
 modes separated by regions of vanishing density. What the forward process buys is
 a family of intermediate targets whose barriers are smoothed away at high noise

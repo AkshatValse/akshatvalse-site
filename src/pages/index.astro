@@ -18,16 +18,16 @@ const fmt = (d: Date) =>
 
 const research = [
   {
-    title: 'Langevin dynamics: sampling, discretisation bias, transport coefficients',
+    title: 'Langevin dynamics: sampling, discretization bias, transport coefficients',
     meta: 'David Herzog · Mathematics · ongoing',
     blurb:
-      'The sampler underneath score-based generative models and stochastic-gradient Langevin dynamics, analysed where its errors are computable: discretisation bias against exact stationary laws, and estimator design for effective diffusivity and mobility.',
+      'The sampler underneath score-based generative models and stochastic-gradient Langevin dynamics, analyzed where its errors are computable: discretization bias against exact stationary laws, and estimator design for effective diffusivity and mobility.',
   },
   {
     title: 'Large-deviation asymptotics for mean-field interacting systems',
     meta: 'Ruoyu Wu · Mathematics · ongoing',
     blurb:
-      'Rate functionals and the variational characterisation of rare events for the empirical measure of a mean-field particle system. This is the construction that sits one level above the mean-field limit of wide-network training, and the machinery underneath PAC-Bayes.',
+      'Rate functionals and the variational characterization of rare events for the empirical measure of a mean-field particle system. This is the construction that sits one level above the mean-field limit of wide-network training, and the machinery underneath PAC-Bayes.',
   },
   {
     title: 'Stability of neural approximations to evolution equations',
@@ -40,7 +40,7 @@ const research = [
 
 <Base
   title="Akshat Valse · stochastic foundations of machine learning"
-  description="Undergraduate researcher at Iowa State University working on the stochastic foundations of machine learning: diffusion models as reverse-time SDEs, Langevin sampling and its discretisation bias, large deviations for mean-field systems, and the stability of learned PDE solvers."
+  description="Undergraduate researcher at Iowa State University working on the stochastic foundations of machine learning: diffusion models as reverse-time SDEs, Langevin sampling and its discretization bias, large deviations for mean-field systems, and the stability of learned PDE solvers."
 >
   <HeroSim slot="hero" />
 
@@ -50,19 +50,19 @@ const research = [
         <span class="rail-label">Fig. 1</span>
         <hr class="rail-rule" />
         <dl>
-          <dt>object</dt>
+          <dt>Object</dt>
           <dd>overdamped Langevin</dd>
-          <dt>potential</dt>
+          <dt>Potential</dt>
           <dd>V = cos x + cos y</dd>
-          <dt>integrator</dt>
+          <dt>Integrator</dt>
           <dd>Euler–Maruyama, h = 0.004</dd>
-          <dt>checked</dt>
+          <dt>Checked</dt>
           <dd>TV 1.0×10⁻³ vs Gibbs</dd>
         </dl>
         <div class="legend" aria-hidden="true">
           <span>−2</span><span class="legend-ramp"></span><span>+2</span>
         </div>
-        <p class="legend-note">colour: V</p>
+        <p class="legend-note">Color: potential V</p>
       </div>
 
       <div>
@@ -72,7 +72,7 @@ const research = [
           generate and sample. A diffusion model is a reverse-time SDE, stochastic
           gradient descent and its Langevin variants are diffusions in a rough loss
           landscape, and a PAC-Bayes bound is the Donsker–Varadhan formula applied to a
-          posterior over hypotheses. Three questions occupy me: what the discretisation
+          posterior over hypotheses. Three questions occupy me: what the discretization
           of a Langevin sampler actually costs, how to estimate probabilities too small
           for direct simulation to reach, and whether a PDE solver with a network inside
           it will hold together when you iterate it. Underneath all three is the same
@@ -92,7 +92,7 @@ const research = [
           Particles collect where <Tex src={tex`e^{-\beta V}`} /> is large and hop
           between wells at the Kramers rate, and across 48 bins the empirical measure
           sits within a total variation of <Tex src={tex`1.0\times 10^{-3}`} /> of the
-          Gibbs law, with a discretisation bias of <Tex src={tex`9\times 10^{-4}`} /> on
+          Gibbs law, with a discretization bias of <Tex src={tex`9\times 10^{-4}`} /> on
           <Tex src={tex`\mathbb{E}[\cos X]`} /> against the closed form
           <Tex src={tex`-I_1(\beta)/I_0(\beta)`} />.
         </p>
@@ -106,13 +106,13 @@ const research = [
         <span class="rail-label">Fig. 2</span>
         <hr class="rail-rule" />
         <dl>
-          <dt>object</dt>
+          <dt>Object</dt>
           <dd>VP-SDE, reverse time</dd>
-          <dt>score</dt>
+          <dt>Score</dt>
           <dd>exact, not learned</dd>
-          <dt>steps</dt>
+          <dt>Steps</dt>
           <dd>320 Euler–Maruyama</dd>
-          <dt>graded on</dt>
+          <dt>Graded on</dt>
           <dd>mode coverage</dd>
         </dl>
       </div>
@@ -193,13 +193,13 @@ const research = [
       <div>
         <h2 class="section-title">Elsewhere</h2>
         <dl class="links">
-          <dt>email</dt>
+          <dt>Email</dt>
           <dd><a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a></dd>
-          <dt>github</dt>
+          <dt>GitHub</dt>
           <dd><a href="https://github.com/AkshatValse" rel="me">AkshatValse</a></dd>
-          <dt>code</dt>
+          <dt>Code</dt>
           <dd><a href="https://github.com/AkshatValse/langevin-samplers">langevin-samplers</a></dd>
-          <dt>cv</dt>
+          <dt>CV</dt>
           <dd><a href="/cv">/cv</a></dd>
         </dl>
         <p class="pending">Preprints will be posted here as they become available.</p>

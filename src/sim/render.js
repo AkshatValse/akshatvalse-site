@@ -12,11 +12,11 @@ import { cividis } from './cividis.js';
 export const LEVEL_SPACING = 0.5;
 
 /**
- * Rasterise the contour lines of V(x,y) = cos x + cos y into an RGBA buffer.
+ * Rasterize the contour lines of V(x,y) = cos x + cos y into an RGBA buffer.
  *
  * Levels are placed at LEVEL_SPACING * (k + 1/2) rather than at multiples of
  * the spacing, which keeps any level off the extrema V = ±2. A level passing
- * exactly through an extremum degenerates to a point and rasterises as a blob,
+ * exactly through an extremum degenerates to a point and rasterizes as a blob,
  * because the distance-to-level estimate below divides by |grad V| -> 0 there.
  *
  * For a pixel at (x,y) the perpendicular distance to the nearest level set is
@@ -26,7 +26,7 @@ export const LEVEL_SPACING = 0.5;
  * line here", so no special case is needed beyond a division guard.
  */
 export function contourRGBA(w, h, spanX, spanY, rgb, alpha = 0.5, halfWidthPx = 0.6, yStart = 0, yEnd = h) {
-  // Returns only rows [yStart, yEnd), so callers can rasterise a large canvas
+  // Returns only rows [yStart, yEnd), so callers can rasterize a large canvas
   // in slices across several frames instead of in one long task.
   const rows = yEnd - yStart;
   const buf = new Uint8ClampedArray(w * rows * 4);
@@ -120,7 +120,7 @@ export function heroRamp(v, reverse) {
   return reverse ? 1 - t : t;
 }
 
-/** Precompute `n` colours of the ramp as [r,g,b] triples. */
+/** Precompute `n` colors of the ramp as [r,g,b] triples. */
 export function rampTable(n, reverse) {
   const out = new Array(n);
   for (let i = 0; i < n; i++) {

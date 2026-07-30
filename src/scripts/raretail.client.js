@@ -13,7 +13,7 @@ import { cividis } from '../sim/cividis.js';
 const A_MIN = 1, A_MAX = 7;
 const P_MIN = 1e-13, P_MAX = 1;
 const N_MAX = 8_000_000;
-/** Colour maps relative standard error over three decades. */
+/** Color maps relative standard error over three decades. */
 const RSE_MIN = 1e-3, RSE_MAX = 1;
 
 export function mountRareTail(root) {
@@ -66,7 +66,7 @@ export function mountRareTail(root) {
   };
 
   /** cividis position for a relative standard error. */
-  function rseColour(rse, reverse) {
+  function rseColor(rse, reverse) {
     const u = (Math.log10(Math.max(rse, 1e-9)) - Math.log10(RSE_MIN)) /
       (Math.log10(RSE_MAX) - Math.log10(RSE_MIN));
     const t = u < 0 ? 0 : u > 1 ? 1 : u;
@@ -136,9 +136,9 @@ export function mountRareTail(root) {
   function drawPoint(x, est, filled, c) {
     const lo = Math.max(P_MIN, est.p - est.se);
     const hi = Math.min(P_MAX, est.p + est.se);
-    const colour = rseColour(est.se / est.p, c.reverse);
+    const color = rseColor(est.se / est.p, c.reverse);
 
-    ctx.strokeStyle = colour;
+    ctx.strokeStyle = color;
     ctx.lineWidth = Math.max(1, dpr);
     ctx.beginPath();
     ctx.moveTo(x, yOf(hi)); ctx.lineTo(x, yOf(lo));
@@ -148,11 +148,11 @@ export function mountRareTail(root) {
     ctx.beginPath();
     ctx.arc(x, yOf(est.p), r, 0, Math.PI * 2);
     if (filled) {
-      ctx.fillStyle = colour;
+      ctx.fillStyle = color;
       ctx.fill();
     } else {
       ctx.lineWidth = Math.max(1.2, 1.4 * dpr);
-      ctx.strokeStyle = colour;
+      ctx.strokeStyle = color;
       ctx.stroke();
     }
   }

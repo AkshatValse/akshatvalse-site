@@ -2,7 +2,7 @@
  * cividis, sampled at 33 anchors from matplotlib's 256-entry table and
  * interpolated linearly in sRGB. Perceptually uniform in lightness and
  * designed to be readable under deuteranomaly/protanomaly, which is the
- * reason it is the only source of colour on this site: colour here encodes
+ * reason it is the only source of color on this site: color here encodes
  * a scalar field, so it has to survive being read by anyone.
  *
  * Max deviation from the full 256-entry table is under 1.5/255 per channel.
@@ -34,7 +34,7 @@ export function cividis(t) {
   ];
 }
 
-/** Precomputed lookup of `n` CSS colour strings, for per-particle fills. */
+/** Precomputed lookup of `n` CSS color strings, for per-particle fills. */
 export function cividisTable(n = 128) {
   const out = new Array(n);
   for (let i = 0; i < n; i++) {

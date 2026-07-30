@@ -33,9 +33,9 @@ const fmt = (d: Date) =>
       <div class="row">
         <div class="rail">
           <dl>
-            <dt>posted</dt><dd>{fmt(n.data.date)}</dd>
-            {n.data.updated && (<><dt>updated</dt><dd>{fmt(n.data.updated)}</dd></>)}
-            {n.data.pdf && (<><dt>pdf</dt><dd><a href={n.data.pdf}>download</a></dd></>)}
+            <dt>Posted</dt><dd>{fmt(n.data.date)}</dd>
+            {n.data.updated && (<><dt>Updated</dt><dd>{fmt(n.data.updated)}</dd></>)}
+            {n.data.pdf && (<><dt>PDF</dt><dd><a href={n.data.pdf}>Download</a></dd></>)}
           </dl>
         </div>
         <div>

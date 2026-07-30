@@ -15,7 +15,7 @@
  * catch it, and they are exactly what a generative model is usually not held
  * to. Standard errors are Monte Carlo, sqrt(w(1-w)/n).
  *
- * A discretisation sweep follows, because the reverse SDE's error is dominated
+ * A discretization sweep follows, because the reverse SDE's error is dominated
  * by the step count and that dependence should be visible rather than assumed.
  *
  * Run: node scripts/verify-diffusion.mjs
@@ -84,7 +84,7 @@ console.log(`   max |mu_hat - mu|        ${r.maxMu.toFixed(4)}`);
 console.log(`   target sd                ${SIGMA}`);
 
 console.log('\n' + '-'.repeat(74));
-console.log('Discretisation sweep (n = 8192 each):\n');
+console.log('Discretization sweep (n = 8192 each):\n');
 console.log('   steps    max |w_hat - w|    TV(weights)    max |mu_hat - mu|');
 for (const steps of [40, 80, 160, 320, 640]) {
   const s = run({ n: 8192, steps, seed: `verify/steps-${steps}` });

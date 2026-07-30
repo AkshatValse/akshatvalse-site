@@ -8,7 +8,7 @@
  *   - visibilitychange stops it when the tab is hidden
  *   - the physics timestep is fixed and decoupled from the frame rate, so a
  *     30Hz display runs the same dynamics as a 120Hz one
- *   - colours are read from the stylesheet, so CSS stays the single source
+ *   - colors are read from the stylesheet, so CSS stays the single source
  *     of truth and an OS scheme change rebuilds the layers
  */
 
@@ -75,7 +75,7 @@ export function mountHero(root) {
   }
 
   /**
-   * Rasterising the contour field over a full-bleed canvas at 2x is several
+   * Rasterizing the contour field over a full-bleed canvas at 2x is several
    * million transcendental evaluations — one long task, and directly visible
    * as blocking time. Slice it by rows across frames instead; no single chunk
    * runs long enough to be a long task.
@@ -134,7 +134,7 @@ export function mountHero(root) {
     const sx = width / sim.spanX, sy = height / sim.spanY;
     const r = Math.max(1.15, 1.5 * dpr);
 
-    // Fade the previous frame toward transparency rather than toward a colour,
+    // Fade the previous frame toward transparency rather than toward a color,
     // so the static contour layer underneath is never painted over.
     pctx.globalCompositeOperation = 'destination-out';
     pctx.fillStyle = `rgba(0,0,0,${TRAIL_FADE})`;
@@ -142,7 +142,7 @@ export function mountHero(root) {
     pctx.globalCompositeOperation = 'source-over';
 
     const { x, y, n } = sim;
-    // Batch by colour: 96 fillStyle changes per frame instead of one per particle.
+    // Batch by color: 96 fillStyle changes per frame instead of one per particle.
     const buckets = new Array(RAMP_STEPS);
     for (let i = 0; i < n; i++) {
       const k = rampIndex(x[i], y[i], RAMP_STEPS);
@@ -215,7 +215,7 @@ export function mountHero(root) {
   io.observe(root);
   document.addEventListener('visibilitychange', sync);
 
-  // Rebuild on a scheme change: the ramp direction and the contour colour both
+  // Rebuild on a scheme change: the ramp direction and the contour color both
   // depend on it. Rebuild on resize too, since the cell tiling follows aspect.
   const dark = window.matchMedia('(prefers-color-scheme: dark)');
   const onScheme = () => { stop(); built = false; build(); };

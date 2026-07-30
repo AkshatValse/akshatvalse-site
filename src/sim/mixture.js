@@ -15,7 +15,7 @@
  *
  * and the score \nabla \log p_t is available in closed form. Substituting it
  * into Anderson's reverse-time SDE gives a sampler with an *oracle* score:
- * whatever it gets wrong is the fault of the sampler or the discretisation,
+ * whatever it gets wrong is the fault of the sampler or the discretization,
  * never of a network. Since the mixture weights are unequal and known, the
  * sampler can be graded on whether it reproduces them — the mode-coverage
  * question, with an answer key.
@@ -73,7 +73,7 @@ export function score(x, y, t) {
   for (let k = 0; k < K; k++) {
     const dx = x - a * MEANS[k][0];
     const dy = y - a * MEANS[k][1];
-    // Shared -log(2 pi v) omitted: it cancels in the normalisation.
+    // Shared -log(2 pi v) omitted: it cancels in the normalization.
     lg[k] = LOG_W[k] - (dx * dx + dy * dy) / (2 * v);
     if (lg[k] > max) max = lg[k];
   }
@@ -92,7 +92,7 @@ export function score(x, y, t) {
 /**
  * The data-space energy phi = -log p_0, up to the additive constant
  * log(2 pi sigma^2). Used for the colormap and the contours, exactly as the
- * potential V is used in the hero: colour encodes energy.
+ * potential V is used in the hero: color encodes energy.
  */
 export function energy(x, y) {
   const s2 = SIGMA * SIGMA;

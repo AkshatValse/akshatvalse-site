@@ -1,10 +1,10 @@
 /* ==========================================================================
    Design tokens
 
-   Colour rule for this site: the only colour is ink on ground, plus one
+   Color rule for this site: the only color is ink on ground, plus one
    perceptually-uniform sequential colormap (cividis) that appears exclusively
    inside figures, where it encodes a scalar. Nothing is coloured for looking
-   nice. There is no accent colour and no colour on any interactive element.
+   nice. There is no accent color and no color on any interactive element.
 
    scripts/gen-posters.mjs parses --sim-bg, --sim-contour and --sim-reverse out
    of this file at build time, so the static poster frames and the live canvas
@@ -94,7 +94,7 @@ h1, h2, h3 {
 p { margin: 0 0 1.15em; }
 p:last-child { margin-bottom: 0; }
 
-/* Links carry no colour. Hover thickens the underline; that is the entire
+/* Links carry no color. Hover thickens the underline; that is the entire
    interactive vocabulary of the site. */
 a {
   color: inherit;
@@ -275,6 +275,7 @@ em, i, cite, dfn, var, blockquote em {
   color: var(--ink-2);
   font-size: var(--step--1);
 }
+.footer .fullname { color: var(--ink); }
 .footer .colophon { font-family: var(--font-mono), monospace; margin-top: 1rem; }
 
 /* ==========================================================================

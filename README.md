@@ -42,7 +42,7 @@ npm run dev
 runs the correctness checks (about two minutes; they are deliberately not part
 of the build).
 
-`node scripts/shots.mjs <outdir>` renders the site across breakpoints, colour
+`node scripts/shots.mjs <outdir>` renders the site across breakpoints, color
 schemes, reduced motion, and with JavaScript disabled, against a running
 `astro preview`. `node scripts/lighthouse.mjs` scores it under mobile
 throttling.
@@ -51,11 +51,11 @@ throttling.
 
 - **No plotting or physics libraries.** The integrators are Euler–Maruyama by
   hand, the colormap is a 33-entry cividis table, and the contours come from a
-  first-order distance-to-level-set estimate rasterised directly. Total
+  first-order distance-to-level-set estimate rasterized directly. Total
   JavaScript is under 7 KB gzipped on the heaviest page.
-- **Colour encodes a quantity.** cividis appears only inside figures, where it
+- **Color encodes a quantity.** cividis appears only inside figures, where it
   maps a potential or a log-density. Nothing else on the site is coloured, and
-  there is no accent colour.
+  there is no accent color.
 - **Correct before any JavaScript runs.** Each figure ships a build-time poster
   of the same simulation, so first paint, `prefers-reduced-motion: reduce`, and
   a browser with scripting off all show a true picture with no layout shift.
@@ -82,3 +82,14 @@ applications does not break when the file is renamed.
 
 Set `SITE_URL` if the domain changes; it feeds the sitemap, canonical URLs, and
 `robots.txt`.
+
+## Search and social
+
+`public/og.png` is the link-preview card. It is rendered by `node scripts/gen-og.mjs`
+using headless Chrome and the site's own woff2 files, then committed, so a Linux build
+box never has to reproduce it. Re-run it after changing the name, the tagline or the
+hero, then rebuild.
+
+`node scripts/submit-indexnow.mjs` pushes the sitemap's URLs to IndexNow, which covers
+Bing, Yandex, Seznam and Naver, and through Bing also DuckDuckGo and Ecosia. Google has
+no equivalent and has to be reached through Search Console.

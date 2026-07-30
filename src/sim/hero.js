@@ -14,7 +14,7 @@
  * picked from its aspect ratio. scripts/verify-gibbs.mjs runs at m = n = 1 and
  * the result transfers unchanged.
  *
- * Integrator: Euler-Maruyama, fixed step, hand-written. The discretisation
+ * Integrator: Euler-Maruyama, fixed step, hand-written. The discretization
  * bias in the invariant law is O(h) and is measured, not assumed.
  *
  * No DOM dependencies: the same module runs in the browser, in the

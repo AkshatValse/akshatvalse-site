@@ -133,8 +133,8 @@ about it.
 
 ## Checking a simulation against it
 
-This is the payoff. Discretise with Euler–Maruyama at step $h$, run $R$
-independent replicas with $X_0$ drawn from the periodised Gibbs measure, and
+This is the payoff. Discretize with Euler–Maruyama at step $h$, run $R$
+independent replicas with $X_0$ drawn from the periodized Gibbs measure, and
 form the mean-squared-displacement estimator
 
 $$\hat D(t) = \frac{1}{R}\sum_{r=1}^{R}\frac{\big(X^{(r)}_t - X^{(r)}_0\big)^2}{2t}.$$
@@ -171,10 +171,10 @@ Two uses, both about sampling rather than about physics.
 First, as a *test*. Any implementation of a Langevin sampler, including the
 inner loop of an annealed or score-based one, can be pointed at $V = \cos x$ and
 required to return $0.6239$. It is a stronger test than checking a marginal,
-because it depends on the sampler's behaviour over long trajectories instead of
+because it depends on the sampler's behavior over long trajectories instead of
 at stationarity, and it is where an integrator with a subtly wrong noise scaling
 shows up. A sampler that gets the invariant measure right and the diffusivity
-wrong has a bug in its time discretisation.
+wrong has a bug in its time discretization.
 
 Second, as a *scale*. The Arrhenius form $D_{\mathrm{eff}} \sim 2\pi e^{-eta\Delta V}$
 says the cost of roughness is exponential in the barrier and only linear in

@@ -35,9 +35,9 @@ for *every* $t$, and therefore the score is available in closed form,
 
 $$\nabla\log p_t(x) = \sum_{k=1}^K r_k(x,t)\,\frac{\alpha_t\mu_k - x}{v_t}, \qquad r_k(x,t) = \frac{w_k\,\mathcal N(x;\alpha_t\mu_k, v_t I)}{\sum_j w_j\,\mathcal N(x;\alpha_t\mu_j, v_t I)},$$
 
-a responsibility-weighted average of the directions toward each noised centre.
+a responsibility-weighted average of the directions toward each noised center.
 In practice $r_k$ should be formed through a log-sum-exp: in the far tails every
-component underflows, and the normalised form still returns the correct
+component underflows, and the normalized form still returns the correct
 direction where the raw ratio returns $0/0$.
 
 ## An oracle sampler
@@ -50,11 +50,11 @@ run from $t=1$ down to $t\approx 0$ with $X_1 \sim \mathcal N(0,I)$. Substitutin
 the exact score rather than a trained network gives a sampler with no
 approximation error in the score. This is the *predictor* half of a
 predictor–corrector sampler, and DDPM's ancestral update in the continuum limit.
-Discretising with Euler–Maruyama backwards by a step $\Delta > 0$:
+Discretizing with Euler–Maruyama backwards by a step $\Delta > 0$:
 
 $$X \leftarrow X + \Delta\Big[\tfrac12\beta(t)X + \beta(t)\,s(X,t)\Big] + \sqrt{\beta(t)\Delta}\;\xi, \qquad \xi\sim\mathcal N(0,I).$$
 
-Every error this sampler makes is now attributable to the time discretisation,
+Every error this sampler makes is now attributable to the time discretization,
 the prior mismatch at $t=1$, or a bug. None of it can be blamed on the network,
 because there is no network.
 
@@ -103,7 +103,7 @@ A step-count sweep at $n = 8192$ is flatter than one might hope:
 
 The Monte Carlo floor at $n = 8192$ is $\sqrt{0.28\cdot 0.72/8192} = 0.0050$, so
 these rows are within a factor of two of pure noise, and the sweep is
-underpowered to resolve the discretisation error in the weights. I would rather
+underpowered to resolve the discretization error in the weights. I would rather
 say that plainly than present the table as evidence of convergence. Resolving it
 would take either far more samples or a lower-variance functional, which is the
 same problem and the same fix as measuring Euler–Maruyama's bias in the
@@ -115,7 +115,7 @@ None of this is a claim about real diffusion models. A six-component Gaussian
 mixture in two dimensions is not CIFAR-10, and a closed-form score is not a
 U-Net. The narrower claim, which I think is the more useful one, is that the
 parts of a generative pipeline that are not the network can be tested exactly and
-mostly are not. The sampler, the schedule, the discretisation, and the choice of
+mostly are not. The sampler, the schedule, the discretization, and the choice of
 solver order all have measurable error against a target you can write down.
 Testing them there is cheap, and it separates "the model is wrong" from "the
 sampler is wrong" before the two get confounded on real data.
