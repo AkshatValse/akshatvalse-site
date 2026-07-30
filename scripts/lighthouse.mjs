@@ -8,7 +8,14 @@
 import puppeteer from 'puppeteer-core';
 import lighthouse from 'lighthouse';
 
-const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+/** Override with CHROME_PATH when the browser lives somewhere else. */
+const CHROME =
+  process.env.CHROME_PATH ??
+  (process.platform === 'win32'
+    ? 'C:/Program Files/Google/Chrome/Application/chrome.exe'
+    : process.platform === 'darwin'
+      ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+      : '/usr/bin/google-chrome');
 const BASE = process.argv[2] ?? 'http://localhost:4321';
 const PATHS = process.argv.slice(3).length
   ? process.argv.slice(3)

@@ -17,7 +17,14 @@ import path from 'node:path';
 
 const OUT = process.argv[2] ?? path.resolve('shots');
 const BASE = process.argv[3] ?? 'http://localhost:4321';
-const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+/** Override with CHROME_PATH when the browser lives somewhere else. */
+const CHROME =
+  process.env.CHROME_PATH ??
+  (process.platform === 'win32'
+    ? 'C:/Program Files/Google/Chrome/Application/chrome.exe'
+    : process.platform === 'darwin'
+      ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+      : '/usr/bin/google-chrome');
 
 mkdirSync(OUT, { recursive: true });
 
