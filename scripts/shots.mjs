@@ -43,6 +43,9 @@ const CASES = [
   { name: '10-fig3-diffusivity-light', url: '/research', w: 1440, h: 900, scheme: 'light', to: '[data-sim="diffusivity"]', settle: 24000 },
   { name: '11-fig3-diffusivity-dark', url: '/research', w: 1440, h: 900, scheme: 'dark', to: '[data-sim="diffusivity"]', settle: 24000 },
   { name: '12-fig3-diffusivity-320', url: '/research', w: 320, h: 640, scheme: 'light', to: '[data-sim="diffusivity"]', settle: 24000 },
+  { name: '12b-fig4-raretail-light', url: '/research', w: 1440, h: 900, scheme: 'light', to: '[data-sim="raretail"]', settle: 14000 },
+  { name: '12c-fig4-raretail-dark', url: '/research', w: 1440, h: 900, scheme: 'dark', to: '[data-sim="raretail"]', settle: 14000 },
+  { name: '12d-fig4-raretail-nojs', url: '/research', w: 1440, h: 900, scheme: 'light', nojs: true, to: '[data-sim="raretail"]' },
   { name: '13-fig2-reduced', url: '/', w: 1440, h: 900, scheme: 'light', reduced: true, to: '[data-sim="diffusion"]' },
   { name: '14-fig3-nojs', url: '/research', w: 1440, h: 900, scheme: 'light', nojs: true, to: '[data-sim="diffusivity"]' },
 

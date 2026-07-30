@@ -30,6 +30,7 @@ import { cividis } from '../src/sim/cividis.js';
 import { DiffusionSampler, DIFFUSION_DEFAULTS } from '../src/sim/diffusion.js';
 import { BOX, energy, energyGrad } from '../src/sim/mixture.js';
 import { DiffusivitySim, D_EFF_EXACT } from '../src/sim/diffusivity.js';
+import { RareTailSim, normalTail } from '../src/sim/raretail.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = path.join(ROOT, 'public', 'poster');
@@ -276,6 +277,104 @@ function diffusivityPoster() {
 }
 
 // ---------------------------------------------------------------------------
+// Rare-event poster (SVG)
+// ---------------------------------------------------------------------------
+
+const RT_PAD = { l: 54, r: 16, t: 14, b: 46 };
+const A_MIN = 1, A_MAX = 7, P_MIN = 1e-13, P_MAX = 1;
+const RT_N = 8_000_000;
+const RSE_MIN = 1e-3, RSE_MAX = 1;
+
+const rtX = (a) =>
+  RT_PAD.l + ((a - A_MIN) / (A_MAX - A_MIN)) * (SVG_W - RT_PAD.l - RT_PAD.r);
+const rtY = (v) =>
+  SVG_H - RT_PAD.b -
+  ((Math.log10(v) - Math.log10(P_MIN)) / (Math.log10(P_MAX) - Math.log10(P_MIN))) *
+    (SVG_H - RT_PAD.t - RT_PAD.b);
+
+/** Relative standard error mapped through cividis, as a hex string. */
+function rseHex(rse, reverse) {
+  const u =
+    (Math.log10(Math.max(rse, 1e-9)) - Math.log10(RSE_MIN)) /
+    (Math.log10(RSE_MAX) - Math.log10(RSE_MIN));
+  const t = u < 0 ? 0 : u > 1 ? 1 : u;
+  const [r, g, b] = cividis(reverse ? 1 - t : t);
+  const hx = (v) => Math.round(v).toString(16).padStart(2, '0');
+  return `#${hx(r)}${hx(g)}${hx(b)}`;
+}
+
+function rareTailPoster() {
+  const sim = new RareTailSim();
+  const BATCH = 200_000;
+  while (sim.n < RT_N) sim.advance(Math.min(BATCH, RT_N - sim.n));
+
+  const clamp = (v) => Math.max(P_MIN, Math.min(P_MAX, v));
+
+  // Exact curve.
+  let exact = '';
+  for (let i = 0; i <= 160; i++) {
+    const a = A_MIN + ((A_MAX - A_MIN) * i) / 160;
+    exact += `${i ? 'L' : 'M'}${n2(rtX(a))} ${n2(rtY(normalTail(a)))}`;
+  }
+
+  // The two colour schemes differ only in the ramp direction, so the markers
+  // are emitted twice and CSS shows one set.
+  const markers = (reverse) => {
+    let s = '';
+    for (const e of sim.est) {
+      const x = rtX(e.a);
+      const c = e.crude(), is = e.is();
+      if (c) {
+        const col = rseHex(c.se / c.p, reverse);
+        s += `<line x1="${n2(x - 2.2)}" y1="${n2(rtY(clamp(c.p + c.se)))}" x2="${n2(x - 2.2)}" y2="${n2(rtY(clamp(c.p - c.se)))}" stroke="${col}"/>`;
+        s += `<circle cx="${n2(x - 2.2)}" cy="${n2(rtY(c.p))}" r="3.1" fill="none" stroke="${col}" stroke-width="1.4"/>`;
+      }
+      if (is) {
+        const col = rseHex(is.se / is.p, reverse);
+        s += `<line x1="${n2(x + 2.2)}" y1="${n2(rtY(clamp(is.p + is.se)))}" x2="${n2(x + 2.2)}" y2="${n2(rtY(clamp(is.p - is.se)))}" stroke="${col}"/>`;
+        s += `<circle cx="${n2(x + 2.2)}" cy="${n2(rtY(is.p))}" r="3.1" fill="${col}"/>`;
+      }
+    }
+    return s;
+  };
+
+  let grid = '', yLab = '';
+  for (let e = 0; e >= -13; e -= 2) {
+    const y = n2(rtY(Math.pow(10, e)));
+    grid += `<line x1="${RT_PAD.l}" y1="${y}" x2="${SVG_W - RT_PAD.r}" y2="${y}"/>`;
+    yLab += `<text x="${RT_PAD.l - 7}" y="${y}" text-anchor="end" dominant-baseline="middle">${e === 0 ? '1' : `1e${e}`}</text>`;
+  }
+  let ticks = '', xLab = '';
+  for (let a = A_MIN; a <= A_MAX; a += 1) {
+    const x = n2(rtX(a));
+    ticks += `<line x1="${x}" y1="${SVG_H - RT_PAD.b}" x2="${x}" y2="${SVG_H - RT_PAD.b + 5}"/>`;
+    xLab += `<text x="${x}" y="${SVG_H - RT_PAD.b + 8}" text-anchor="middle" dominant-baseline="hanging">${a}</text>`;
+  }
+
+  const reach = sim.reach();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SVG_W} ${SVG_H}" role="img" aria-label="Gaussian tail probability against threshold, on a logarithmic axis. Importance sampling tracks the exact curve down to 10 to the minus 12, while crude Monte Carlo stops producing estimates below about 10 to the minus 7.">
+<style>
+.g{stroke:var(--rule,#cfd6d7);stroke-width:1;fill:none}
+.a{stroke:var(--ink-2,#59636a);stroke-width:1;fill:none}
+.l{fill:var(--ink-2,#59636a);font:11px var(--font-mono,monospace)}
+.rf{stroke:var(--ink,#101619);stroke-width:1;stroke-dasharray:6 4;fill:none}
+.dark{display:none}
+@media (prefers-color-scheme: dark){.light{display:none}.dark{display:inline}}
+</style>
+<g class="g">${grid}</g>
+<g class="a">${ticks}<line x1="${RT_PAD.l}" y1="${SVG_H - RT_PAD.b}" x2="${SVG_W - RT_PAD.r}" y2="${SVG_H - RT_PAD.b}"/></g>
+<g class="l">${yLab}${xLab}<text x="${n2((RT_PAD.l + SVG_W - RT_PAD.r) / 2)}" y="${SVG_H - RT_PAD.b + 24}" text-anchor="middle" dominant-baseline="hanging">threshold a</text><text x="13" y="${n2((SVG_H - RT_PAD.b + RT_PAD.t) / 2)}" text-anchor="middle" transform="rotate(-90 13 ${n2((SVG_H - RT_PAD.b + RT_PAD.t) / 2)})">P(Z &gt; a)</text></g>
+<path class="rf" d="${exact}"/>
+<g class="light">${markers(false)}</g>
+<g class="dark">${markers(true)}</g>
+</svg>`;
+
+  const out = path.join(GENERATED, 'raretail-poster.svg');
+  writeFileSync(out, svg, 'utf8');
+  return { bytes: Buffer.byteLength(svg), n: sim.n, reach };
+}
+
+// ---------------------------------------------------------------------------
 
 const t0 = Date.now();
 const light = await heroPoster('light');
@@ -283,6 +382,7 @@ const dark = await heroPoster('dark');
 const dsLight = await diffusionPoster('light');
 const dsDark = await diffusionPoster('dark');
 const diff = diffusivityPoster();
+const rt = rareTailPoster();
 
 console.log('poster frames');
 for (const [name, r] of [['hero-light', light], ['hero-dark', dark]]) {
@@ -296,4 +396,6 @@ console.log(`  diffusion-dark   ${(dsDark.avif / 1024).toFixed(1)} KB avif / ${(
 console.log(`  mode coverage    max |w_hat - w| = ${dsLight.coverage.maxDev.toFixed(4)}`);
 console.log(`  diffusivity-poster.svg   ${(diff.bytes / 1024).toFixed(1)} KB   (${SAMPLES} samples to t = ${T_MAX})`);
 console.log(`  final D_hat              ${diff.last.d.toFixed(5)} ± ${diff.last.se.toFixed(5)}   vs exact ${D_EFF_EXACT.toFixed(5)}`);
+console.log(`  raretail-poster.svg      ${(rt.bytes / 1024).toFixed(1)} KB   (n = ${rt.n.toLocaleString()} per method per threshold)`);
+console.log(`  reach                    crude ${rt.reach.crude ? rt.reach.crude.toExponential(1) : 'n/a'}  vs  IS ${rt.reach.is ? rt.reach.is.toExponential(1) : 'n/a'}`);
 console.log(`  elapsed                  ${((Date.now() - t0) / 1000).toFixed(1)} s`);

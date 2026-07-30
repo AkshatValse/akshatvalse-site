@@ -72,14 +72,14 @@ const research = [
           generate and sample. A diffusion model is a reverse-time SDE, stochastic
           gradient descent and its Langevin variants are diffusions in a rough loss
           landscape, and a PAC-Bayes bound is the Donsker–Varadhan formula applied to a
-          posterior over hypotheses. My work concerns the long-time behaviour of
-          Langevin dynamics and its discretisations, estimator design for transport
-          coefficients, large-deviation asymptotics for mean-field interacting systems,
-          and the stability of learned PDE solvers under long rollouts. The connecting
-          question is what can actually be proved about the objects practitioners
-          already use: rates, stability, and error bounds in place of heuristics.
-          Everything moving on this page is one of those objects, running live and
-          graded against a closed-form answer.
+          posterior over hypotheses. Three questions occupy me: what the discretisation
+          of a Langevin sampler actually costs, how to estimate probabilities too small
+          for direct simulation to reach, and whether a PDE solver with a network inside
+          it will hold together when you iterate it. Underneath all three is the same
+          question, which is what can be proved about the objects practitioners already
+          use: rates, stability, and error bounds in place of heuristics. Everything
+          moving on this page is one of those objects, running live and graded against a
+          closed-form answer.
         </p>
 
         <p>

@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import DiffusivityFigure from '../components/DiffusivityFigure.astro';
+import RareEventFigure from '../components/RareEventFigure.astro';
 import Tex from '../components/Tex.astro';
 
 /** String.raw keeps TeX backslashes intact: a quoted attribute would
@@ -143,7 +144,27 @@ const tex = String.raw;
             numerics. The application domain is queueing, but the technique carries
             well past it.
           </p>
+          <p>
+            The results are held back until the preprint is out. What the figure below
+            shows instead is the mechanism the whole method rests on, on the one target
+            where the answer is known to machine precision.
+          </p>
         </article>
+
+        <RareEventFigure />
+
+        <p>
+          Naive Monte Carlo does not merely get slow in this regime. It stops being an
+          estimator: it returns zero occurrences and no information about the magnitude.
+          Tilting the sampling law so the rare event becomes typical, then reweighting by
+          the likelihood ratio, recovers an answer, and the tilt has to come from
+          somewhere principled, because a badly chosen change of measure produces an
+          estimator with <em>infinite</em> variance that fails silently. In the Gaussian
+          case the right tilt is a mean shift and can be written down. In the mean-field
+          model it comes from the large-deviation rate function, and checking whether the
+          asymptotics have actually taken hold at the system sizes anyone simulates is
+          the part of the project I find most worth doing.
+        </p>
       </div>
     </div>
   </section>
