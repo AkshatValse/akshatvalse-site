@@ -67,9 +67,10 @@ const tex = String.raw;
             stationary variance solves exactly,
             <Tex src={tex`v(h) = \frac{s^2}{1 - h/2s^2}, \qquad W_2(\pi_h, \pi) = \tfrac{h}{4}\Big(\textstyle\sum_i s_i^{-2}\Big)^{1/2} + O(h^2),`} block />
             so a measured bias that disagrees indicts the sampler, not the theory. On a
-            two-component mixture the crossing rate follows Kramers' law with fitted
-            slopes <Tex src={tex`-0.948`} /> and <Tex src={tex`-1.032`} /> against the
-            predicted <Tex src={tex`-1`} />. Together the two results are the argument
+            two-component mixture the crossing rate follows Kramers' law with
+            <a href="https://github.com/AkshatValse/langevin-samplers#results">fitted
+            slopes</a> <Tex src={tex`-0.948`} /> and <Tex src={tex`-1.032`} /> against
+            the predicted <Tex src={tex`-1`} />. Together the two results are the argument
             for noise schedules. Bias is polynomial in <Tex src={tex`h`} /> and can be
             halved by halving the step; mixing is exponential in the barrier, and no
             step size buys back an exponential.
