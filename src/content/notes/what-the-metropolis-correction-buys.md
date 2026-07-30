@@ -126,6 +126,10 @@ in the barrier, rather than a trick for sample quality, and the
 [effective-diffusivity note](/notes/effective-diffusivity-cosine-potential) gives
 the exponent in the one case where it can be written down.
 
+The measurements come from [langevin-samplers](https://github.com/AkshatValse/langevin-samplers),
+which runs the whole sweep from a seed and writes a sidecar with the parameters
+and the resolved commit next to every result.
+
 ## References
 
 - G. O. Roberts and R. L. Tweedie (1996). Exponential convergence of Langevin

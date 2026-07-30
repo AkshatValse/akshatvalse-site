@@ -184,6 +184,9 @@ buys back an exponential. The
 [companion note on the Metropolis correction](/notes/what-the-metropolis-correction-buys)
 makes the same point from the other direction.
 
+The sampler this note tests is in
+[langevin-samplers](https://github.com/AkshatValse/langevin-samplers).
+
 ## References
 
 - S. Lifson and J. L. Jackson (1962). On the self-diffusion of ions in a
