@@ -20,7 +20,6 @@ const coursework = {
     ['Stochastic Process Models', 'STAT 5540'],
     ['Multivariate Analysis', 'STAT 5750'],
     ['Categorical Data Analysis', 'STAT 5770'],
-    ['Empirical Methods for the Computational Sciences', 'STAT 5830'],
     ['Statistical Computing', 'STAT 5860'],
     ['Numerical Methods for Differential Equations', 'MATH 5810'],
     ['Analysis I', 'MATH 4140'],
@@ -31,11 +30,8 @@ const coursework = {
   inProgress: [
     ['Foundations of Probability Theory, measure-theoretic', 'STAT 6541'],
     ['High-Dimensional Probability', 'MATH 6230'],
-    ['Graduate Real Analysis I', 'MATH 5150'],
     ['Bayesian Statistics', 'STAT 5644'],
     ['Advanced Topics in Machine Learning', 'COM S 6730'],
-    ['Convex Optimization', 'E E 5710'],
-    ['Introduction to Tensors', 'HON 3210'],
   ],
 };
 
@@ -52,8 +48,8 @@ const manuscripts = [
   },
   {
     title:
-      'Sparse nonlinear Bayesian inference via Gaussian processes with spike-and-slab priors',
-    meta: 'In preparation with P. Ma.',
+      'Stability Certificates for Cell-Average-Based Neural Network Solvers: von Neumann Analysis of Trained Flux Networks',
+    meta: 'With M. Yang and J. Yan. arXiv preprint forthcoming, 2026.',
   },
 ];
 
@@ -61,7 +57,7 @@ const research = [
   {
     title: 'Langevin Sampling and Diffusion Estimation for Molecular Systems',
     dates: 'May 2026 – present',
-    role: 'Research Collaborator, Department of Mathematics, Iowa State University. Advisor: Prof. David Herzog.',
+    role: 'Research Collaborator, Department of Mathematics, Iowa State University. Advisor: Prof. David Herzog. Funded by NSF award DMS-2246491.',
     bullets: [
       'Built an end-to-end Python simulation pipeline implementing MALA and projected Euler–Maruyama samplers for overdamped Langevin dynamics, staged from a one-dimensional periodic potential up to a solvated ion in a three-dimensional Lennard-Jones bath; estimated self-diffusion and mobility coefficients from long-run trajectory data.',
       'Derived the closed-form Lifson–Jackson diffusivity D = 1/I₀(1)² ≈ 0.62386 as an exact benchmark, validating the estimators against it before scaling to three dimensions and reproducing published solvated-ion results.',
@@ -101,7 +97,7 @@ const research = [
         <h1 class="page-title">Curriculum vitae</h1>
         <p class="lede">
           {hasPdf ? (
-            <><a href={pdf}>Download as PDF</a>. Updated July 2026.</>
+            <><a href={pdf}>Download as PDF</a>. Updated August 2026.</>
           ) : (
             <>PDF not posted yet. Write to <a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a>.</>
           )}
@@ -121,15 +117,15 @@ const research = [
           <p>
             B.S. Statistics · B.S. Mathematics · B.A. Computer Science · B.S. Data Science
           </p>
-          <h4 class="sub">Graduate and advanced coursework, completed</h4>
-          <ul class="courses">
-            {coursework.completed.map(([name, code]) => (
-              <li>{name} <span class="code">{code}</span></li>
-            ))}
-          </ul>
           <h4 class="sub">In progress, Fall 2026</h4>
           <ul class="courses">
             {coursework.inProgress.map(([name, code]) => (
+              <li>{name} <span class="code">{code}</span></li>
+            ))}
+          </ul>
+          <h4 class="sub">Graduate and advanced coursework, completed</h4>
+          <ul class="courses">
+            {coursework.completed.map(([name, code]) => (
               <li>{name} <span class="code">{code}</span></li>
             ))}
           </ul>
