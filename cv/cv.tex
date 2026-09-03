@@ -1,10 +1,11 @@
 % Akshat Sachin Valse — curriculum vitae
 % Compile:  latexmk -pdf cv.tex     Clean: latexmk -c
-% Output is copied to ../public/cv.pdf, which /cv redirects to.
+% Output is copied to ../public/<PDF_FILE> (dated filename, see src/pages/cv.astro);
+% /cv.pdf redirects to the current file via public/_redirects.
 
 \documentclass[11pt]{article}
 
-\usepackage[margin=0.92in,top=0.8in,bottom=0.7in]{geometry}
+\usepackage[margin=0.85in,top=0.7in,bottom=0.65in]{geometry}
 \usepackage{amsmath,amssymb}
 % Latin Modern rather than bitmap CM: same design, scalable outlines, which
 % microtype's font expansion requires and which keeps the PDF text selectable.
@@ -16,6 +17,13 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{fancyhdr}
 
+\hypersetup{
+  pdftitle={Akshat Sachin Valse -- Curriculum Vitae},
+  pdfauthor={Akshat Sachin Valse},
+  pdfsubject={Curriculum vitae},
+  pdfkeywords={stochastic analysis, Langevin sampling, large deviations, rare-event simulation, neural PDE solvers},
+}
+
 \pagestyle{fancy}
 \fancyhf{}
 \renewcommand{\headrulewidth}{0pt}
@@ -23,17 +31,18 @@
 \fancyfoot[L]{\footnotesize Last updated \today}
 
 \titleformat{\section}{\normalsize\scshape}{}{0pt}{}[\vspace{-0.6em}\rule{\textwidth}{0.4pt}]
-\titlespacing{\section}{0pt}{1.0em}{0.45em}
+\titlespacing{\section}{0pt}{0.85em}{0.4em}
 
 \setlist[itemize]{leftmargin=1.2em,itemsep=0.15em,topsep=0.25em,parsep=0pt}
 
 % Entry with a right-aligned date. Two minipages rather than \hfill so a long
 % title wraps in its own column instead of running into the date.
 \newcommand{\entry}[2]{%
-  \noindent\begin{minipage}[t]{0.70\textwidth}\raggedright\textbf{#1}\end{minipage}%
+  \noindent\begin{minipage}[t]{0.78\textwidth}\raggedright\textbf{#1}\end{minipage}%
   \hfill%
-  \begin{minipage}[t]{0.28\textwidth}\raggedleft #2\end{minipage}\par\vspace{0.1em}}
+  \begin{minipage}[t]{0.22\textwidth}\raggedleft #2\end{minipage}\par\vspace{0.1em}}
 \newcommand{\subentry}[1]{\noindent\textit{#1}\par\vspace{0.15em}}
+\newcommand{\course}[2]{#1 (\textsc{#2})}
 
 \begin{document}
 
@@ -45,53 +54,53 @@
     \ \textperiodcentered\ \href{https://akshatvalse.com}{akshatvalse.com}
     \ \textperiodcentered\ \href{https://github.com/AkshatValse}{github.com/AkshatValse}
   }\\[0.6em]
-  {\small\itshape Stochastic analysis for machine learning: Langevin sampling, large
-  deviations\\ and rare-event simulation, and the stability of learned PDE solvers.}
+  {\small\itshape Stochastic analysis for machine learning: Langevin sampling and its
+  discretization,\\ large deviations and rare-event simulation, and the stability of
+  learned PDE solvers.}
 \end{center}
 
 % ---------------------------------------------------------------------------
 \section{Education}
 
-\entry{Iowa State University, Honors Program}{Aug.\ 2024 -- May 2028 (expected)}
+\entry{Iowa State University, Honors Program}{Expected May 2028}
 \subentry{B.S.\ Statistics \textperiodcentered\ B.S.\ Mathematics \textperiodcentered\
 B.A.\ Computer Science \textperiodcentered\ B.S.\ Data Science}
 \noindent Cumulative GPA 3.85 / 4.00.
 
 \vspace{0.5em}
 \noindent\textbf{In progress, Fall 2026} (all five at the PhD level, 6000-series).
-Foundations of Probability Theory, measure-theoretic (\textsc{stat} 6541);
-High-Dimensional Probability and Linear Algebra for Machine Learning (\textsc{math} 6230);
-Advanced Topics in Machine Learning (\textsc{com s} 6730);
-Advanced Topics in Artificial Intelligence (\textsc{com s} 6720);
-Advanced Topics in High-Performance Computing (\textsc{com s} 6250).
+\course{Foundations of Probability Theory, measure-theoretic}{stat 6541};
+\course{High-Dimensional Probability and Linear Algebra for Machine Learning}{math 6230};
+\course{Advanced Topics in Machine Learning}{com s 6730};
+\course{Advanced Topics in Artificial Intelligence}{com s 6720};
+\course{Advanced Topics in High-Performance Computing}{com s 6250}.
 
 \vspace{0.35em}
-\noindent\textbf{Graduate and advanced coursework, completed.}
-Theory of Probability and Statistics (\textsc{stat} 5430);
-Stochastic Process Models (\textsc{stat} 5540);
-Multivariate Analysis (\textsc{stat} 5750);
-Categorical Data Analysis (\textsc{stat} 5770);
-Statistical Computing (\textsc{stat} 5860);
-Numerical Methods for Differential Equations (\textsc{math} 5810);
-Analysis I (\textsc{math} 4140);
-Partial Differential Equations (\textsc{math} 3850);
-Theory of Linear Algebra, honors (\textsc{math} 3170);
-Concepts and Applications of Machine Learning, honors (\textsc{ds} 3030).
+\noindent\textbf{Planned, Spring 2027.} Advanced Probability Theory; Advanced Stochastic
+Processes.
 
-% ---------------------------------------------------------------------------
-\section{Preprints and Manuscripts}
-
-\begin{enumerate}[leftmargin=1.4em,itemsep=0.4em,topsep=0.3em]
-  \item \textit{Large-Deviation-Guided Importance Sampling for Rare Events in the
-    Mean-Field Join-the-Shortest-Queue Model.} With R.\ Wu. In preparation.
-
-  \item Manuscript in preparation with D.\ Herzog on Langevin dynamics and
-    transport-coefficient estimation for molecular systems.
-
-  \item \textit{Stability Certificates for Cell-Average-Based Neural Network Solvers:
-    von Neumann Analysis of Trained Flux Networks.} With M.\ Yang and J.\ Yan.
-    In preparation.
-\end{enumerate}
+\vspace{0.35em}
+\noindent\textbf{Graduate and advanced coursework, completed.}\par
+\vspace{0.15em}
+\noindent\textit{Probability and statistics:}
+\course{Theory of Probability and Statistics}{stat 5430};
+\course{Stochastic Process Models}{stat 5540};
+\course{Empirical Methods for the Computational Sciences}{stat 5830};
+\course{Multivariate Analysis}{stat 5750};
+\course{Categorical Data Analysis}{stat 5770};
+\course{Statistical Computing}{stat 5860}.\par
+\vspace{0.15em}
+\noindent\textit{Mathematics:}
+\course{Numerical Methods for Differential Equations}{math 5810};
+\course{Analysis I}{math 4140};
+\course{Introduction to Mathematical Logic}{math 4430x};
+\course{Partial Differential Equations}{math 3850};
+\course{Theory of Linear Algebra, honors}{math 3170}.\par
+\vspace{0.15em}
+\noindent\textit{Computing and machine learning:}
+\course{Concepts and Applications of Machine Learning, honors}{ds 3030};
+\course{Design and Analysis of Algorithms}{com s 3110};
+\course{Software Development Practices}{com s 3090}.
 
 % ---------------------------------------------------------------------------
 \section{Research Experience}
@@ -102,51 +111,65 @@ Advisor: Prof.\ David Herzog. Funded by NSF award DMS-2246491.}
 \begin{itemize}
   \item Built an end-to-end Python simulation pipeline implementing MALA and projected
     Euler--Maruyama samplers for overdamped Langevin dynamics, staged from a
-    one-dimensional periodic potential up to a solvated ion in a three-dimensional
+    one-dimensional periodic potential to a solvated ion in a three-dimensional
     Lennard-Jones bath; estimated self-diffusion and mobility coefficients from
     long-run trajectory data.
   \item Derived the closed-form Lifson--Jackson diffusivity
-    $D = 1/I_0(1)^2 \approx 0.62386$ as an exact benchmark, validating the estimators
-    against it before scaling to three dimensions and reproducing published
-    solvated-ion results.
-  \item Delivered weekly technical reports, including a companion note supporting the
-    team's CLT-based error analysis.
+    $D = 1/I_0(1)^2 \approx 0.62386$ as an exact benchmark and validated the estimators
+    against it before scaling to three dimensions, where the pipeline reproduces
+    published solvated-ion results.
+  \item Author weekly technical reports, including a companion note supporting the
+    group's CLT-based error analysis.
 \end{itemize}
 
-\vspace{0.5em}
+\vspace{0.35em}
 \entry{Large Deviation Theory for Rare-Event Analysis in Queueing Systems}{Nov.\ 2024 -- present}
 \subentry{Undergraduate Research Fellow, Department of Mathematics, Iowa State
-University. Advisor: Prof.\ Ruoyu Wu. Dean's High Impact Research Award.}
+University. Advisor: Prof.\ Ruoyu Wu. Dean's High Impact Undergraduate Research Award.}
 \begin{itemize}
   \item Developed the first importance-sampling methodology for rare-event estimation
     in the mean-field join-the-shortest-queue model, deriving state-dependent
     exponential tilting from the Budhiraja--Friedlander--Wu (2021) large-deviation rate
     function; stated a logarithmic-efficiency conjecture with a proof sketch via the
     Dupuis--Wang subsolution framework.
-  \item Built a reproducible, performance-tuned simulation framework in Python
-    (Xoshiro256** with deterministic seeding) validated across 27
+  \item Built a reproducible, performance-tuned Python simulation framework
+    (Xoshiro256** with deterministic seeding) and validated it across 27
     configurations ($n \le 100$, $\rho \in \{0.7, 0.9, 0.95\}$): estimates agree with
     crude Monte Carlo within 95\% confidence intervals wherever crude Monte Carlo
     succeeds, and extend to probabilities as small as $10^{-31}$, where it fails
     entirely.
   \item Designed and benchmarked two heuristic tilting families (rate-reversal,
     level-weighted) with pilot-run selection; diagnosed over-tilting at extreme rarity
-    through likelihood-ratio calibration statistics, motivating ongoing computation of
-    the optimal state-dependent tilt.
+    through likelihood-ratio calibration statistics, motivating the ongoing computation
+    of the optimal state-dependent tilt.
 \end{itemize}
 
-\vspace{0.5em}
+\vspace{0.35em}
 \entry{Stability Analysis of Cell-Average Neural Networks for PDEs}{May 2026 -- present}
 \subentry{Undergraduate Researcher, Department of Mathematics, Iowa State University.
-Advisor: Prof.\ Jue Yan. Funded by the NSF D4 NRT.}
+Advisor: Prof.\ Jue Yan. Funded by the NSF D4 NRT. Joint with Mengyuan Yang.}
 \begin{itemize}
   \item Adapting von Neumann stability analysis to neural-network PDE solvers: deriving
-    the linearized network amplification factor and characterizing how perturbations
-    propagate through the learned time-stepping scheme, toward stability conditions
-    analogous to those of classical finite-difference methods.
-  \item Porting the group's solver to Python to enable systematic stability
+    the linearized amplification factor of the learned time-stepping scheme and
+    characterizing how perturbations propagate through it, toward stability conditions
+    on the trained weights analogous to those of classical finite-difference methods.
+  \item Reimplementing the group's solver in Python to enable systematic stability
     experiments across schemes and step sizes.
 \end{itemize}
+
+% ---------------------------------------------------------------------------
+\section{Manuscripts in Preparation}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=0.4em,topsep=0.3em]
+  \item \textit{Large-Deviation-Guided Importance Sampling for Rare Events in the
+    Mean-Field Join-the-Shortest-Queue Model.} With R.\ Wu.
+
+  \item \textit{Langevin Dynamics and Transport-Coefficient Estimation for Molecular
+    Systems.} With D.\ Herzog.
+
+  \item \textit{Stability Certificates for Cell-Average-Based Neural Network Solvers:
+    von Neumann Analysis of Trained Flux Networks.} With M.\ Yang and J.\ Yan.
+\end{enumerate}
 
 % ---------------------------------------------------------------------------
 \section{Awards and Honors}
@@ -154,24 +177,33 @@ Advisor: Prof.\ Jue Yan. Funded by the NSF D4 NRT.}
 \begin{itemize}
   \item Dean's High Impact Undergraduate Research Award, Iowa State University, 2026.
   \item Schillmoeller Family Scholarship in Statistics.
+  \item Mead Fund Award in Statistics.
   \item James L.\ Cornette Mathematics and Interdisciplinary Studies Award.
+  \item Dean's List, every semester.
+\end{itemize}
+
+% ---------------------------------------------------------------------------
+\section{Leadership and Service}
+
+\begin{itemize}
+  \item Treasurer, Iowa State Data Science Club, 2025 -- present. Secured \$60{,}000+
+    in funding supporting 130+ members.
+  \item Research Ambassador, Iowa State University Honors Program.
+  \item FAA Private Pilot Certificate, high-performance endorsement, 2025. Volunteer
+    pilot and recruitment advisor, Pilots N Paws animal-rescue flights.
 \end{itemize}
 
 % ---------------------------------------------------------------------------
 \section{Technical Skills}
 
-\noindent PyTorch and CUDA for neural-network and GPU-accelerated simulation work;
-Python (NumPy, SciPy, matplotlib) for the numerical pipelines; R, \LaTeX, git.
-Simulations are kept as staged pipelines with recorded seeds and parameter sidecars,
-so every figure regenerates from saved results without rerunning the sampler.
-
-% ---------------------------------------------------------------------------
-\section{Service and Other}
-
-\begin{itemize}
-  \item Research Ambassador, Iowa State University Honors Program.
-  \item FAA Private Pilot Certificate, high-performance endorsement, 2025. Volunteer
-    pilot and recruitment advisor, Pilots N Paws animal-rescue flights.
-\end{itemize}
+\noindent\textit{Languages and tools.} PyTorch and CUDA for neural-network and
+GPU-accelerated simulation; Python (NumPy, SciPy, pandas, scikit-learn, matplotlib);
+R; \LaTeX; git.\par
+\vspace{0.3em}
+\noindent\textit{Methods.} Measure-theoretic probability and stochastic differential
+equations; MCMC (MALA, Metropolis--Hastings) and importance sampling; large-deviation
+asymptotics; numerical analysis of time-stepping schemes and von Neumann stability;
+reproducible computation with recorded seeds and parameter sidecars, so every figure
+regenerates from saved results.
 
 \end{document}

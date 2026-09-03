@@ -76,8 +76,10 @@ repository root, which serves the source tree at the project URL and returns 404
 for every page of the actual site. Framework preset "Astro" fills in the same
 two values if you would rather pick it from the list.
 
-`public/_redirects` keeps `/cv` pointing at the current CV file, so the URL on
-applications does not break when the file is renamed.
+The CV PDF carries a dated filename (`public/akshat-valse-cv-YYYY-MM.pdf`) so no
+cache can serve a stale copy after an update; `public/_redirects` keeps `/cv.pdf`
+pointing at the current file, so the URL on applications does not break. Bump the
+name in `src/pages/cv.astro` and the redirect together.
 
 Set `SITE_URL` if the domain changes; it feeds the sitemap, canonical URLs, and
 `robots.txt`.
