@@ -32,7 +32,6 @@ const canonical = new URL(path, Astro.site);
 const NAV = [
   { href: '/', label: 'Home' },
   { href: '/research', label: 'Research' },
-  { href: '/notes', label: 'Notes' },
   { href: '/cv', label: 'CV' },
 ];
 
@@ -93,12 +92,6 @@ const ld = {
     <meta name="twitter:image" content={new URL(ogImage ?? '/og.png', Astro.site).href} />
     <meta name="author" content="Akshat Sachin Valse" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <link
-      rel="alternate"
-      type="application/rss+xml"
-      title="Notes — Akshat Sachin Valse"
-      href={new URL('/rss.xml', Astro.site).href}
-    />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
     <Font cssVariable="--font-body" preload />

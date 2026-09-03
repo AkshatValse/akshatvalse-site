@@ -3,18 +3,10 @@ import Base from '../layouts/Base.astro';
 import HeroSim from '../components/HeroSim.astro';
 import DiffusionSampler from '../components/DiffusionSampler.astro';
 import Tex from '../components/Tex.astro';
-import { getCollection } from 'astro:content';
 
 /** String.raw keeps TeX backslashes intact: a quoted attribute would
  *  have JS eat them, and one of them is an invalid escape. */
 const tex = String.raw;
-
-const notes = (await getCollection('notes'))
-  .filter((n) => !n.data.draft)
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-
-const fmt = (d: Date) =>
-  d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', timeZone: 'UTC' });
 
 const research = [
   {
@@ -144,7 +136,6 @@ const research = [
           a toy target with a closed form buys you. The sampler either returns the
           weights or it does not, and no quantity of plausible-looking output makes up
           the difference.
-          <a href="/notes/grading-a-diffusion-model">The full check is here.</a>
         </p>
       </div>
     </div>
@@ -166,26 +157,6 @@ const research = [
       </div>
     </div>
   </section>
-
-  {notes.length > 0 && (
-    <section class="section shell">
-      <div class="row">
-        <div class="rail"><span class="rail-label">notes</span></div>
-        <div>
-          <h2 class="section-title">Notes</h2>
-          <ul class="note-list">
-            {notes.map((n) => (
-              <li>
-                <a href={`/notes/${n.id}`}>{n.data.title}</a>
-                <span class="note-date">{fmt(n.data.date)}</span>
-                <p class="note-blurb">{n.data.summary}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </section>
-  )}
 
   <section class="section shell">
     <div class="row">
@@ -215,16 +186,6 @@ const research = [
     color: var(--ink-2);
     margin: 0.3rem 0 0;
   }
-  .note-list { list-style: none; padding: 0; margin: 0; }
-  .note-list > li + li { margin-top: 1.5rem; }
-  .note-date {
-    font-family: var(--font-mono), monospace;
-    font-size: var(--step--1);
-    color: var(--ink-2);
-    margin-left: 0.6rem;
-    white-space: nowrap;
-  }
-  .note-blurb { margin: 0.25rem 0 0; }
   .more { margin-top: 2rem; }
   .pending {
     margin-top: 1.6rem;

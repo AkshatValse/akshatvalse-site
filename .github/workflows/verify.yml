@@ -48,5 +48,3 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Note contract
-        run: node scripts/lint-notes.mjs

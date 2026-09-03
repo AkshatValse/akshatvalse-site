@@ -27,7 +27,6 @@ src/sim/         simulation cores. Plain ES modules with no DOM access, so the
                  and in the build-time poster generator.
 src/scripts/     browser entry points: canvas rendering, lazy start, pause
 src/components/  Astro components, one per figure
-src/content/     notes, Markdown with KaTeX
 scripts/         verify-*.mjs, gen-posters.mjs, shots.mjs, lighthouse.mjs
 ```
 
@@ -101,13 +100,7 @@ block that asserts its tolerance and exits non-zero on a breach, so the numbers
 quoted in the figure captions cannot drift without failing the build. Measured
 values are recorded next to each tolerance so drift shows up in a diff.
 
-`npm run lint:notes` enforces the note contract: a named result, a constant
-compared against a closed form, a reachable live figure, and an owning verify
-script.
-
-GitHub Actions runs both on every push, on pull requests, and weekly. The
+GitHub Actions runs them on every push, on pull requests, and weekly. The
 Cloudflare build command is `npm run verify:fast && npm run build`, so a
 tolerance breach in the two quick checks also blocks the deploy; the two slow
 ones (about 100 s combined) run in Actions rather than on every deploy.
-
-`npm run new-note <slug>` scaffolds a note, a sim module, and a verify script.
