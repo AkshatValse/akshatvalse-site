@@ -103,6 +103,10 @@ quoted in the figure captions cannot drift without failing the build. Measured
 values are recorded next to each tolerance so drift shows up in a diff.
 
 GitHub Actions runs them on every push, on pull requests, and weekly. The
-Cloudflare build command is `npm run verify:fast && npm run build`, so a
-tolerance breach in the two quick checks also blocks the deploy; the two slow
-ones (about 100 s combined) run in Actions rather than on every deploy.
+Cloudflare build command (set in the Pages dashboard, not in this repo) is
+`npm run verify:fast && npm run lint:notes && npm run build`, so a tolerance
+breach in the two quick checks also blocks the deploy; the two slow ones (about
+100 s combined) run in Actions rather than on every deploy. `lint:notes` is a
+no-op since the notes section was removed; it stays until the dashboard command
+is shortened to `npm run verify:fast && npm run build`, after which
+`scripts/lint-notes.mjs` and the npm script can be deleted.
