@@ -10,7 +10,6 @@
     "posters": "node scripts/gen-posters.mjs",
     "verify": "node scripts/verify-diffusion.mjs && node scripts/verify-raretail.mjs && node scripts/verify-diffusivity.mjs && node scripts/verify-gibbs.mjs",
     "verify:fast": "node scripts/verify-diffusion.mjs && node scripts/verify-raretail.mjs",
-    "lint:notes": "node scripts/lint-notes.mjs",
     "og": "node scripts/gen-og.mjs"
   },
   "dependencies": {

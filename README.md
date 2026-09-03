@@ -104,9 +104,8 @@ values are recorded next to each tolerance so drift shows up in a diff.
 
 GitHub Actions runs them on every push, on pull requests, and weekly. The
 Cloudflare build command (set in the Pages dashboard, not in this repo) is
-`npm run verify:fast && npm run lint:notes && npm run build`, so a tolerance
-breach in the two quick checks also blocks the deploy; the two slow ones (about
-100 s combined) run in Actions rather than on every deploy. `lint:notes` is a
-no-op since the notes section was removed; it stays until the dashboard command
-is shortened to `npm run verify:fast && npm run build`, after which
-`scripts/lint-notes.mjs` and the npm script can be deleted.
+`npm run verify:fast && npm run build`, so a tolerance breach in the two quick
+checks also blocks the deploy; the two slow ones (about 100 s combined) run in
+Actions rather than on every deploy. If a script referenced by that command is
+renamed or removed, update the dashboard command in the same change: a missing
+script fails every deploy within seconds while Actions still passes.
