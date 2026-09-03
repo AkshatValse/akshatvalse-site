@@ -29,9 +29,10 @@ const coursework = {
   ],
   inProgress: [
     ['Foundations of Probability Theory, measure-theoretic', 'STAT 6541'],
-    ['High-Dimensional Probability', 'MATH 6230'],
-    ['Bayesian Statistics', 'STAT 5644'],
+    ['High-Dimensional Probability and Linear Algebra for Machine Learning', 'MATH 6230'],
     ['Advanced Topics in Machine Learning', 'COM S 6730'],
+    ['Advanced Topics in Artificial Intelligence', 'COM S 6720'],
+    ['Advanced Topics in High-Performance Computing', 'COM S 6250'],
   ],
 };
 
@@ -70,7 +71,7 @@ const research = [
     role: "Undergraduate Research Fellow, Department of Mathematics, Iowa State University. Advisor: Prof. Ruoyu Wu. Dean's High Impact Research Award.",
     bullets: [
       'Developed the first importance-sampling methodology for rare-event estimation in the mean-field join-the-shortest-queue model, deriving state-dependent exponential tilting from the Budhiraja–Friedlander–Wu (2021) large-deviation rate function; stated a logarithmic-efficiency conjecture with a proof sketch via the Dupuis–Wang subsolution framework.',
-      'Built a reproducible simulation framework (Python prototype, ported to C for performance; Xoshiro256** with deterministic seeding) validated across 27 configurations (n ≤ 100, ρ ∈ {0.7, 0.9, 0.95}): estimates agree with crude Monte Carlo within 95% confidence intervals wherever crude Monte Carlo succeeds, and extend to probabilities as small as 10⁻³¹, where it fails entirely.',
+      'Built a reproducible, performance-tuned simulation framework in Python (Xoshiro256** with deterministic seeding) validated across 27 configurations (n ≤ 100, ρ ∈ {0.7, 0.9, 0.95}): estimates agree with crude Monte Carlo within 95% confidence intervals wherever crude Monte Carlo succeeds, and extend to probabilities as small as 10⁻³¹, where it fails entirely.',
       'Designed and benchmarked two heuristic tilting families (rate-reversal, level-weighted) with pilot-run selection; diagnosed over-tilting at extreme rarity through likelihood-ratio calibration statistics, motivating ongoing computation of the optimal state-dependent tilt.',
     ],
   },
@@ -80,7 +81,7 @@ const research = [
     role: 'Undergraduate Researcher, Department of Mathematics, Iowa State University. Advisor: Prof. Jue Yan. Funded by the NSF D4 NRT.',
     bullets: [
       'Adapting von Neumann stability analysis to neural-network PDE solvers: deriving the linearized network amplification factor and characterizing how perturbations propagate through the learned time-stepping scheme, toward stability conditions analogous to those of classical finite-difference methods.',
-      "Porting the group's MATLAB solver to Python to enable systematic stability experiments across schemes and step sizes. Publication targeted for the end of Summer 2026.",
+      "Porting the group's solver to Python to enable systematic stability experiments across schemes and step sizes. Publication targeted for the end of Summer 2026.",
     ],
   },
 ];
@@ -97,7 +98,7 @@ const research = [
         <h1 class="page-title">Curriculum vitae</h1>
         <p class="lede">
           {hasPdf ? (
-            <><a href={pdf}>Download as PDF</a>. Updated August 2026.</>
+            <><a href={pdf}>Download as PDF</a>. Updated September 2026.</>
           ) : (
             <>PDF not posted yet. Write to <a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a>.</>
           )}
@@ -117,7 +118,7 @@ const research = [
           <p>
             B.S. Statistics · B.S. Mathematics · B.A. Computer Science · B.S. Data Science
           </p>
-          <h4 class="sub">In progress, Fall 2026</h4>
+          <h4 class="sub">In progress, Fall 2026 · all five at the PhD level (6000-series)</h4>
           <ul class="courses">
             {coursework.inProgress.map(([name, code]) => (
               <li>{name} <span class="code">{code}</span></li>
@@ -189,7 +190,8 @@ const research = [
       <div>
         <h2 class="section-title">Technical skills</h2>
         <p>
-          Python (NumPy, SciPy, PyTorch, matplotlib), C, R, LaTeX, git, MATLAB. Simulations
+          PyTorch and CUDA for neural-network and GPU-accelerated simulation work; Python
+          (NumPy, SciPy, matplotlib) for the numerical pipelines; R, LaTeX, git. Simulations
           are kept as staged pipelines with recorded seeds and parameter sidecars, so every
           figure regenerates from saved results without rerunning the sampler.
         </p>
