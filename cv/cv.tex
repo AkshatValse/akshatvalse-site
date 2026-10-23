@@ -21,7 +21,7 @@
   pdftitle={Akshat Sachin Valse -- Curriculum Vitae},
   pdfauthor={Akshat Sachin Valse},
   pdfsubject={Curriculum vitae},
-  pdfkeywords={stochastic analysis, Langevin sampling, large deviations, rare-event simulation, neural PDE solvers},
+  pdfkeywords={stochastic analysis, Langevin sampling, large deviations, rare-event simulation, neural PDE solvers, LLM serving, online conformal calibration, agent reliability},
 }
 
 \pagestyle{fancy}
@@ -55,8 +55,9 @@
     \ \textperiodcentered\ \href{https://github.com/AkshatValse}{github.com/AkshatValse}
   }\\[0.6em]
   {\small\itshape Stochastic analysis for machine learning: Langevin sampling and its
-  discretization,\\ large deviations and rare-event simulation, and the stability of
-  learned PDE solvers.}
+  discretization,\\ large deviations and rare-event simulation, the stability of
+  learned PDE solvers,\\ and the queueing, calibration and reliability questions
+  raised by systems that run LLMs.}
 \end{center}
 
 % ---------------------------------------------------------------------------
@@ -65,12 +66,11 @@
 \entry{Iowa State University, Honors Program}{Expected May 2028}
 \subentry{B.S.\ Statistics \textperiodcentered\ B.S.\ Mathematics \textperiodcentered\
 B.A.\ Computer Science \textperiodcentered\ B.S.\ Data Science}
-\noindent Cumulative GPA 3.85 / 4.00.
+\noindent Cumulative GPA 3.86 / 4.00.
 
 \vspace{0.5em}
-\noindent\textbf{In progress, Fall 2026} (all five at the PhD level, 6000-series).
+\noindent\textbf{In progress, Fall 2026} (all four at the PhD level, 6000-series).
 \course{Foundations of Probability Theory, measure-theoretic}{stat 6541};
-\course{High-Dimensional Probability and Linear Algebra for Machine Learning}{math 6230};
 \course{Advanced Topics in Machine Learning}{com s 6730};
 \course{Advanced Topics in Artificial Intelligence}{com s 6720};
 \course{Advanced Topics in High-Performance Computing}{com s 6250}.
@@ -157,6 +157,56 @@ Advisor: Prof.\ Jue Yan. Funded by the NSF D4 NRT. Joint with Mengyuan Yang.}
     experiments across schemes and step sizes.
 \end{itemize}
 
+\vspace{0.35em}
+\entry{Metastable Failures in Prefix-Cached LLM Agent Serving}{Aug.\ 2026 -- present}
+\subentry{Research project, Advanced Topics in High-Performance Computing
+(COM S 6250), Department of Computer Science, Iowa State University.
+Advisor: Prof.\ Ali Jannesari, SwaPP Lab.}
+\begin{itemize}
+  \item Asking whether a short burst of agent traffic can push a healthy LLM serving
+    engine into a self-sustaining all-miss, low-throughput state, and which scheduling
+    and admission mechanisms prevent it. Built a discrete-event simulator of a
+    continuous-batching engine with prefix caching (scheduling policies, eviction
+    rules, memory-allocation modes, and re-implementations of recently proposed
+    mechanisms) and a queueing-theoretic ``thrashing curve'' model of when caching
+    helps, when it collapses, and when admission control restores stability.
+  \item Run real-engine experiments (SGLang serving a 7B-parameter model on NVIDIA
+    A100 GPUs) on Iowa State's Nova HPC cluster through SLURM, with predictions
+    registered before each run, paired control arms, and every reported number traced
+    to a results directory, a commit and a cluster job ID. Toward an arXiv preprint.
+\end{itemize}
+
+\vspace{0.35em}
+\entry{Calibrating Volatility Forecasts with Early, One-Sided Feedback}{Aug.\ 2026 -- present}
+\subentry{Research project, Advanced Topics in Machine Learning (COM S 6730),
+Department of Computer Science, Iowa State University. Advisor: Prof.\ Hongyang Gao.}
+\begin{itemize}
+  \item A forecast of a cumulative quantity is scored only when its horizon ends, but
+    its increments are non-negative, so a miss becomes certain the moment the running
+    sum crosses the issued bound. Designed a model-agnostic calibration layer over any
+    quantile forecaster that credits those certain early misses and keeps explicit
+    accounts of forecasts still pending; proved its long-run coverage guarantee under
+    early crediting, bounded correction and missing data, and checked it numerically
+    over tens of thousands of adversarial runs.
+  \item Built a leakage-audited data pipeline (5-minute spot bars, 2020--2025, with a
+    sealed and hashed test set), a regime-shift simulation study with exact oracle
+    quantiles and pre-registered hypotheses, and delayed-feedback conformal and
+    classical volatility baselines, including a temporal convolutional network
+    trained on HPC GPUs. Paper in preparation.
+\end{itemize}
+
+\vspace{0.35em}
+\entry{Reliability of Tool-Using LLM Agents}{Aug.\ 2026 -- present}
+\subentry{Research project, Advanced Topics in Artificial Intelligence
+(COM S 6720), Department of Computer Science, Iowa State University.
+Advisor: Prof.\ Yang Li.}
+\begin{itemize}
+  \item When an agent stalls, when is restarting it worth more than waiting, and how can
+    the probability of a failure too rare for direct simulation be estimated? Two
+    pre-registered pilots on real agents, one on restart policies and one on rare
+    failures, with the direction still being chosen.
+\end{itemize}
+
 % ---------------------------------------------------------------------------
 \section{Manuscripts in Preparation}
 
@@ -169,6 +219,12 @@ Advisor: Prof.\ Jue Yan. Funded by the NSF D4 NRT. Joint with Mengyuan Yang.}
 
   \item \textit{Stability Certificates for Cell-Average-Based Neural Network Solvers:
     von Neumann Analysis of Trained Flux Networks.} With M.\ Yang and J.\ Yan.
+
+  \item \textit{Metastable Failures in Prefix-Cached LLM Agent Serving.} With
+    A.\ Jannesari.
+
+  \item \textit{Online Calibration of Neural Volatility Forecasts with Early,
+    One-Sided Feedback.} With H.\ Gao.
 \end{enumerate}
 
 % ---------------------------------------------------------------------------
@@ -197,13 +253,14 @@ Advisor: Prof.\ Jue Yan. Funded by the NSF D4 NRT. Joint with Mengyuan Yang.}
 \section{Technical Skills}
 
 \noindent\textit{Languages and tools.} PyTorch and CUDA for neural-network and
-GPU-accelerated simulation; Python (NumPy, SciPy, pandas, scikit-learn, matplotlib);
-R; \LaTeX; git.\par
+GPU-accelerated simulation; Python (NumPy, SciPy, pandas, scikit-learn, matplotlib,
+asyncio); SLURM on GPU clusters and LLM serving engines (SGLang); R; \LaTeX; git.\par
 \vspace{0.3em}
 \noindent\textit{Methods.} Measure-theoretic probability and stochastic differential
 equations; MCMC (MALA, Metropolis--Hastings) and importance sampling; large-deviation
 asymptotics; numerical analysis of time-stepping schemes and von Neumann stability;
-reproducible computation with recorded seeds and parameter sidecars, so every figure
-regenerates from saved results.
+discrete-event simulation and queueing models; online conformal calibration;
+reproducible computation with recorded seeds, parameter sidecars and pre-registered
+predictions, so every figure regenerates from saved results.
 
 \end{document}

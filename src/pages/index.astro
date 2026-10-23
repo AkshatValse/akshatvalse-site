@@ -27,12 +27,30 @@ const research = [
     blurb:
       'Conservation in a cell-average neural network solver is architectural. Stability is not, and the training loss does not separate the networks that survive a long rollout from the ones that come apart. Adapting von Neumann analysis to say which, from the weights alone.',
   },
+  {
+    title: 'Metastable failures in prefix-cached LLM agent serving',
+    meta: 'Ali Jannesari · Computer Science · ongoing',
+    blurb:
+      'An agent re-sends its whole growing conversation every turn, and the serving engine keeps that prefix in a GPU cache so the next turn stays cheap. Under enough concurrent sessions, evictions feed on themselves. Whether a short burst can tip a healthy server into a self-sustaining slow state, and what prevents it, studied by simulation, a queueing model, and real experiments on A100s.',
+  },
+  {
+    title: 'Online calibration of forecasts with early, one-sided feedback',
+    meta: 'Hongyang Gao · Computer Science · ongoing',
+    blurb:
+      'A forecast of a cumulative quantity is scored only when its horizon ends, but a miss becomes certain the moment the running sum crosses the bound. A calibration layer that credits those certain misses early and keeps accounts of what is still pending, with its coverage guarantee proved and checked.',
+  },
+  {
+    title: 'Reliability of tool-using agents',
+    meta: 'Yang Li · Computer Science · ongoing',
+    blurb:
+      'When an agent stalls, when is restarting it worth more than waiting, and how do you estimate the probability of a failure too rare for direct simulation to reach? Two pilots on real agents, with the direction still being chosen.',
+  },
 ];
 ---
 
 <Base
   title="Akshat Valse · stochastic foundations of machine learning"
-  description="Undergraduate researcher at Iowa State University working on the stochastic foundations of machine learning: diffusion models as reverse-time SDEs, Langevin sampling and its discretization bias, large deviations for mean-field systems, and the stability of learned PDE solvers."
+  description="Undergraduate researcher at Iowa State University working on the stochastic foundations of machine learning: diffusion models as reverse-time SDEs, Langevin sampling and its discretization bias, large deviations for mean-field systems, the stability of learned PDE solvers, and metastability, calibration and reliability in systems that run LLMs."
 >
   <HeroSim slot="hero" />
 
@@ -69,9 +87,13 @@ const research = [
           for direct simulation to reach, and whether a PDE solver with a network inside
           it will hold together when you iterate it. Underneath all three is the same
           question, which is what can be proved about the objects practitioners already
-          use: rates, stability, and error bounds in place of heuristics. Everything
-          moving on this page is one of those objects, running live and graded against a
-          closed-form answer.
+          use: rates, stability, and error bounds in place of heuristics. A second set
+          of projects, in computer science, carries the same habits into the systems
+          that run large language models: whether a burst of agent traffic can tip a
+          serving engine into a self-sustaining slow state, how to calibrate a forecast
+          when its feedback arrives early but one-sided, and when restarting a stalled
+          agent beats waiting. Everything moving on this page is one of the stochastic
+          objects, running live and graded against a closed-form answer.
         </p>
 
         <p>

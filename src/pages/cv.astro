@@ -15,19 +15,19 @@ import Base from '../layouts/Base.astro';
  * copy after an update. Bump PDF_FILE here and the /cv.pdf redirect in
  * public/_redirects together.
  */
-const PDF_FILE = 'akshat-valse-cv-2026-09.pdf';
+const PDF_FILE = 'akshat-valse-cv-2026-10.pdf';
 const pdf = `/${PDF_FILE}`;
 const hasPdf = existsSync(fileURLToPath(new URL(`../../public/${PDF_FILE}`, import.meta.url)));
 
 const interests =
   'Stochastic analysis for machine learning: Langevin sampling and its discretization, ' +
-  'large deviations and rare-event simulation, and the stability of learned PDE solvers.';
+  'large deviations and rare-event simulation, the stability of learned PDE solvers, ' +
+  'and the queueing, calibration and reliability questions raised by systems that run LLMs.';
 
 type Course = [name: string, code?: string];
 
 const inProgress: Course[] = [
   ['Foundations of Probability Theory, measure-theoretic', 'STAT 6541'],
-  ['High-Dimensional Probability and Linear Algebra for Machine Learning', 'MATH 6230'],
   ['Advanced Topics in Machine Learning', 'COM S 6730'],
   ['Advanced Topics in Artificial Intelligence', 'COM S 6720'],
   ['Advanced Topics in High-Performance Computing', 'COM S 6250'],
@@ -85,6 +85,14 @@ const manuscripts = [
       'Stability Certificates for Cell-Average-Based Neural Network Solvers: von Neumann Analysis of Trained Flux Networks',
     meta: 'With M. Yang and J. Yan. In preparation.',
   },
+  {
+    title: 'Metastable Failures in Prefix-Cached LLM Agent Serving',
+    meta: 'With A. Jannesari. In preparation.',
+  },
+  {
+    title: 'Online Calibration of Neural Volatility Forecasts with Early, One-Sided Feedback',
+    meta: 'With H. Gao. In preparation.',
+  },
 ];
 
 const research = [
@@ -117,6 +125,32 @@ const research = [
       "Reimplementing the group's solver in Python to enable systematic stability experiments across schemes and step sizes.",
     ],
   },
+  {
+    title: 'Metastable Failures in Prefix-Cached LLM Agent Serving',
+    dates: 'Aug. 2026 – present',
+    role: 'Research project, Advanced Topics in High-Performance Computing (COM S 6250), Department of Computer Science, Iowa State University. Advisor: Prof. Ali Jannesari, SwaPP Lab.',
+    bullets: [
+      'Asking whether a short burst of agent traffic can push a healthy LLM serving engine into a self-sustaining all-miss, low-throughput state, and which scheduling and admission mechanisms prevent it. Built a discrete-event simulator of a continuous-batching engine with prefix caching (scheduling policies, eviction rules, memory-allocation modes, and re-implementations of recently proposed mechanisms) and a queueing-theoretic "thrashing curve" model of when caching helps, when it collapses, and when admission control restores stability.',
+      "Run real-engine experiments (SGLang serving a 7B-parameter model on NVIDIA A100 GPUs) on Iowa State's Nova HPC cluster through SLURM, with predictions registered before each run, paired control arms, and every reported number traced to a results directory, a commit and a cluster job ID. Toward an arXiv preprint.",
+    ],
+  },
+  {
+    title: 'Calibrating Volatility Forecasts with Early, One-Sided Feedback',
+    dates: 'Aug. 2026 – present',
+    role: 'Research project, Advanced Topics in Machine Learning (COM S 6730), Department of Computer Science, Iowa State University. Advisor: Prof. Hongyang Gao.',
+    bullets: [
+      'A forecast of a cumulative quantity is scored only when its horizon ends, but its increments are non-negative, so a miss becomes certain the moment the running sum crosses the issued bound. Designed a model-agnostic calibration layer over any quantile forecaster that credits those certain early misses and keeps explicit accounts of forecasts still pending; proved its long-run coverage guarantee under early crediting, bounded correction and missing data, and checked it numerically over tens of thousands of adversarial runs.',
+      'Built a leakage-audited data pipeline (5-minute spot bars, 2020–2025, with a sealed and hashed test set), a regime-shift simulation study with exact oracle quantiles and pre-registered hypotheses, and delayed-feedback conformal and classical volatility baselines, including a temporal convolutional network trained on HPC GPUs. Paper in preparation.',
+    ],
+  },
+  {
+    title: 'Reliability of Tool-Using LLM Agents',
+    dates: 'Aug. 2026 – present',
+    role: 'Research project, Advanced Topics in Artificial Intelligence (COM S 6720), Department of Computer Science, Iowa State University. Advisor: Prof. Yang Li.',
+    bullets: [
+      'When an agent stalls, when is restarting it worth more than waiting, and how can the probability of a failure too rare for direct simulation be estimated? Two pre-registered pilots on real agents, one on restart policies and one on rare failures, with the direction still being chosen.',
+    ],
+  },
 ];
 
 const awards = [
@@ -137,19 +171,19 @@ const skills = [
   {
     label: 'Languages and tools',
     text:
-      'PyTorch and CUDA for neural-network and GPU-accelerated simulation; Python (NumPy, SciPy, pandas, scikit-learn, matplotlib); R; LaTeX; git.',
+      'PyTorch and CUDA for neural-network and GPU-accelerated simulation; Python (NumPy, SciPy, pandas, scikit-learn, matplotlib, asyncio); SLURM on GPU clusters and LLM serving engines (SGLang); R; LaTeX; git.',
   },
   {
     label: 'Methods',
     text:
-      'Measure-theoretic probability and stochastic differential equations; MCMC (MALA, Metropolis–Hastings) and importance sampling; large-deviation asymptotics; numerical analysis of time-stepping schemes and von Neumann stability; reproducible computation with recorded seeds and parameter sidecars, so every figure regenerates from saved results.',
+      'Measure-theoretic probability and stochastic differential equations; MCMC (MALA, Metropolis–Hastings) and importance sampling; large-deviation asymptotics; numerical analysis of time-stepping schemes and von Neumann stability; discrete-event simulation and queueing models; online conformal calibration; reproducible computation with recorded seeds, parameter sidecars and pre-registered predictions, so every figure regenerates from saved results.',
   },
 ];
 ---
 
 <Base
   title="CV · Akshat Sachin Valse"
-  description="Curriculum vitae. Undergraduate researcher in stochastic analysis at Iowa State University: Langevin sampling, large deviations for mean-field systems, and the stability of learned PDE solvers."
+  description="Curriculum vitae. Undergraduate researcher at Iowa State University: Langevin sampling, large deviations for mean-field systems, the stability of learned PDE solvers, and metastability, calibration and reliability in systems that run LLMs."
 >
   <section class="section shell">
     <div class="row">
@@ -159,7 +193,7 @@ const skills = [
         <p class="lede">{interests}</p>
         <p class="entry-meta">
           {hasPdf ? (
-            <><a href={pdf}>Download as PDF</a>. Updated September 2026.</>
+            <><a href={pdf}>Download as PDF</a>. Updated October 2026.</>
           ) : (
             <>PDF not posted yet. Write to <a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a>.</>
           )}
@@ -179,12 +213,12 @@ const skills = [
         <h2 class="section-title">Education</h2>
         <article class="entry">
           <h3 class="entry-title">Iowa State University, Honors Program</h3>
-          <p class="entry-meta">Aug. 2024 – May 2028 (expected) · Cumulative GPA 3.85 / 4.00</p>
+          <p class="entry-meta">Aug. 2024 – May 2028 (expected) · Cumulative GPA 3.86 / 4.00</p>
           <p>
             B.S. Statistics · B.S. Mathematics · B.A. Computer Science · B.S. Data Science
           </p>
 
-          <h4 class="sub">In progress, Fall 2026 · all five at the PhD level (6000-series)</h4>
+          <h4 class="sub">In progress, Fall 2026 · all four at the PhD level (6000-series)</h4>
           <ul class="courses">
             {inProgress.map(([name, code]) => (
               <li>{name} <span class="code">{code}</span></li>

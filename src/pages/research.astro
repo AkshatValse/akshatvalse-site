@@ -11,7 +11,7 @@ const tex = String.raw;
 
 <Base
   title="Research · Akshat Valse"
-  description="Langevin sampling and transport coefficients; large deviations for mean-field interacting systems and their role in learning theory; stability of neural approximations to evolution equations."
+  description="Langevin sampling and transport coefficients; large deviations for mean-field interacting systems; stability of neural approximations to evolution equations; metastable failures in LLM serving; online calibration with early feedback; reliability of tool-using agents."
 >
   <section class="section shell">
     <div class="row">
@@ -19,9 +19,12 @@ const tex = String.raw;
       <div>
         <h1 class="page-title">Research</h1>
         <p class="lede">
-          Three projects, ordered by how central they are to one question: what can be
-          proved about the stochastic objects machine learning already runs on. The
-          answer is usually less than one would hope, and more than gets checked.
+          Six projects. The first three are ordered by how central they are to one
+          question: what can be proved about the stochastic objects machine learning
+          already runs on. The answer is usually less than one would hope, and more than
+          gets checked. The other three, in computer science, carry the same habits,
+          a closed form where one exists and a registered prediction where one does not,
+          into the systems that run large language models.
         </p>
       </div>
     </div>
@@ -218,6 +221,156 @@ const tex = String.raw;
           </p>
           <p class="entry-meta">
             Joint with Mengyuan Yang. Approach and results held back pending submission.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail">
+        <dl>
+          <dt>Advisor</dt><dd>Ali Jannesari</dd>
+          <dt>Department</dt><dd>Computer Science</dd>
+          <dt>Status</dt><dd>Ongoing</dd>
+        </dl>
+        <hr class="rail-rule" />
+        <dl>
+          <dt>Bears on</dt>
+          <dd>LLM serving · metastable failures · admission control</dd>
+        </dl>
+      </div>
+      <div>
+        <article class="entry">
+          <h2 class="entry-title">Metastable failures in prefix-cached LLM agent serving</h2>
+          <p class="entry-meta">Ali Jannesari · SwaPP Lab, Computer Science, Iowa State University · ongoing</p>
+          <p>
+            An agent works in a loop: model call, tool call, model call, re-sending the
+            whole growing conversation each turn. Serving engines such as SGLang and
+            vLLM keep that shared prefix in a GPU KV cache so a follow-up turn costs a
+            fraction of the first. The cache is small, though. When enough agent
+            sessions compete for it, a session evicted while it waits on a tool has to
+            recompute everything on its next turn, and that extra work keeps the cache
+            full and evicts the next session. The question is whether a short burst of
+            traffic can push an otherwise healthy server into a self-sustaining
+            all-miss, low-throughput state, a metastable failure, and which scheduling
+            and admission mechanisms prevent it.
+          </p>
+          <p>
+            Three instruments. A discrete-event simulator of a continuous-batching
+            engine with prefix caching, covering scheduling policies, eviction rules,
+            memory-allocation modes and re-implementations of recently proposed
+            mechanisms. A queueing-theoretic thrashing-curve model that connects the
+            classical working-set and metastability literature to agent workloads and
+            says when caching helps, when it collapses, and when admission control
+            restores stability. And a load-testing harness that drives a production
+            engine, SGLang serving a 7B-parameter model on NVIDIA A100s, on Iowa
+            State's Nova cluster through SLURM, with the prediction for each run
+            committed before the run and paired control arms under common random
+            numbers. On the real engine, cache reuse collapses sharply once concurrent
+            sessions exceed the cache's working set and throughput falls severalfold,
+            which matches the simulator. Whether the collapse outlives the burst that
+            caused it is the experiment in progress.
+          </p>
+          <p class="entry-meta">
+            Public overview:
+            <a href="https://github.com/AkshatValse/Nova-Research-Overview">Nova-Research-Overview</a>.
+            Code and data held back pending the preprint.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail">
+        <dl>
+          <dt>Advisor</dt><dd>Hongyang Gao</dd>
+          <dt>Department</dt><dd>Computer Science</dd>
+          <dt>Status</dt><dd>Ongoing</dd>
+        </dl>
+        <hr class="rail-rule" />
+        <dl>
+          <dt>Bears on</dt>
+          <dd>conformal prediction · delayed feedback · volatility forecasting</dd>
+        </dl>
+      </div>
+      <div>
+        <article class="entry">
+          <h2 class="entry-title">Online calibration of neural volatility forecasts with early, one-sided feedback</h2>
+          <p class="entry-meta">Hongyang Gao · Computer Science, Iowa State University · ongoing</p>
+          <p>
+            A forecast of a cumulative quantity, the realized variance of an asset over
+            the next day, say, is scored only when the horizon ends. Every online
+            calibration method therefore learns one full horizon late, which is exactly
+            when it is slowest to react to a shift. But the increments of such a
+            quantity are non-negative, so the running sum is monotone, and if it crosses
+            the issued upper bound before the horizon ends the miss is certain at once.
+            Coverage is confirmed only at the end. The feedback is early, but
+            one-sided.
+          </p>
+          <p>
+            The method is a model-agnostic layer on top of any quantile forecaster. It
+            credits certain early misses to an online integrator as soon as they are
+            confirmed, keeps explicit accounts of forecasts still pending so the
+            eventual miss count is known to lie in an interval rather than treated as
+            settled, and applies a bounded correction only when the accounting
+            justifies it. The long-run coverage guarantee under early crediting, bounded
+            correction and missing data is proved and checked numerically over tens of
+            thousands of adversarial runs. Whether this recovers faster after a
+            volatility jump than delayed-feedback conformal baselines, without widening
+            the bounds the rest of the time, is the question, and the answer is being
+            settled on a regime-shift simulation with exact oracle quantiles and on a
+            sealed real-data test set, against pre-registered hypotheses.
+          </p>
+          <p class="entry-meta">
+            Public overview:
+            <a href="https://github.com/AkshatValse/neural-forecasting-research-overview">neural-forecasting-research-overview</a>.
+            Code, proofs and results held back pending submission.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail">
+        <dl>
+          <dt>Advisor</dt><dd>Yang Li</dd>
+          <dt>Department</dt><dd>Computer Science</dd>
+          <dt>Status</dt><dd>Ongoing</dd>
+        </dl>
+        <hr class="rail-rule" />
+        <dl>
+          <dt>Bears on</dt>
+          <dd>survival analysis · rare-event estimation · agent evaluation</dd>
+        </dl>
+      </div>
+      <div>
+        <article class="entry">
+          <h2 class="entry-title">Reliability of tool-using agents</h2>
+          <p class="entry-meta">Yang Li · Computer Science, Iowa State University · ongoing</p>
+          <p>
+            Two questions about agents that run for a long time and sometimes fail.
+            When one stalls, when is restarting it worth more than waiting, and what in
+            the distribution of run times decides that? And how do you estimate the
+            probability of a failure too rare for direct simulation to reach, the same
+            problem as the rare-event work above with an agent in place of a queue? Two
+            pilots on real agents, one on restart policies and one on rare failures,
+            each with its kill criteria registered before any data, with the direction
+            still being chosen between them.
+          </p>
+          <p class="entry-meta">
+            Approach and results held back pending the choice of direction.
           </p>
         </article>
       </div>
