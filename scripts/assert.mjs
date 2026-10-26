@@ -1,10 +1,10 @@
 /**
  * Tolerance assertions for the verification scripts.
  *
- * Every figure on the site quotes a number. These helpers turn each of those
- * quotes into a build-breaking contract: the achieved value is printed next to
- * the tolerance it had to meet, and a breach exits non-zero so CI and the
- * deploy both fail.
+ * Every figure on the site quotes a number. These helpers check the simulation's
+ * numerical tolerances: the achieved value is printed next to its limit, and a
+ * breach exits non-zero so the invoking check fails. Caption snapshots still
+ * need to be updated manually when a measured value changes.
  *
  * Tolerances are set with headroom over the measured value, wide enough that
  * Monte Carlo noise alone will not trip them and tight enough that a real

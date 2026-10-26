@@ -20,7 +20,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { RareTailSim, normalTail, THRESHOLDS } from '../src/sim/raretail.js';
-import { assertAtMost, finish } from './assert.mjs';
+import { assertAtMost, assertNear, finish } from './assert.mjs';
 
 console.log('Rare-event estimation — exactness and estimator check');
 console.log('='.repeat(78));
@@ -81,13 +81,17 @@ const BATCH = 200_000;
 for (let done = 0; done < N; done += BATCH) sim.advance(Math.min(BATCH, N - done));
 
 console.log('      a       exact          crude MC        z        IS              z');
-let maxZ = 0, crudeDied = null;
+let maxZ = 0, validIS = 0, crudeDied = null;
 for (const e of sim.est) {
   const c = e.crude();
   const s = e.is();
   const zc = c ? (c.p - e.exact) / c.se : null;
   const zs = s ? (s.p - e.exact) / s.se : null;
-  if (zs !== null && Number.isFinite(zs)) maxZ = Math.max(maxZ, Math.abs(zs));
+  const finiteIS = Number.isFinite(s?.p) && s.p > 0 &&
+    Number.isFinite(s?.se) && s.se > 0 && Number.isFinite(zs);
+  if (finiteIS) validIS++;
+  else console.log(`   invalid IS estimate or z-score at a = ${e.a}`);
+  maxZ = finiteIS ? Math.max(maxZ, Math.abs(zs)) : Infinity;
   if (!c && crudeDied === null) crudeDied = e.exact;
   console.log(
     `   ${e.a.toFixed(1).padStart(4)}   ${e.exact.toExponential(3)}   ` +
@@ -123,5 +127,6 @@ if (scipy) {
   assertAtMost('series/CF join at a = 1.5, rel.',
     Math.abs(viaSeries - normalTail(1.5)) / normalTail(1.5), 1e-12);
 }
+assertNear('thresholds with finite IS estimates and z-scores', validIS, THRESHOLDS.length, 0);
 assertAtMost('max |z| for the IS estimator', maxZ, 4, '(measured 2.04)');
 finish('verify-raretail');

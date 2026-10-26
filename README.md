@@ -7,13 +7,14 @@ every one of them is checked against a closed-form answer before it ships. The
 checks are the scripts in `scripts/verify-*.mjs`; their output is quoted in the
 figure captions, so a caption that disagrees with a fresh run is a bug.
 
-## The three simulations
+## The four simulations
 
 | | object | reference value | check |
 |---|---|---|---|
 | Fig. 1 | overdamped Langevin in `V = cos x + cos y` on the torus, `β = 2` | Gibbs measure `∝ exp(−βV)`; `E[cos X] = −I₁(β)/I₀(β)` | `verify-gibbs.mjs` |
 | Fig. 2 | reverse-time VP-SDE with the exact score of a 6-component Gaussian mixture | true mixture weights, means, and `σ` | `verify-diffusion.mjs` |
 | Fig. 3 | effective diffusivity in `V = cos x`, `β = 1` | Lifson–Jackson, `1/I₀(1)² = 0.6238603604…` | `verify-diffusivity.mjs` |
+| Fig. 4 | Gaussian-tail estimation by crude Monte Carlo and importance sampling | `P(Z > a) = Φ(−a)` for `Z ~ N(0,1)` | `verify-raretail.mjs` |
 
 Current results: total variation `1.0e-3` against the Gibbs marginal over 48
 bins; recovered mixture weights within `0.006` of truth at a Monte Carlo floor of
@@ -98,9 +99,11 @@ no equivalent and has to be reached through Search Console.
 ## Checks
 
 `npm run verify` runs all four verification scripts. Each ends in a CONTRACT
-block that asserts its tolerance and exits non-zero on a breach, so the numbers
-quoted in the figure captions cannot drift without failing the build. Measured
-values are recorded next to each tolerance so drift shows up in a diff.
+block that asserts its tolerance and exits non-zero on a breach. The checks
+validate the simulations; caption values are manually recorded snapshots and
+are not compared automatically with each run. Refresh them when a verification
+result changes. Measured values are also recorded next to each tolerance for
+review.
 
 GitHub Actions runs them on every push, on pull requests, and weekly. The
 Cloudflare build command (set in the Pages dashboard, not in this repo) is
