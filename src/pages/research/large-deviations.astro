@@ -1,0 +1,681 @@
+---
+/**
+ * /research/large-deviations: rare events in the mean-field JSQ(d) model.
+ *
+ * Unpublished joint work with Ruoyu Wu. The page describes the problem and
+ * what the project does at the level of the CV and the public write-up
+ * (AkshatValse/research, jsq-rare-events.md); every result, how the change of
+ * measure is built, and the precise event are held back pending submission
+ * (the brief's DO_NOT_PUBLISH). Figures 2-4 are classical baselines with
+ * exact references, not project results.
+ */
+import ProjectLayout from '../../layouts/ProjectLayout.astro';
+import Container from '../../components/clarity/Container.astro';
+import NoteRow from '../../components/clarity/NoteRow.astro';
+import Slides from '../../components/clarity/Slides.astro';
+import CodeBlock from '../../components/clarity/CodeBlock.astro';
+import TexTile from '../../components/clarity/TexTile.astro';
+import Tex from '../../components/Tex.astro';
+import RareEventFigure from '../../components/RareEventFigure.astro';
+import LdPowerOfChoices from '../../components/widgets/LdPowerOfChoices.astro';
+
+const WRITEUP = 'https://github.com/AkshatValse/research/blob/main/jsq-rare-events.md';
+
+/* Figure 1: JSQ(d) dispatch, d = 2, illustrative heights (brief, D1). */
+const HEIGHTS = [3, 1, 4, 2, 0, 5, 2, 3];
+const SAMPLED = [2, 6];
+const SHORTER = 6;
+const colX = (i: number) => 150 + 58 * i;
+const BASE = 390;
+const UNIT = 30;
+
+const CHECK = `node scripts/verify-raretail.mjs   # the check behind Figure 4
+npm run verify                      # all of the site's verification scripts`;
+---
+
+<ProjectLayout
+  slug="large-deviations"
+  pageTitle="Large deviations and rare events in mean-field queueing · Akshat Valse"
+  description="Rare events in mean-field JSQ(d) load balancing: large deviations choose the importance-sampling tilt, and exact computation is the benchmark where feasible."
+  authors="Akshat Valse, with Ruoyu Wu"
+  affiliation="Department of Mathematics, Iowa State University"
+  abstract="Sending each job to the shortest of d randomly sampled queues is the standard model for randomized load balancing, and its typical behaviour has a clean mean-field description. A capacity guarantee is written against something else: the probability that some queue climbs to a high level inside a time window, which is small enough to defeat direct simulation. This project uses large-deviation theory to choose the tilt for importance sampling, and commits to checking the estimator against probabilities computed exactly, with no sampling error, at system sizes where that is still feasible. Results are held back pending submission."
+  buttons={[
+    { label: 'Write-up', href: WRITEUP, icon: 'github' },
+    { label: 'Live figure', href: '#mechanism', icon: 'chart' },
+  ]}
+  info="Ongoing since November 2024 · Manuscript in preparation · Dean's High Impact Undergraduate Research Award, 2026"
+>
+  <Fragment slot="cover">
+    <TexTile
+      big
+      tex={String.raw`p \;=\; \mathbb{E}_P\big[\mathbf 1_A\big] \;=\; \mathbb{E}_Q\!\Big[\mathbf 1_A\,\frac{dP}{dQ}\Big]`}
+      label="The importance-sampling identity: simulate under a tilted law Q, then reweight by the likelihood ratio dP/dQ."
+    />
+  </Fragment>
+
+  <!-- 1. Setting -->
+  <Container first>
+    <h1>The setting</h1>
+    <p class="text">
+      Join-the-shortest-queue-of-<Tex src="d" />, or JSQ(<Tex src="d" />), is the standard model for
+      randomized load balancing. An arriving job samples <Tex src="d" /> of <Tex src="n" /> servers and
+      joins the shortest of them. Sampling two servers rather than one improves the tail of the
+      queue-length distribution dramatically, and as <Tex src="n" /> grows the system has a mean-field
+      limit that describes typical behaviour cleanly.
+    </p>
+    <p class="text">
+      Write <Tex src="Q_i(t)" /> for the number of jobs at server <Tex src="i" /> and
+      <Tex src={String.raw`s_k(t) = \tfrac1n\,\#\{i : Q_i(t) \ge k\}`} /> for the occupancy, the fraction
+      of servers holding at least <Tex src="k" />. The occupancy is the empirical measure
+      <Tex src={String.raw`\mu^n_t = \tfrac1n \sum_{i=1}^n \delta_{Q_i(t)}`} /> read on the sets
+      <Tex src={String.raw`[k,\infty)`} />, and it is the object whose large-deviation asymptotics guide
+      the project's change of measure.
+    </p>
+    <p class="text">
+      Typical behaviour is not what you provision against. What matters is the rare event: the
+      probability that some queue climbs to a high level inside a time window. That is the quantity a
+      capacity guarantee is written against, and the mean-field limit says nothing about it, since the
+      limit describes where the system usually sits and the event of interest is a departure from
+      exactly that. This page states the event in words only; its precise definition is held back with
+      the manuscript.
+    </p>
+  </Container>
+
+  <Container width="large" tone="gray">
+    <svg class="diagram ld-dgm" viewBox="0 0 900 450" role="img"
+      aria-label="Diagram of JSQ(d) dispatch with d = 2. An arriving job passes through a sampler that samples d of n servers. Eight server columns of illustrative heights 3, 1, 4, 2, 0, 5, 2 and 3 jobs are drawn; two sampled columns, of heights 4 and 2, are outlined, and the shorter one is filled. The job's path ends on top of the shorter sampled column, labelled joins the shortest. A dashed horizontal line above all columns marks a high level, labelled: rare event, some queue climbs to a high level inside a time window.">
+      <defs>
+        <marker id="ld-d1-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="head" />
+        </marker>
+        <marker id="ld-d1-arr-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="head-acc" />
+        </marker>
+      </defs>
+
+      <!-- arriving job and sampler -->
+      <rect x="170" y="83" width="30" height="30" rx="4" class="acc-fill" />
+      <text x="185" y="140" text-anchor="middle" class="t13 muted-t">arriving job</text>
+      <line x1="202" y1="98" x2="296" y2="98" class="line" marker-end="url(#ld-d1-arr)" />
+      <rect x="300" y="70" width="200" height="56" rx="8" class="box dash" />
+      <text x="400" y="95" text-anchor="middle" class="t14">sample d of n</text>
+      <text x="400" y="115" text-anchor="middle" class="t13 muted-t">(here d = 2)</text>
+
+      <!-- probes to the two sampled servers -->
+      <line x1="360" y1="126" x2="286" y2="264" class="line dash thin" />
+      <line x1="440" y1="126" x2="510" y2="298" class="line dash thin" />
+      <text x="400" y="168" text-anchor="middle" class="t13 muted-t">d sampled</text>
+
+      <!-- the job's route to the shorter sampled queue -->
+      <path d="M185 83 V48 H526 V296" class="acc-line" marker-end="url(#ld-d1-arr-acc)" />
+      <text x="536" y="66" class="t14">joins the shortest</text>
+
+      <!-- the high level -->
+      <line x1="135" y1="195" x2="612" y2="195" class="line dash" />
+      <text x="135" y="186" class="t13 muted-t">a high level</text>
+      <text x="630" y="190" class="t14 b">rare event:</text>
+      <text x="630" y="209" class="t14">some queue climbs</text>
+      <text x="630" y="228" class="t14">to a high level</text>
+      <text x="630" y="247" class="t14">inside a time window</text>
+
+      <!-- servers -->
+      <line x1="140" y1={BASE} x2="606" y2={BASE} class="line" />
+      {HEIGHTS.map((h, i) =>
+        Array.from({ length: h }, (_, j) => (
+          <rect x={colX(i) + 2} y={BASE - UNIT * (j + 1) + 2} width="36" height="26" rx="3"
+            class={i === SHORTER ? 'acc-fill' : 'box'} />
+        ))
+      )}
+      {SAMPLED.map((i) => (
+        <rect x={colX(i) - 3} y={BASE - UNIT * HEIGHTS[i] - 3} width="46" height={UNIT * HEIGHTS[i] + 3} rx="5" class="acc-line" />
+      ))}
+      <rect x={colX(SHORTER) + 2} y={BASE - UNIT * (HEIGHTS[SHORTER] + 1) + 2} width="36" height="26" rx="3" class="acc-line dash" />
+
+      <!-- n servers -->
+      <line x1="150" y1="410" x2="596" y2="410" class="line thin" />
+      <line x1="150" y1="404" x2="150" y2="416" class="line thin" />
+      <line x1="596" y1="404" x2="596" y2="416" class="line thin" />
+      <text x="373" y="436" text-anchor="middle" class="t13 muted-t">n servers (queue heights illustrative, not data)</text>
+
+      <!-- typical against rare -->
+      <text x="630" y="304" class="t13 muted-t">as n → ∞, the occupancy follows</text>
+      <text x="630" y="322" class="t13 muted-t">the mean-field limit (typical);</text>
+      <text x="630" y="340" class="t13 muted-t">the rare event is a departure</text>
+      <text x="630" y="358" class="t13 muted-t">from exactly that</text>
+    </svg>
+    <p class="caption">
+      <b>Figure 1.</b> JSQ(<Tex src="d" />) dispatch, drawn for <Tex src="d = 2" /> with illustrative
+      queue heights. The arriving job samples two servers (outlined) and joins the shorter (filled); the
+      dashed square is where it lands. The dashed line marks a high level, and the project's quantity is
+      the probability that some queue climbs to a high level inside a time window. As <Tex src={String.raw`n \to \infty`} />
+      the occupancy follows the mean-field limit, and the rare event is a departure from exactly that.
+    </p>
+  </Container>
+
+  <Container>
+    <h2>Two choices against one</h2>
+    <p class="text">
+      How dramatic the improvement is shows up in the mean-field fixed point. Take a textbook model,
+      assumed here for illustration and not taken from the project: Poisson arrivals at rate
+      <Tex src={String.raw`\lambda n`} />, unit-rate exponential service, and <Tex src="d" /> servers
+      sampled uniformly at random. The occupancy then follows
+    </p>
+    <Tex block src={String.raw`\dot s_k = \lambda\,\big(s_{k-1}^d - s_k^d\big) - \big(s_k - s_{k+1}\big),\qquad s_0 = 1.`} />
+    <p class="text">
+      Summing the stationary equations from <Tex src="k" /> to infinity, both sides telescope to
+      <Tex src={String.raw`\lambda\, s_{k-1}^d = s_k`} />, so the fixed point is explicit:
+    </p>
+    <Tex block src={String.raw`s_k = \lambda^{(d^k-1)/(d-1)}\quad (d \ge 2),\qquad s_k = \lambda^k \quad (d = 1).`} />
+    <p class="text">
+      With one sample the tail is geometric; with two it is doubly exponential. Figure 2 puts the two
+      on the same axis.
+    </p>
+  </Container>
+
+  <Container width="large" tone="gray">
+    <img-comparison-slider class="slider-container no-adapt">
+      <figure slot="first" class="before">
+        <img class="fig no-adapt" src="/research/large-deviations/occupancy-meanfield-d1.svg" width="640" height="320"
+          alt="Mean-field fixed point at load 0.9, one sample per job: the fraction of servers with at least k jobs falls geometrically, 0.9 to the k, from 1 to 0.430 at k = 8, on a log axis from 1 to 1e-12" />
+        <figcaption>one sample per job (d = 1)</figcaption>
+      </figure>
+      <figure slot="second" class="after">
+        <img class="fig no-adapt" src="/research/large-deviations/occupancy-meanfield-d2.svg" width="640" height="320"
+          alt="Mean-field fixed point at load 0.9, two samples per job: the fraction of servers with at least k jobs falls doubly exponentially, to about 1.5e-6 at k = 7 and 2.1e-12 at k = 8, on the same log axis" />
+        <figcaption>two samples per job (d = 2)</figcaption>
+      </figure>
+    </img-comparison-slider>
+    <p class="caption">
+      <b>Figure 2.</b> Classical baseline, not a project result. The mean-field fixed point of the
+      textbook model at load <Tex src={String.raw`\lambda = 0.9`} />, on the
+      same log axis: drag the divider. With one sample per job the fraction of servers holding at least
+      <Tex src="k" /> jobs falls only geometrically, <Tex src="0.9^k" />, to 0.430 at
+      <Tex src="k = 8" />. With two it falls doubly exponentially, to about
+      <Tex src={String.raw`1.5\times10^{-6}`} /> at <Tex src="k = 7" /> and
+      <Tex src={String.raw`2.1\times10^{-12}`} /> at <Tex src="k = 8" />. Closed form, no sampling. This
+      is the typical picture, the mean-field limit; the rare event this project estimates lies outside it.
+    </p>
+  </Container>
+
+  <Container>
+    <h2>The limit against a finite system</h2>
+    <p class="text">
+      The fixed point is a statement about <Tex src={String.raw`n \to \infty`} />. Figure 3 sets it
+      against a seeded simulation of <Tex src="n" /> servers under the same textbook model. For
+      <Tex src="d = 1" /> the closed form is exact at every <Tex src="n" /> in stationarity, so the
+      simulation should land on it within its error bars; for <Tex src={String.raw`d \ge 2`} /> it is only the limit, and
+      the widget shows how far a small system sits from it.
+    </p>
+  </Container>
+
+  <Container width="extra-large" tone="gray">
+    <LdPowerOfChoices />
+    <p class="caption">
+      <b>Figure 3.</b> Classical baseline, not a project result or method. The mean-field closed form
+      for a load <Tex src={String.raw`\lambda`} /> from 0.5 to 0.99 and <Tex src={String.raw`d \in \{1, 2, 3, 5\}`} />,
+      against a seeded event-driven simulation of <Tex src={String.raw`n \in \{10, 100, 1000\}`} />
+      servers under the textbook model above, assumed for illustration: Poisson arrivals at rate <Tex src={String.raw`\lambda n`} />, unit-rate exponential
+      service, and <Tex src="d" /> servers sampled uniformly with replacement. Points are time averages,
+      <Tex src={String.raw`\pm 1`} /> s.e. across independent runs; the readout gives the seed. For
+      <Tex src="d = 1" /> each server receives an independent Poisson(<Tex src={String.raw`\lambda`} />)
+      stream, so each queue is an M/M/1 queue with load <Tex src={String.raw`\lambda`} /> and
+      <Tex src={String.raw`\mathbb P(Q_i \ge k) = \lambda^k`} /> holds exactly at every <Tex src="n" /> in
+      stationarity; each run starts from that law.
+      For <Tex src={String.raw`d \ge 2`} /> the closed form is the <Tex src={String.raw`n \to \infty`} />
+      limit, and the gap at small <Tex src="n" /> is a stationary finite-<Tex src="n" /> correction. It is
+      not the time-window rare event this project estimates.
+    </p>
+  </Container>
+
+  <!-- 2. Problem -->
+  <Container>
+    <h1>Why direct simulation fails</h1>
+    <p class="text">
+      These probabilities are small enough to defeat direct simulation. Crude Monte Carlo runs
+      <Tex src="M" /> independent copies of the system and counts how often the event <Tex src="A" />
+      occurs. Its relative error is the standard deviation over the mean:
+    </p>
+  </Container>
+
+  <NoteRow>
+    <Tex block src={String.raw`\hat p^{\,\mathrm{crude}}_M = \frac{1}{M}\sum_{j=1}^M \mathbf 1_A(\omega_j),\qquad \mathrm{RE} = \sqrt{\frac{1-p}{M p}} \;\Longrightarrow\; M = \frac{1-p}{p\,\mathrm{RE}^2}.`} />
+    <p class="text">
+      An event of probability <Tex src={String.raw`10^{-20}`} /> needs something like
+      <Tex src={String.raw`10^{22}`} /> independent replications before the estimator has a usable
+      relative error, and it gets worse as <Tex src="n" /> grows, which is the regime you want the answer
+      in. Crude Monte Carlo does not just get slow here. It stops being an estimator at all, returning
+      zero occurrences and no information about the magnitude.
+    </p>
+    <Fragment slot="note">
+      Reading "usable" as a 10% relative error, the formula gives
+      <Tex src={String.raw`M \approx 10^{22}`} /> runs at <Tex src={String.raw`p = 10^{-20}`} />.
+    </Fragment>
+  </NoteRow>
+
+  <Container>
+    <p class="text">
+      Importance sampling is the standard response: simulate under a modified law <Tex src="Q" /> that
+      makes the event common, then reweight each run by the likelihood ratio, which keeps the estimate
+      unbiased:
+    </p>
+    <Tex block src={String.raw`p = \mathbb{E}_P[\mathbf 1_A] = \mathbb{E}_Q\!\Big[\mathbf 1_A \tfrac{dP}{dQ}\Big],\qquad \hat p^{\,\mathrm{IS}}_M = \frac1M \sum_{j=1}^M \mathbf 1_A(X_j)\,\frac{dP}{dQ}(X_j),\quad X_j \sim Q.`} />
+    <p class="text">
+      The catch is that <Tex src="Q" /> has to be chosen well. A badly chosen change of measure can
+      produce an estimator with <em>infinite</em> variance, which is worse than the naive one it replaced
+      and more dangerous, because the failure does not always show up in the output. The change of
+      measure needs a principle.
+    </p>
+  </Container>
+
+  <Container>
+    <h2>The mechanism, on a target with a known answer</h2>
+    <p class="text">
+      Figure 4 runs both estimators on the Gaussian tail <Tex src={String.raw`\mathbb P(Z > a)`} />,
+      <Tex src={String.raw`Z \sim \mathcal N(0,1)`} />, whose exact value <Tex src={String.raw`\Phi(-a)`} />,
+      with <Tex src={String.raw`\Phi`} /> the standard normal distribution function, is known to machine
+      precision. Shifting the mean to the threshold, <Tex src={String.raw`Q = \mathcal N(a,1)`} />,
+      makes the event common, and the weight is explicit:
+    </p>
+    <Tex block src={String.raw`\frac{dP}{dQ}(x) = \frac{e^{-x^2/2}}{e^{-(x-a)^2/2}} = e^{-a x + a^2/2},\qquad \hat p = \frac1M \sum_{j} \mathbf 1\{X_j > a\}\, e^{-a X_j + a^2/2},\quad X_j \sim \mathcal N(a,1).`} />
+  </Container>
+
+  <Container width="large" tone="gray" id="mechanism">
+    <RareEventFigure n={4} />
+    <p class="caption">
+      <b>Figure 4.</b> Classical baseline: a textbook instance, chosen because its answer is exact. It
+      stands in for the mechanism and is not a project result: it does not touch the project's
+      estimator.
+    </p>
+  </Container>
+
+  <NoteRow>
+    <p class="text">
+      Why the tilt works here. Write <Tex src={String.raw`W = e^{-aX + a^2/2}`} /> for the weight. Then
+    </p>
+    <Tex block src={String.raw`\mathbb{E}_Q\big[W^2 \mathbf 1\{X>a\}\big] = e^{a^2}\,\Phi(-2a),\qquad \frac{\operatorname{Var}_Q}{p^2} = \frac{e^{a^2}\Phi(-2a)}{\Phi(-a)^2} - 1 \;\sim\; a\sqrt{\pi/2}\quad (a\to\infty).`} />
+    <p class="text">
+      The relative variance per sample grows only polynomially in <Tex src="a" />. For crude Monte Carlo
+      it is <Tex src={String.raw`(1-p)/p`} />, which grows like <Tex src={String.raw`e^{a^2/2}`} /> up to
+      polynomial factors.
+    </p>
+    <Fragment slot="note">
+      Key step, with <Tex src={String.raw`\varphi`} /> the standard normal density:
+      <Tex src={String.raw`e^{-ax}\varphi(x) = e^{a^2/2}\varphi(x+a)`} />, so
+      <Tex src={String.raw`\int_a^\infty e^{-ax+a^2/2}\varphi(x)\,dx = e^{a^2}\Phi(-2a)`} />. Textbook, and
+      specific to this Gaussian stand-in.
+    </Fragment>
+  </NoteRow>
+
+  <Container>
+    <h2>How Figure 4 is checked</h2>
+    <p class="text">
+      Figure 4 is one of the site's live simulations that a verification script checks against an exact
+      reference before it ships. For Figure 4:
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Item</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Target</td><td><Tex src={String.raw`\mathbb P(Z > a) = \Phi(-a),\ Z \sim \mathcal N(0,1)`} /></td></tr>
+          <tr><td>Thresholds</td><td><Tex src={String.raw`a = 1, 1.5, \dots, 7`} /> (13 values)</td></tr>
+          <tr><td>Importance-sampling check</td><td>4,000,000 samples per threshold; <Tex src={String.raw`|z| \le 4`} /> against the exact value is required at every threshold; measured maximum 2.04</td></tr>
+          <tr><td>Exact reference against SciPy</td><td>worst relative difference <Tex src={String.raw`7.2\times10^{-15}`} /> (a recorded snapshot)</td></tr>
+          <tr><td>Seeds</td><td><code>gaussian-tail/2026</code> for the live figure, <code>verify/raretail</code> for the check</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text">From the site's repository:</p>
+    <CodeBlock code={CHECK} lang="bash" />
+  </Container>
+
+  <!-- 3. Approach -->
+  <Container>
+    <h1>Large deviations supply the tilt</h1>
+    <p class="text">
+      Large-deviation theory supplies the principle. The decay rate of the probability, and the most
+      likely path along which the rare event happens, are described by a rate function built from the
+      Cramér transform of the per-server net input. Knowing how the system gets to the rare state tells
+      you how to tilt the dynamics so that it goes there routinely. Figure 5 shows where that sits among
+      the ways to spend <Tex src="M" /> runs.
+    </p>
+  </Container>
+
+  <Container width="large" tone="gray">
+    <Slides count={3} labels={['Crude Monte Carlo', 'Tilt and reweight', 'A bad tilt']}>
+      <div class="slide-content">
+        <svg class="diagram ld-dgm" viewBox="0 0 900 230" role="img"
+          aria-label="Panel 1, crude Monte Carlo: the nominal law P, M independent runs, hits of A equal to zero, so the estimate is zero with no information about the magnitude.">
+          <defs>
+            <marker id="ld-d2a-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" class="head" />
+            </marker>
+          </defs>
+          <text x="20" y="32" class="t15 b">1 · Crude Monte Carlo</text>
+          <rect x="20" y="70" width="190" height="80" rx="8" class="box" />
+          <text x="115" y="104" text-anchor="middle" class="t14 b">P</text>
+          <text x="115" y="126" text-anchor="middle" class="t13 muted-t">the nominal law</text>
+          <rect x="243" y="70" width="190" height="80" rx="8" class="box" />
+          <text x="338" y="104" text-anchor="middle" class="t14 b">M runs</text>
+          <text x="338" y="126" text-anchor="middle" class="t13 muted-t">drawn from P</text>
+          <rect x="466" y="70" width="190" height="80" rx="8" class="box" />
+          <text x="561" y="104" text-anchor="middle" class="t14 b">hits of A: 0</text>
+          <text x="561" y="126" text-anchor="middle" class="t13 muted-t">zero occurrences</text>
+          <rect x="689" y="70" width="190" height="80" rx="8" class="box dark" />
+          <text x="784" y="100" text-anchor="middle" class="t14 b" style="fill: var(--ground)">estimate: 0</text>
+          <text x="784" y="120" text-anchor="middle" class="t13" style="fill: var(--ground)">no information</text>
+          <text x="784" y="138" text-anchor="middle" class="t13" style="fill: var(--ground)">about the magnitude</text>
+          <line x1="212" y1="110" x2="240" y2="110" class="line" marker-end="url(#ld-d2a-arr)" />
+          <line x1="435" y1="110" x2="463" y2="110" class="line" marker-end="url(#ld-d2a-arr)" />
+          <line x1="658" y1="110" x2="686" y2="110" class="line" marker-end="url(#ld-d2a-arr)" />
+          <text x="20" y="196" class="t13 muted-t">An event of probability 10⁻²⁰ needs something like 10²² runs before the estimate is usable,</text>
+          <text x="20" y="215" class="t13 muted-t">and it gets worse as n grows.</text>
+        </svg>
+      </div>
+      <div class="slide-content">
+        <svg class="diagram ld-dgm" viewBox="0 0 900 240" role="img"
+          aria-label="Panel 2, tilt and reweight: the rate function, built from the Cramér transform of the per-server net input, gives the most likely path, which gives a tilted law Q under which the event is common (Gaussian case: Q equals N of a, 1). M runs are drawn from Q, each is weighted by dP/dQ (Gaussian case: exp of minus a X plus a squared over 2), and the estimate is the average over all runs of the weight times the indicator that the run hit A.">
+          <defs>
+            <marker id="ld-d2b-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" class="head" />
+            </marker>
+          </defs>
+          <text x="20" y="28" class="t15 b">2 · Tilt and reweight</text>
+          <rect x="20" y="44" width="250" height="72" rx="8" class="box" />
+          <text x="145" y="68" text-anchor="middle" class="t14 b">rate function</text>
+          <text x="145" y="88" text-anchor="middle" class="t13 muted-t">Cramér transform of the</text>
+          <text x="145" y="105" text-anchor="middle" class="t13 muted-t">per-server net input</text>
+          <rect x="325" y="44" width="250" height="72" rx="8" class="box" />
+          <text x="450" y="74" text-anchor="middle" class="t14 b">most likely path</text>
+          <text x="450" y="96" text-anchor="middle" class="t13 muted-t">how the system gets there</text>
+          <rect x="630" y="44" width="250" height="72" rx="8" class="box" />
+          <rect x="630" y="44" width="250" height="72" rx="8" class="acc-line" />
+          <text x="755" y="68" text-anchor="middle" class="t14 b">tilted law Q</text>
+          <text x="755" y="88" text-anchor="middle" class="t13 muted-t">the event becomes common</text>
+          <text x="755" y="105" text-anchor="middle" class="t13 muted-t">Gaussian case: Q = 𝒩(a, 1)</text>
+          <line x1="272" y1="80" x2="322" y2="80" class="line" marker-end="url(#ld-d2b-arr)" />
+          <line x1="577" y1="80" x2="627" y2="80" class="line" marker-end="url(#ld-d2b-arr)" />
+          <path d="M755 118 V138 H145 V152" class="line" marker-end="url(#ld-d2b-arr)" />
+          <rect x="20" y="156" width="250" height="72" rx="8" class="box" />
+          <text x="145" y="186" text-anchor="middle" class="t14 b">M runs drawn from Q</text>
+          <text x="145" y="208" text-anchor="middle" class="t13 muted-t">the system goes there routinely</text>
+          <rect x="325" y="156" width="250" height="72" rx="8" class="box" />
+          <text x="450" y="180" text-anchor="middle" class="t14 b">weight dP/dQ of each run</text>
+          <text x="450" y="200" text-anchor="middle" class="t13 muted-t">Gaussian case:</text>
+          <text x="450" y="217" text-anchor="middle" class="t13 muted-t">exp(−aX + a²/2)</text>
+          <rect x="630" y="156" width="250" height="72" rx="8" class="box dark" />
+          <text x="755" y="180" text-anchor="middle" class="t14 b" style="fill: var(--ground)">estimate of p</text>
+          <text x="755" y="200" text-anchor="middle" class="t13" style="fill: var(--ground)">average over all M runs of</text>
+          <text x="755" y="217" text-anchor="middle" class="t13" style="fill: var(--ground)">{'weight × 1{run hits A}'}</text>
+          <line x1="272" y1="192" x2="322" y2="192" class="line" marker-end="url(#ld-d2b-arr)" />
+          <line x1="577" y1="192" x2="627" y2="192" class="line" marker-end="url(#ld-d2b-arr)" />
+        </svg>
+      </div>
+      <div class="slide-content">
+        <svg class="diagram ld-dgm" viewBox="0 0 900 250" role="img"
+          aria-label="Panel 3, a bad tilt: Q chosen badly leads to a few rare runs carrying huge weights, which leads to infinite variance, while the output looks fine (warning sign). At the other extreme, the optimal tilt, a Doob h-transform of the chain, gives every run that reaches the event the same weight p, so the variance is zero; this is a textbook fact.">
+          <defs>
+            <marker id="ld-d2c-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" class="head" />
+            </marker>
+          </defs>
+          <text x="20" y="28" class="t15 b">3 · A bad tilt</text>
+          <rect x="20" y="48" width="190" height="80" rx="8" class="box" />
+          <text x="115" y="82" text-anchor="middle" class="t14 b">Q chosen badly</text>
+          <text x="115" y="104" text-anchor="middle" class="t13 muted-t">no principle behind it</text>
+          <rect x="243" y="48" width="190" height="80" rx="8" class="box" />
+          <text x="338" y="82" text-anchor="middle" class="t14 b">a few rare runs</text>
+          <text x="338" y="104" text-anchor="middle" class="t13 muted-t">carry huge weights</text>
+          <rect x="466" y="48" width="190" height="80" rx="8" class="box" />
+          <text x="561" y="82" text-anchor="middle" class="t14 b">variance infinite</text>
+          <text x="561" y="104" text-anchor="middle" class="t13 muted-t">worse than crude</text>
+          <rect x="689" y="48" width="190" height="80" rx="8" class="box" />
+          <rect x="689" y="48" width="190" height="80" rx="8" class="acc-line" />
+          <path d="M866 55 L877 75 L855 75 Z" class="warn" />
+          <line x1="866" y1="62" x2="866" y2="68" class="warn" />
+          <circle cx="866" cy="71.5" r="1.1" class="head" />
+          <text x="770" y="82" text-anchor="middle" class="t14 b">output looks fine</text>
+          <text x="770" y="104" text-anchor="middle" class="t13 muted-t">the failure does not</text>
+          <text x="770" y="121" text-anchor="middle" class="t13 muted-t">always show up</text>
+          <line x1="212" y1="88" x2="240" y2="88" class="line" marker-end="url(#ld-d2c-arr)" />
+          <line x1="435" y1="88" x2="463" y2="88" class="line" marker-end="url(#ld-d2c-arr)" />
+          <line x1="658" y1="88" x2="686" y2="88" class="line" marker-end="url(#ld-d2c-arr)" />
+          <text x="20" y="196" class="t13 muted-t">the other extreme:</text>
+          <rect x="243" y="160" width="636" height="72" rx="8" class="box soft dash" />
+          <text x="561" y="190" text-anchor="middle" class="t14 b">optimal tilt: a Doob h-transform of the chain</text>
+          <text x="561" y="212" text-anchor="middle" class="t13 muted-t">every run that reaches the event returns exactly p, so the variance is zero (textbook)</text>
+        </svg>
+      </div>
+    </Slides>
+    <p class="caption">
+      <b>Figure 5.</b> Three ways to spend <Tex src="M" /> runs; the dots switch panels. Crude Monte Carlo
+      under <Tex src="P" /> returns zero occurrences and no information about the magnitude. Importance
+      sampling tilts the law so the event becomes common and reweights each run by
+      <Tex src="dP/dQ" />; large-deviation theory says which tilt, and the Gaussian case is Figure 4. A
+      badly chosen tilt can give infinite variance while the output looks fine ("a few rare runs carry
+      huge weights" is a sketch of the mechanism). At the other extreme, the Doob
+      <Tex src="h" />-transform gives every run the same weight <Tex src="p" /> and zero variance, but
+      building it requires <Tex src="h" />, which is the unknown probability itself, so in practice the
+      optimal tilt has to be approximated.
+    </p>
+  </Container>
+
+  <NoteRow>
+    <p class="text">
+      The ingredients, in textbook form. For a per-server net input <Tex src="Y" />, the log moment
+      generating function and its Cramér transform are
+    </p>
+    <Tex block src={String.raw`\Lambda(\theta) = \log \mathbb{E}\, e^{\theta Y},\qquad \Lambda^*(y) = \sup_{\theta \in \mathbb R}\big\{\theta y - \Lambda(\theta)\big\}.`} />
+    <p class="text">
+      For the empirical measure, the generic shape of a large-deviation principle on path space is
+    </p>
+    <Tex block src={String.raw`\mathbb{P}\big(\mu^n \in \Gamma\big) \approx \exp\!\Big(-n \inf_{\psi \in \Gamma} I_T(\psi)\Big)`} />
+    <p class="text">
+      for a set <Tex src={String.raw`\Gamma`} /> of measure-valued paths, with a rate function <Tex src="I_T" /> on the horizon
+      <Tex src="T" />; precisely, an upper bound for closed sets and a lower bound for open ones. The net
+      input <Tex src="Y" /> for this model, its rate function and the tilt built from it are held back
+      with the manuscript.
+    </p>
+    <Fragment slot="note">
+      The textbook shape, not a result stated here for this model. It concerns events of the empirical
+      measure <Tex src={String.raw`\mu^n`} />, a macroscopic object.
+    </Fragment>
+  </NoteRow>
+
+  <Container>
+    <h2>The optimal tilt is a Doob h-transform</h2>
+    <p class="text">
+      The optimal tilting is characterized by a Doob <Tex src="h" />-transform of the underlying chain.
+      For a continuous-time chain with rates <Tex src="q(x,y)" />, a target set <Tex src="B" /> with
+      hitting time <Tex src={String.raw`\tau_B`} />, and a horizon <Tex src="T" />, let
+      <Tex src={String.raw`h(t,x) = \mathbb P(\tau_B \le T \mid X_t = x)`} />. Then
+    </p>
+    <Tex block src={String.raw`q^h_t(x,y) = q(x,y)\,\frac{h(t,y)}{h(t,x)},\qquad \frac{dP}{dQ^h}\Big|_{\{\tau_B \le T\}} = h(0,x_0) = p\ \text{ on every path}\;\Longrightarrow\; \operatorname{Var}_{Q^h}(\hat p) = 0 .`} />
+  </Container>
+
+  <NoteRow>
+    <p class="text">
+      Every path that reaches <Tex src="B" /> returns the same weight, so the estimator has zero
+      variance. The catch is that <Tex src="h" /> is the unknown itself, which is why in practice it
+      has to be approximated. How this project builds its tilt is held back pending submission.
+    </p>
+    <Fragment slot="note">
+      Key step, time-homogeneous case (<Tex src={String.raw`T = \infty`} />): <Tex src="h" /> is harmonic
+      on the transient states, so the total exit rate is unchanged and the likelihood ratio telescopes to
+      <Tex src={String.raw`h(x_0)/h(x_\tau) = h(x_0)`} />.
+    </Fragment>
+  </NoteRow>
+
+  <Container>
+    <h2>What efficient means</h2>
+    <p class="text">
+      A standard yardstick for a rare-event estimator is logarithmic efficiency: on the exponential scale, its
+      second moment decays twice as fast as the probability itself,
+    </p>
+    <Tex block src={String.raw`\liminf_{n\to\infty} \frac{\log \mathbb{E}_Q\big[(\hat p_n)^2\big]}{\log p_n} \;\ge\; 2,`} />
+    <p class="text">
+      which is the best possible, since by Jensen's inequality the ratio is at most 2. Whether an estimator
+      built this way is genuinely efficient, or only assumed to be, is one of the questions the project
+      asks.
+    </p>
+    <p class="text">
+      Large-deviation tools reach past queueing: Sanov's theorem and the Donsker–Varadhan variational
+      formula for relative entropy are the machinery behind PAC-Bayes generalization bounds. That is
+      context for why the tools are worth knowing, not a claim about what this project does.
+    </p>
+  </Container>
+
+  <!-- 4. Exact against asymptotic -->
+  <Container>
+    <h1>Exact against asymptotic</h1>
+    <p class="text">
+      What the project commits to methodologically is not taking any of that on faith. For system sizes
+      where it is still feasible, the probability can be computed <em>exactly</em> rather than estimated:
+      uniformizing the killed chain reduces the question to linear algebra on the occupancy state space,
+      which gives ground truth with no sampling error. With <Tex src="B" /> made absorbing,
+      <Tex src="G_B" /> the resulting generator, a rate <Tex src={String.raw`\nu \ge \max_x |G_B(x,x)|`} />
+      and <Tex src={String.raw`\tilde P = I + G_B/\nu`} />,
+    </p>
+    <Tex block src={String.raw`\mathbb{P}_x(\tau_B \le T) = \sum_{m=0}^{\infty} e^{-\nu T}\frac{(\nu T)^m}{m!}\,\big(\tilde P^{\,m}\mathbf 1_B\big)(x).`} />
+    <p class="text">
+      Every term lies in <Tex src="[0,1]" />, so truncating the Poisson sum leaves a Poisson tail as an
+      explicit error bound. The remaining errors are truncation and rounding, never sampling. It is
+      feasible only at small <Tex src="n" />.
+    </p>
+  </Container>
+
+  <Container width="large" tone="gray">
+    <svg class="diagram ld-dgm" viewBox="0 0 900 480" role="img"
+      aria-label="Triangle diagram of three answers to one question. Top: asymptotic, the large-deviation rate function and decay rate. Bottom left: exact, kill the chain and uniformize, linear algebra on the occupancy space, no sampling error, small n only. Bottom right: estimate, importance sampling under the tilt. Asymptotic to estimate: supplies the tilt; do the approximations cost anything? Exact to asymptotic: has the rate taken hold at this n? Exact to estimate: genuinely efficient, or only assumed to be? Below, an axis of system size n with exact computation feasible at the left and estimates only at the right.">
+      <defs>
+        <marker id="ld-d3-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="head" />
+        </marker>
+      </defs>
+      <rect x="315" y="24" width="270" height="82" rx="8" class="box" />
+      <text x="450" y="52" text-anchor="middle" class="t15 b">Asymptotic</text>
+      <text x="450" y="74" text-anchor="middle" class="t13 muted-t">large-deviation rate function</text>
+      <text x="450" y="93" text-anchor="middle" class="t13 muted-t">and decay rate</text>
+
+      <rect x="30" y="268" width="300" height="104" rx="8" class="box" />
+      <text x="180" y="294" text-anchor="middle" class="t15 b">Exact</text>
+      <text x="180" y="315" text-anchor="middle" class="t13">kill the chain, uniformize:</text>
+      <text x="180" y="334" text-anchor="middle" class="t13">linear algebra on occupancy space</text>
+      <text x="180" y="356" text-anchor="middle" class="t13 muted-t">no sampling error · small n only</text>
+
+      <rect x="570" y="268" width="300" height="104" rx="8" class="box" />
+      <rect x="570" y="268" width="300" height="104" rx="8" class="acc-line" />
+      <text x="720" y="294" text-anchor="middle" class="t15 b">Estimate</text>
+      <text x="720" y="318" text-anchor="middle" class="t13">importance sampling</text>
+      <text x="720" y="337" text-anchor="middle" class="t13">under the tilt</text>
+
+      <line x1="540" y1="108" x2="680" y2="264" class="line" marker-end="url(#ld-d3-arr)" />
+      <text x="650" y="150" class="t14 b">supplies the tilt</text>
+      <text x="650" y="170" class="t13 muted-t">do the approximations</text>
+      <text x="650" y="188" class="t13 muted-t">cost anything?</text>
+
+      <line x1="220" y1="264" x2="360" y2="108" class="line" marker-start="url(#ld-d3-arr)" marker-end="url(#ld-d3-arr)" />
+      <text x="290" y="160" text-anchor="end" class="t13 muted-t">has the rate taken</text>
+      <text x="290" y="178" text-anchor="end" class="t13 muted-t">hold at this n?</text>
+
+      <line x1="334" y1="322" x2="566" y2="322" class="line" marker-start="url(#ld-d3-arr)" marker-end="url(#ld-d3-arr)" />
+      <text x="450" y="292" text-anchor="middle" class="t13 muted-t">genuinely efficient,</text>
+      <text x="450" y="310" text-anchor="middle" class="t13 muted-t">or only assumed to be?</text>
+
+      <rect x="30" y="412" width="300" height="28" rx="4" class="acc-band" />
+      <text x="180" y="431" text-anchor="middle" class="t13">exact feasible</text>
+      <text x="720" y="431" text-anchor="middle" class="t13 muted-t">estimates only</text>
+      <line x1="30" y1="446" x2="868" y2="446" class="line" marker-end="url(#ld-d3-arr)" />
+      <text x="870" y="470" text-anchor="end" class="t13 muted-t">system size n</text>
+    </svg>
+    <p class="caption">
+      <b>Figure 6.</b> Exact, asymptotic and estimated answers to the same question, with the question each
+      pair of them answers. Exact computation is feasible only at small <Tex src="n" />; at large
+      <Tex src="n" /> only estimates remain, which is why the exact answer has to be on hand wherever it
+      can be. The diagram carries no numbers: these comparisons are what the project commits to, and their
+      results are held back.
+    </p>
+  </Container>
+
+  <Container>
+    <p class="text">
+      Against that ground truth you can ask the questions that otherwise get waved through. Has the
+      asymptotic rate actually taken hold at the system sizes anyone simulates? Is the estimator genuinely
+      efficient, or only assumed to be? Do the approximations made in deriving the tilting cost anything
+      that shows up in practice? Of the three, exact against asymptotic is the comparison I find most
+      worth doing.
+    </p>
+  </Container>
+
+  <!-- 5. What we are doing -->
+  <Container>
+    <h1>What we are doing</h1>
+    <p class="text">
+      With Ruoyu Wu in the Department of Mathematics at Iowa State, I am developing importance-sampling
+      estimators for rare events in mean-field join-the-shortest-queue load-balancing systems. The
+      change of measure is guided by large-deviation asymptotics for the system's empirical measure, and
+      we are studying how the estimators behave as the number of servers grows.
+    </p>
+    <p class="text">
+      The estimators run on a reproducible Python simulation framework with deterministic seeding, and
+      they are checked against crude Monte Carlo wherever crude Monte Carlo is reliable. Where the system
+      is small enough, the project's commitment is to check them against probabilities computed exactly,
+      as described above.
+    </p>
+  </Container>
+
+  <!-- 6. Status -->
+  <Container>
+    <h1>Status</h1>
+    <p class="text">
+      Ongoing since November 2024, as an Undergraduate Research Fellow in the Department of Mathematics
+      at Iowa State, with a Dean's High Impact Undergraduate Research Award (2026). A manuscript with
+      Ruoyu Wu is in preparation:
+      <em>Large-Deviation-Guided Importance Sampling for Rare Events in the Mean-Field
+      Join-the-Shortest-Queue Model</em>.
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>On this page</th><th>Held back pending submission</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>The setting and the problem, in the words of the public write-up</td>
+            <td>The precise rare event and the model's parameters</td>
+          </tr>
+          <tr>
+            <td>The textbook definitions this page uses: the importance-sampling identity, the Cramér transform, the <Tex src="h" />-transform, uniformization, logarithmic efficiency</td>
+            <td>How the project's change of measure is constructed</td>
+          </tr>
+          <tr>
+            <td>Classical baselines with exact references (Figures 2 to 4)</td>
+            <td>Every result of the project</td>
+          </tr>
+          <tr>
+            <td>The site's check for Figure 4, which can be rerun from the site's repository</td>
+            <td>The code and the manuscript text</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text">
+      The code is in a private repository, and results are held back pending submission.
+    </p>
+  </Container>
+</ProjectLayout>
+
+<style>
+  .ld-dgm { --ld-acc: var(--seq-lo); }
+  @media (prefers-color-scheme: dark) { .ld-dgm { --ld-acc: var(--seq-hi); } }
+  .ld-dgm .t13 { font-size: 13px; }
+  .ld-dgm .t14 { font-size: 14px; }
+  .ld-dgm .t15 { font-size: 15px; }
+  .ld-dgm .b { font-weight: 600; }
+  .ld-dgm .thin { stroke-width: 1.1; }
+  .ld-dgm .head { fill: var(--ink-2); }
+  .ld-dgm .head-acc { fill: var(--ld-acc); }
+  .ld-dgm .acc-fill { fill: var(--ld-acc); stroke: var(--ld-acc); stroke-width: 1; }
+  .ld-dgm .acc-line { fill: none; stroke: var(--ld-acc); stroke-width: 2; }
+  .ld-dgm .acc-line.dash { stroke-width: 1.6; stroke-dasharray: 4 3; }
+  .ld-dgm .acc-band { fill: var(--ld-acc); fill-opacity: 0.16; }
+  .ld-dgm .warn { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+</style>

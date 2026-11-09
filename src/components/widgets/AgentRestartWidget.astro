@@ -1,0 +1,459 @@
+---
+/**
+ * W1 · Restart or wait: the classical question, for a run-time law you know.
+ *
+ * CLASSICAL BASELINE, NOT PROJECT DATA. A known run-time law, independent and
+ * identically distributed restarts, nothing fitted to any agent, and nothing
+ * about the project's held-back method. The exact values are the closed forms
+ * in AgentRestartMath.ts (Φ via the site's normalTail); beside them a seeded
+ * simulation of the restart process (site makeRng, sfc32 + Box-Muller) runs to
+ * 200,000 replications as the check. τ* comes from bisection on the sign of
+ * S F − f (A + c); when the best attainable gain is under 1e-6 of E[T] the
+ * widget says so instead of printing an ill-conditioned τ*.
+ *
+ * Markup is the site's .widget pattern (src/components/clarity/README.md).
+ */
+interface Props { id?: string }
+const { id = 'restart-widget' } = Astro.props;
+---
+
+<div class="widget agent-restart" id={id} data-agent-restart>
+  <div class="widget-head">
+    <h3>Restart or wait: the classical question, for a run-time law you know</h3>
+    <span class="ref">classical baseline, not project data · exact: closed form in Φ · check: seeded simulation of the restart process</span>
+  </div>
+
+  <div class="widget-body">
+    <div>
+      <div class="widget-plot">
+        <svg viewBox="0 0 640 360" role="img" data-plot
+          aria-label="Expected completion time when every run is restarted at cutoff tau, and the mean residual life of a run already tau old, against tau on a logarithmic axis, for the chosen run-time law. Drag to move tau.">
+          <defs>
+            <clipPath id="ar-w1-clip"><rect x="58" y="12" width="568" height="294"></rect></clipPath>
+          </defs>
+          <g data-grid></g>
+          <g clip-path="url(#ar-w1-clip)">
+            <g data-shade></g>
+            <line class="ar-ref ar-dotted" data-ref-et x1="58" x2="626"></line>
+            <line class="ar-ref ar-dashed" data-ref-etc x1="58" x2="626"></line>
+            <path class="ar-m" data-curve-m></path>
+            <path class="ar-e" data-curve-e></path>
+            <circle class="ar-star" data-star r="5.5"></circle>
+          </g>
+          <g data-marker>
+            <line class="ar-cursor" data-cursor y1="12" y2="306"></line>
+            <circle class="ar-pt-m" data-pt-m r="3.5"></circle>
+            <circle class="ar-pt-e" data-pt-e r="3.5"></circle>
+            <circle class="ar-handle" data-handle cy="306" r="7"></circle>
+            <text class="ar-handle-t" data-handle-t y="300" text-anchor="middle">τ</text>
+          </g>
+          <text class="ar-note" data-note x="618" y="294" text-anchor="end"></text>
+        </svg>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span><svg class="sw" viewBox="0 0 22 10"><line class="ar-e" x1="1" y1="5" x2="21" y2="5"></line></svg><span>E[T<sub>τ,c</sub>], restarting at cutoff τ</span></span>
+        <span><svg class="sw" viewBox="0 0 22 10"><line class="ar-m" x1="1" y1="5" x2="21" y2="5"></line></svg><span>m(τ), time still to go</span></span>
+        <span><svg class="sw" viewBox="0 0 22 10"><line class="ar-ref ar-dashed" x1="1" y1="5" x2="21" y2="5"></line></svg><span>E[T] + c</span></span>
+        <span><svg class="sw" viewBox="0 0 22 10"><line class="ar-ref ar-dotted" x1="1" y1="5" x2="21" y2="5"></line></svg><span>E[T], never restarting</span></span>
+        <span><svg class="sw" viewBox="0 0 22 10"><rect class="ar-shade" x="1" y="0" width="20" height="10"></rect></svg><span>restarting at τ helps</span></span>
+        <span><svg class="sw" viewBox="0 0 22 10"><circle class="ar-star" cx="11" cy="5" r="4"></circle></svg><span>best cutoff τ*</span></span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="control">
+        <label for={`${id}-family`}>Run-time law</label>
+        <select id={`${id}-family`} data-family>
+          <option value="lognormal" selected>lognormal, median 1</option>
+          <option value="mixture">two-mode mixture</option>
+          <option value="hang">lognormal that can hang</option>
+        </select>
+      </div>
+      <div class="control" data-for="lognormal">
+        <label for={`${id}-sigma`}>σ, spread of ln T <output data-out="sigma">1.5</output></label>
+        <input id={`${id}-sigma`} type="range" min="0.25" max="2.5" step="0.05" value="1.5" data-in="sigma" />
+      </div>
+      <div class="control" data-for="mixture" hidden>
+        <label for={`${id}-slow`}>slow fraction <output data-out="slow">0.2</output></label>
+        <input id={`${id}-slow`} type="range" min="0" max="0.5" step="0.01" value="0.2" data-in="slow" />
+      </div>
+      <div class="control" data-for="mixture" hidden>
+        <label for={`${id}-slowmed`}>slow median <output data-out="slowmed">20.09</output></label>
+        <input id={`${id}-slowmed`} type="range" min="1.6094" max="4.6052" step="0.001" value="3" data-in="slowmed" />
+      </div>
+      <div class="control" data-for="hang" hidden>
+        <label for={`${id}-q`}>q, chance a run hangs <output data-out="q">0.05</output></label>
+        <input id={`${id}-q`} type="range" min="0" max="0.3" step="0.01" value="0.05" data-in="q" />
+      </div>
+      <div class="control">
+        <label for={`${id}-c`}>c, relaunch cost <output data-out="c">0.5</output></label>
+        <input id={`${id}-c`} type="range" min="0" max="2" step="0.05" value="0.5" data-in="c" />
+      </div>
+      <div class="control">
+        <label for={`${id}-tau`}>τ, age or cutoff <output data-out="tau">2</output></label>
+        <input id={`${id}-tau`} type="range" min="-3" max="3" step="0.001" value="0.30103" data-in="tau" />
+      </div>
+
+      <div class="readings">
+        <div><span>E[T], never restarting</span> <b data-r="et">3.08</b></div>
+        <div><span>F(τ), finished by τ</span> <b data-r="F">—</b></div>
+        <div><span>m(τ), time still to go</span> <b data-r="m">—</b></div>
+        <div><span>E[T] + c</span> <b data-r="etc">—</b></div>
+        <div aria-live="polite"><b data-r="verdict">—</b></div>
+        <div><span>E[T<sub>τ,c</sub>], exact</span> <b data-r="e">—</b></div>
+        <div><span>simulated</span> <b data-r="sim">—</b></div>
+        <div><span data-r="simn">—</span></div>
+        <div><span>best cutoff τ*</span> <b data-r="star">—</b></div>
+        <div><span>E[T<sub>τ*,c</sub>]</span> <b data-r="estar">—</b></div>
+      </div>
+    </div>
+  </div>
+  <noscript><p class="caption">This figure needs JavaScript. Figures 2 to 4 show the same quantities as static plots.</p></noscript>
+</div>
+
+<style>
+  .agent-restart .control[hidden] { display: none; }
+  .agent-restart select { width: 100%; font-family: 'Poppins', sans-serif; font-size: 13px; }
+  .agent-restart .widget-plot svg { touch-action: pan-y; cursor: ew-resize; }
+  .agent-restart .legend { gap: 0.4em 1.2em; }
+  .agent-restart .legend > span { display: inline-flex; align-items: center; gap: 0.4em; }
+  .agent-restart .legend sub, .agent-restart .readings sub { font-size: 75%; }
+  .agent-restart .sw { width: 22px; height: 10px; overflow: visible; }
+
+  .agent-restart :global(.ar-grid) { stroke: var(--rule-strong); stroke-width: 0.6; opacity: 0.6; }
+  .agent-restart :global(.ar-axis) { stroke: var(--ink-2); stroke-width: 1; }
+  .agent-restart :global(.ar-tick) { font-family: 'Fira Code', monospace; font-size: 12px; fill: var(--ink-2); }
+  .agent-restart :global(.ar-title) { font-family: 'Poppins', sans-serif; font-size: 13px; fill: var(--ink-2); }
+  .agent-restart :global(.ar-shade) { fill: var(--seq-mid); fill-opacity: 0.14; stroke: none; }
+  .ar-e { fill: none; stroke: var(--seq-lo); stroke-width: 2.4; }
+  .ar-m { fill: none; stroke: var(--ink-2); stroke-width: 1.8; }
+  .ar-ref { stroke: var(--ink); stroke-width: 1.1; fill: none; }
+  .ar-dashed { stroke-dasharray: 6 4; }
+  .ar-dotted { stroke-dasharray: 2 3; }
+  .ar-star { fill: var(--seq-lo); stroke: var(--ground); stroke-width: 1.5; }
+  .ar-cursor { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; }
+  .ar-pt-e { fill: var(--seq-lo); }
+  .ar-pt-m { fill: var(--ink-2); }
+  .ar-handle { fill: var(--ground); stroke: var(--ink); stroke-width: 1.4; }
+  .ar-handle-t { font-family: 'Poppins', sans-serif; font-size: 13px; fill: var(--ink); pointer-events: none; }
+  .ar-note { font-family: 'Poppins', sans-serif; font-size: 13px; fill: var(--ink); }
+
+  @media (prefers-color-scheme: dark) {
+    .ar-e { stroke: var(--seq-hi); }
+    .ar-star, .ar-pt-e { fill: var(--seq-hi); }
+  }
+</style>
+
+<script>
+  import {
+    lognormal, twoMode, hanging, pieces, meanTime, policyTime, meanResidual, optimum, RestartSim,
+    type Law, type Optimum,
+  } from './AgentRestartMath';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  /** Plot frame in viewBox units, and the log10 range of tau it shows. */
+  const X0 = 58, X1 = 626, Y0 = 12, Y1 = 306;
+  const LT0 = -3, LT1 = 3;
+  const CURVE_POINTS = 241;
+  /** The check: replications of the restart process, and attempts drawn per frame. */
+  const SIM_TARGET = 200_000;
+  const SIM_BUDGET = 40_000;
+  /** Below this relative gain, tau* is numerically ill-defined: say so instead. */
+  const GAIN_FLOOR = 1e-6;
+  /** Below this F(tau), one replication needs too many attempts to simulate live. */
+  const SIM_MIN_F = 1e-3;
+
+  const SUP: Record<string, string> = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+
+  /** Four significant figures; scientific with a ×10ⁿ mantissa outside [1e-3, 1e5). */
+  function fmt(x: number, digits = 4): string {
+    if (Number.isNaN(x)) return '—';
+    if (!Number.isFinite(x)) return '∞';
+    if (x === 0) return '0';
+    const ax = Math.abs(x);
+    if (ax >= 1e5 || ax < 1e-3) {
+      const e = Math.floor(Math.log10(ax));
+      const m = x / 10 ** e;
+      return `${m.toFixed(2)} × 10${String(e).split('').map((ch) => SUP[ch] ?? ch).join('')}`;
+    }
+    return String(Number(x.toPrecision(digits)));
+  }
+
+  const el = (tag: string, attrs: Record<string, string | number>, text?: string): SVGElement => {
+    const node = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, String(v));
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+
+  const xOf = (tau: number) => X0 + ((Math.log10(tau) - LT0) / (LT1 - LT0)) * (X1 - X0);
+  const tauOf = (x: number) => 10 ** (LT0 + ((x - X0) / (X1 - X0)) * (LT1 - LT0));
+
+  function init(root: HTMLElement): void {
+    const q1 = <T extends Element>(sel: string): T => {
+      const node = root.querySelector<T>(sel);
+      if (!node) throw new Error(`agent-restart widget: missing ${sel}`);
+      return node;
+    };
+    const svg = q1<SVGSVGElement>('[data-plot]');
+    const gGrid = q1<SVGGElement>('[data-grid]');
+    const gShade = q1<SVGGElement>('[data-shade]');
+    const refEt = q1<SVGLineElement>('[data-ref-et]');
+    const refEtc = q1<SVGLineElement>('[data-ref-etc]');
+    const curveE = q1<SVGPathElement>('[data-curve-e]');
+    const curveM = q1<SVGPathElement>('[data-curve-m]');
+    const star = q1<SVGCircleElement>('[data-star]');
+    const cursor = q1<SVGLineElement>('[data-cursor]');
+    const ptE = q1<SVGCircleElement>('[data-pt-e]');
+    const ptM = q1<SVGCircleElement>('[data-pt-m]');
+    const handle = q1<SVGCircleElement>('[data-handle]');
+    const handleT = q1<SVGTextElement>('[data-handle-t]');
+    const note = q1<SVGTextElement>('[data-note]');
+    const family = q1<HTMLSelectElement>('[data-family]');
+    const input = (k: string) => q1<HTMLInputElement>(`[data-in="${k}"]`);
+    const out = (k: string) => q1<HTMLOutputElement>(`[data-out="${k}"]`);
+    const reading = (k: string) => q1<HTMLElement>(`[data-r="${k}"]`);
+    const inSigma = input('sigma'), inSlow = input('slow'), inSlowMed = input('slowmed');
+    const inQ = input('q'), inC = input('c'), inTau = input('tau');
+
+    let law: Law = lognormal(1.5);
+    let ET = meanTime(law);
+    let c = 0.5;
+    let tau = 2;
+    let best: Optimum | null = null;
+    let guard = false;
+    let yLo = -1, yHi = 1;
+    let sim: RestartSim | null = null;
+    let exactAtTau = NaN;
+    let raf = 0;
+    let visible = false;
+
+    const yOf = (v: number) => Y1 - ((Math.log10(v) - yLo) / (yHi - yLo)) * (Y1 - Y0);
+    const clampY = (y: number) => Math.min(Y1 + 60, Math.max(Y0 - 60, y));
+
+    function readLaw(): { law: Law; key: string } {
+      const f = family.value;
+      if (f === 'mixture') {
+        const slow = Number(inSlow.value), med = Math.exp(Number(inSlowMed.value));
+        out('slow').value = fmt(slow, 2);
+        out('slowmed').value = fmt(med);
+        return { law: twoMode(slow, med), key: `mix/${slow}/${Number(inSlowMed.value)}` };
+      }
+      if (f === 'hang') {
+        const q = Number(inQ.value);
+        out('q').value = fmt(q, 2);
+        return { law: hanging(q), key: `hang/${q}` };
+      }
+      const s = Number(inSigma.value);
+      out('sigma').value = fmt(s, 3);
+      return { law: lognormal(s), key: `lognormal/${s}` };
+    }
+
+    let lawKey = '';
+
+    function path(values: number[], taus: number[]): string {
+      let d = '';
+      let pen = false;
+      for (let i = 0; i < values.length; i++) {
+        const v = values[i];
+        if (!(v > 0) || !Number.isFinite(v)) { pen = false; continue; }
+        d += `${pen ? 'L' : 'M'}${xOf(taus[i]).toFixed(1)} ${clampY(yOf(v)).toFixed(1)}`;
+        pen = true;
+      }
+      return d;
+    }
+
+    function drawGrid(): void {
+      gGrid.replaceChildren();
+      for (let e = LT0; e <= LT1; e++) {
+        const x = xOf(10 ** e);
+        gGrid.append(el('line', { class: 'ar-grid', x1: x, x2: x, y1: Y0, y2: Y1 }));
+        gGrid.append(el('text', { class: 'ar-tick', x, y: Y1 + 17, 'text-anchor': 'middle' }, fmt(10 ** e)));
+      }
+      for (let e = yLo; e <= yHi; e++) {
+        const y = yOf(10 ** e);
+        gGrid.append(el('line', { class: 'ar-grid', x1: X0, x2: X1, y1: y, y2: y }));
+        gGrid.append(el('text', { class: 'ar-tick', x: X0 - 7, y: y + 4, 'text-anchor': 'end' }, fmt(10 ** e)));
+      }
+      gGrid.append(el('line', { class: 'ar-axis', x1: X0, x2: X1, y1: Y1, y2: Y1 }));
+      gGrid.append(el('line', { class: 'ar-axis', x1: X0, x2: X0, y1: Y0, y2: Y1 }));
+      gGrid.append(el('text', { class: 'ar-title', x: (X0 + X1) / 2, y: 352, 'text-anchor': 'middle' },
+        'τ: cutoff, or age of the current run (multiples of the median, log axis)'));
+      gGrid.append(el('text', { class: 'ar-title', transform: `translate(15 ${(Y0 + Y1) / 2}) rotate(-90)`, 'text-anchor': 'middle' },
+        'expected time (medians, log axis)'));
+    }
+
+    /** Law or relaunch cost changed: curves, axes, optimum. */
+    function rebuild(): void {
+      const r = readLaw();
+      law = r.law;
+      lawKey = r.key;
+      c = Number(inC.value);
+      out('c').value = fmt(c, 3);
+      for (const node of root.querySelectorAll<HTMLElement>('[data-for]')) node.hidden = node.dataset.for !== family.value;
+      ET = meanTime(law);
+      const finite = Number.isFinite(ET);
+
+      const taus: number[] = [], es: number[] = [], ms: number[] = [];
+      for (let i = 0; i < CURVE_POINTS; i++) {
+        const t = 10 ** (LT0 + ((LT1 - LT0) * i) / (CURVE_POINTS - 1));
+        const p = pieces(law, t);
+        taus.push(t);
+        es.push(policyTime(p, c));
+        ms.push(meanResidual(law, p));
+      }
+
+      best = optimum(law, c);
+      guard = finite && !(1 - best.time / ET >= GAIN_FLOOR);
+
+      // Axes: whole decades, from just under the lowest curve to a few times E[T] + c.
+      const lows = [...es, ...ms].filter((v) => v > 0 && Number.isFinite(v));
+      const lo = Math.min(...lows, best.time);
+      const hiRef = finite ? ET + c : best.time;
+      yLo = Math.floor(Math.log10(0.7 * lo));
+      yHi = Math.max(yLo + 2, Math.ceil(Math.log10(6 * hiRef)));
+      drawGrid();
+
+      curveE.setAttribute('d', path(es, taus));
+      curveM.setAttribute('d', finite ? path(ms, taus) : '');
+
+      gShade.replaceChildren();
+      if (finite) {
+        // Shade where m(tau) > E[T] + c, which (identity) is where E[T_{tau,c}] < E[T].
+        let start = -1;
+        for (let i = 0; i <= CURVE_POINTS; i++) {
+          const helps = i < CURVE_POINTS && ms[i] > ET + c;
+          if (helps && start < 0) {
+            start = i;
+          } else if (!helps && start >= 0) {
+            const xa = start === 0 ? X0 : (xOf(taus[start - 1]) + xOf(taus[start])) / 2;
+            const xb = i === CURVE_POINTS ? X1 : (xOf(taus[i - 1]) + xOf(taus[i])) / 2;
+            gShade.append(el('rect', { class: 'ar-shade', x: xa, y: Y0, width: Math.max(0, xb - xa), height: Y1 - Y0 }));
+            start = -1;
+          }
+        }
+        for (const [line, v] of [[refEt, ET], [refEtc, ET + c]] as const) {
+          const y = yOf(v);
+          line.setAttribute('y1', y.toFixed(1));
+          line.setAttribute('y2', y.toFixed(1));
+        }
+        refEt.style.display = '';
+        refEtc.style.display = c > 0 ? '' : 'none';
+        note.textContent = guard ? 'best gain under 10⁻⁶ of E[T]: nothing measurable' : '';
+      } else {
+        refEt.style.display = 'none';
+        refEtc.style.display = 'none';
+        note.textContent = 'never restarting: infinite';
+      }
+
+      const showStar = !guard && best.interior && best.tau >= 10 ** LT0 && best.tau <= 10 ** LT1;
+      star.style.display = showStar ? '' : 'none';
+      if (showStar) {
+        star.setAttribute('cx', xOf(best.tau).toFixed(1));
+        star.setAttribute('cy', clampY(yOf(best.time)).toFixed(1));
+      }
+
+      reading('et').textContent = finite ? fmt(ET) : '∞';
+      reading('etc').textContent = finite ? fmt(ET + c) : '∞';
+      if (guard) {
+        reading('star').textContent = 'restarting gains nothing measurable here';
+        reading('estar').textContent = `${fmt(best.time, 7)} vs E[T] ${fmt(ET, 7)}`;
+      } else if (!best.interior) {
+        reading('star').textContent = 'at the edge of the range searched';
+        reading('estar').textContent = fmt(best.time);
+      } else {
+        reading('star').textContent = fmt(best.tau);
+        reading('estar').textContent = finite ? `${fmt(best.time)} (ratio ${fmt(best.time / ET, 3)})` : fmt(best.time);
+      }
+      update();
+    }
+
+    /** Cutoff changed: marker, readings, and a fresh seeded simulation. */
+    function update(): void {
+      tau = 10 ** Number(inTau.value);
+      out('tau').value = fmt(tau);
+      const p = pieces(law, tau);
+      const e = policyTime(p, c);
+      const m = meanResidual(law, p);
+      const finite = Number.isFinite(ET);
+      exactAtTau = e;
+
+      const x = xOf(tau);
+      cursor.setAttribute('x1', x.toFixed(1));
+      cursor.setAttribute('x2', x.toFixed(1));
+      handle.setAttribute('cx', x.toFixed(1));
+      handleT.setAttribute('x', x.toFixed(1));
+      handleT.setAttribute('y', String(Y1 + 4.5));
+      ptE.setAttribute('cx', x.toFixed(1));
+      ptE.setAttribute('cy', clampY(yOf(e)).toFixed(1));
+      ptE.style.display = e > 0 && Number.isFinite(e) ? '' : 'none';
+      ptM.setAttribute('cx', x.toFixed(1));
+      ptM.setAttribute('cy', finite ? clampY(yOf(m)).toFixed(1) : '0');
+      ptM.style.display = finite && m > 0 && Number.isFinite(m) ? '' : 'none';
+
+      reading('F').textContent = fmt(p.F);
+      reading('m').textContent = finite ? fmt(m) : '∞';
+      reading('e').textContent = fmt(e);
+      if (!finite) {
+        reading('verdict').textContent = 'any finite cutoff beats never restarting; the rule m(τ) > E[T] + c does not apply';
+      } else if (m > ET + c) {
+        const gain = 1 - e / ET;
+        reading('verdict').textContent = gain < GAIN_FLOOR
+          ? 'm(τ) > E[T] + c: restarting at τ helps, by under 10⁻⁶ of E[T]'
+          : 'm(τ) > E[T] + c: restarting at τ helps';
+      } else {
+        reading('verdict').textContent = 'm(τ) ≤ E[T] + c: restarting at τ does not help';
+      }
+
+      // Seed from the numeric settings, so a drag and the slider reaching the same tau agree.
+      sim = p.F >= SIM_MIN_F ? new RestartSim(law, tau, c, `agent-restart/${lawKey}/${c}/${Number(inTau.value)}`) : null;
+      if (!sim) {
+        reading('sim').textContent = 'not run live';
+        reading('simn').textContent = `one replication needs about ${fmt(1 / p.F, 2)} attempts at this τ`;
+      }
+      schedule();
+    }
+
+    function step(): void {
+      raf = 0;
+      if (!sim || !visible) return;
+      sim.advance(SIM_BUDGET, SIM_TARGET);
+      const z = (sim.mean - exactAtTau) / sim.se;
+      reading('sim').textContent = `${fmt(sim.mean)} ± ${fmt(sim.se, 2)}`;
+      reading('simn').textContent = `n = ${sim.n.toLocaleString('en-US')} replications · z =${Number.isFinite(z) ? z.toFixed(2) : '—'}${sim.n < SIM_TARGET ? ' · running' : ''}`;
+      if (sim.n < SIM_TARGET) schedule();
+    }
+
+    function schedule(): void {
+      if (!raf && sim && visible && sim.n < SIM_TARGET) raf = requestAnimationFrame(step);
+    }
+
+    // Dragging tau on the plot (the range input is the keyboard path).
+    let dragging = false;
+    const moveTo = (clientX: number) => {
+      const r = svg.getBoundingClientRect();
+      const x = ((clientX - r.left) / r.width) * 640;
+      const t = tauOf(Math.min(X1, Math.max(X0, x)));
+      inTau.value = Math.log10(t).toFixed(3);
+      update();
+    };
+    svg.addEventListener('pointerdown', (ev) => { dragging = true; svg.setPointerCapture(ev.pointerId); moveTo(ev.clientX); });
+    svg.addEventListener('pointermove', (ev) => { if (dragging) moveTo(ev.clientX); });
+    const stop = () => { dragging = false; };
+    svg.addEventListener('pointerup', stop);
+    svg.addEventListener('pointercancel', stop);
+
+    family.addEventListener('change', rebuild);
+    for (const node of [inSigma, inSlow, inSlowMed, inQ, inC]) node.addEventListener('input', rebuild);
+    inTau.addEventListener('input', update);
+
+    new IntersectionObserver((entries) => {
+      visible = entries.some((en) => en.isIntersecting);
+      schedule();
+    }).observe(root);
+
+    rebuild();
+  }
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-agent-restart]')) init(root);
+</script>

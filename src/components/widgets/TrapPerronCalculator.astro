@@ -1,0 +1,452 @@
+---
+/**
+ * W1. Model F calculator: the Perron root and the youth premium of the
+ * trapped state ("Inside the Trap", arXiv:2611.08902, Sec. 3 and App. A).
+ *
+ * Model F is a fluid FIFO server on which every turn misses. Turn k costs c_k
+ * GPU seconds and G_k = P(T >= k). Everything below is a displayed statement of
+ * the paper, evaluated in the browser:
+ *
+ *   lam_miss = 1 / sum_k c_k G_k,  rho = lam / lam_miss                (Sec. 3)
+ *   lam sum_k c_k G_k z^-k = 1,  z > 1 iff rho > 1          (Perron root, Lemma 2)
+ *   gamma = z - 1, alpha = lam (1 - E[z^-T]), D = lam E[z^-T],
+ *   nu^z_k = G_k z^-k / sum_j G_j z^-j                            (Theorem 1(a))
+ *   D / lam_miss = H(z) Gamma(z),  H = E[T] E[z^-T] / sum_k G_k z^-k,
+ *   Gamma = E_nu[c] / E_{nu^z}[c]                                    (Theorem 2)
+ *
+ * Costs: c_k = t_P(L_k, 0) + delta with the paper's cost model (App. E; the
+ * constants come from src/sim/modelf.js, the site's copy of that model).
+ * delta, the all-miss per-turn decode share, is not printed in the paper; for
+ * the standard workload the site's value gives lam_miss = 1.0043 lam_ref (paper:
+ * 1.004), and for MIRROR delta is solved in closed form so that lam_miss =
+ * 1.046 lam_ref, the capacity the paper states. Nothing is random, so no PRNG.
+ *
+ * Exact references shown beside the readings: the paper's published model-F
+ * values for the 300k cell at 1.35 and 1.65 lam_ref and the frozen MIRROR
+ * prediction. Checks run on load: Theorem 2's identity, App. A's closed form
+ * for H, the geometric constant-cost case (D = lam_miss; z = q + rho(1 - q) is
+ * derived for this page, not stated in the paper), dz/drho -> 1/kbar_c at
+ * rho = 1, and the negative premium for slowly growing costs.
+ */
+import { COST, MODEL_WL } from '../../sim/modelf.js';
+import { LAMBDA_REF } from '../../sim/trap.js';
+
+interface Props { id?: string }
+const { id = 'trap-perron' } = Astro.props;
+const cfg = { cost: COST, wl: MODEL_WL, lamRef: LAMBDA_REF };
+---
+
+<div class="widget trap-perron" id={id} data-trap-perron data-cfg={JSON.stringify(cfg)}>
+  <div class="widget-head">
+    <h3>Model F calculator: Perron root and youth premium</h3>
+    <span class="ref" data-ref>exact reference: paper, model F, 300k cell at 1.65 λ<sub>ref</sub>: D/λ<sub>miss</sub> = 1.223 = 0.989 × 1.236</span>
+  </div>
+  <div class="widget-body">
+    <div class="widget-plot">
+      <svg viewBox="0 0 640 360" role="img" data-plot
+        aria-label="Left: the turn mix a trapped server serves, against the stationary mix. Right: completions over the all-miss capacity against load."></svg>
+    </div>
+    <div class="controls">
+      <div class="control">
+        <label for={`${id}-wl`}>Workload</label>
+        <select id={`${id}-wl`} data-wl>
+          <option value="standard" selected>Standard, T = min(Geom(1/15), 60)</option>
+          <option value="mirror">MIRROR, T = min(Geom(1/1000), 20)</option>
+          <option value="slow">Slowly growing costs, cₖ = 1 + 10⁻³(k − 1)</option>
+          <option value="geom">Geometric T, constant cost</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for={`${id}-load`}>
+          <span data-lab-engine>Arrival rate λ/λ<sub>ref</sub></span>
+          <span data-lab-rho hidden>Load ρ = λ/λ<sub>miss</sub></span>
+          <output data-out>1.65</output>
+        </label>
+        <input id={`${id}-load`} type="range" min="1.1" max="6.5" step="0.05" value="1.65" data-load />
+        <div class="tp-presets" data-presets>
+          <!-- Clarity's .button uppercases its label (λ would become Λ), so the labels carry no letters. -->
+          <button type="button" class="button" data-preset="1.35" aria-label="Set the arrival rate to 1.35 times lambda ref">1.35×</button>
+          <button type="button" class="button" data-preset="1.65" aria-label="Set the arrival rate to 1.65 times lambda ref">1.65×</button>
+        </div>
+      </div>
+      <div class="readings" aria-live="polite" data-readings></div>
+    </div>
+  </div>
+  <div class="readings tp-checks" data-checks>
+    <div>Checks run in your browser: computing…</div>
+  </div>
+</div>
+
+<style>
+  .trap-perron { --tp-acc: var(--seq-lo); }
+  @media (prefers-color-scheme: dark) { .trap-perron { --tp-acc: var(--seq-hi); } }
+  .trap-perron select { width: 100%; height: auto; padding: 4px 6px; font-family: 'Poppins', sans-serif; font-size: 13px; }
+  .trap-perron .control label span { font-family: inherit; font-size: inherit; font-weight: inherit; }
+  .tp-presets { display: flex; gap: 0.6em; flex-wrap: wrap; padding-top: 0.6vh; }
+  .tp-presets[hidden] { display: none; }
+  .trap-perron :global(.tp-row) { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: 0.6em; }
+  .trap-perron :global(.tp-row .tp-ref) { flex-basis: 100%; text-align: right; }
+  .trap-perron :global(.tp-ok) { color: var(--ink); }
+  .tp-checks { margin-top: 1.5vh; }
+  .trap-perron :global(text) { font-family: 'Poppins', sans-serif; fill: var(--ink); font-size: 13px; }
+  .trap-perron :global(.tp-muted) { fill: var(--ink-2); }
+  .trap-perron :global(.tp-title) { font-size: 13.5px; font-weight: 500; }
+  .trap-perron :global(.tp-num) { font-family: 'Fira Code', monospace; font-size: 12px; fill: var(--ink-2); }
+  .trap-perron :global(.tp-axis) { stroke: var(--ink-2); stroke-width: 1; fill: none; }
+  .trap-perron :global(.tp-grid) { stroke: var(--rule-strong); stroke-width: 0.8; stroke-dasharray: 2 4; fill: none; }
+  .trap-perron :global(.tp-bar) { fill: var(--tp-acc); opacity: 0.85; }
+  .trap-perron :global(.tp-stat) { stroke: var(--ink); stroke-width: 1.6; fill: none; stroke-linejoin: round; }
+  .trap-perron :global(.tp-curve) { stroke: var(--tp-acc); stroke-width: 2.2; fill: none; stroke-linejoin: round; }
+  .trap-perron :global(.tp-one) { stroke: var(--ink-2); stroke-width: 1.2; stroke-dasharray: 6 4; fill: none; }
+  .trap-perron :global(.tp-dot) { fill: var(--tp-acc); stroke: var(--ground); stroke-width: 2; }
+  .trap-perron :global(.tp-key-bar) { fill: var(--tp-acc); opacity: 0.85; }
+</style>
+
+<script>
+  interface Cost { a: number; f0: number; b: number; cp: number; Bc: number; delta: number }
+  interface Wl { L0: number; step: number; q: number; K: number }
+  interface Cfg { cost: Cost; wl: Wl; lamRef: number }
+  type Key = 'standard' | 'mirror' | 'slow' | 'geom';
+
+  interface Workload {
+    key: Key;
+    /** Slider is lambda/lambda_ref (engine workloads) or rho (abstract ones). */
+    engine: boolean;
+    /** T = min(Geometric(1 - q), K): App. A's closed form for H applies. */
+    truncGeom: boolean;
+    q: number; K: number;
+    G: number[]; c: number[]; p: number[]; P: number[] | null;
+    ET: number; cG: number; lamMiss: number; kbar: number;
+  }
+
+  interface Lim {
+    s: number; lam: number; rho: number; z: number; gapSlope: number; alphaRatio: number;
+    D: number; DoverMiss: number; H: number; Gamma: number; nu: number[]; nuz: number[];
+    Pserved: number | null; Pstat: number | null; DoverRef: number | null; Hcf: number | null; perronRes: number;
+  }
+
+  type RefKey = 'rho' | 'gapSlope' | 'alphaRatio' | 'DoverMiss' | 'H' | 'Gamma' | 'DoverRef' | 'Pserved';
+  type RefSet = Partial<Record<RefKey, string>>;
+
+  /** MIRROR's step-capped workload and its stated capacity (paper, Sec. 5). */
+  const MIRROR = { q: 1 - 1 / 1000, K: 20, lamMissOverRef: 1.046 };
+  /** "Slowly growing costs" c_k = 1 + 1e-3 (k - 1) with the standard T (Sec. 3). */
+  const SLOW_SLOPE = 1e-3;
+  /** Untruncated geometric T: q^600 < 1e-17, below double precision. */
+  const GEOM_K = 600;
+  const S_MIN = 1.1, S_MAX = 6.5, S_STEP = 0.05;
+
+  /** Paper-stated model-F values (model F's predictions for the 300k cell; MIRROR frozen before its runs). */
+  const REFS: Partial<Record<Key, Record<string, RefSet>>> = {
+    standard: {
+      '1.35': { DoverMiss: '1.126', alphaRatio: '0.634', gapSlope: '.013', DoverRef: '1.13', Pserved: '9324' },
+      '1.65': { DoverMiss: '1.223', H: '0.989', Gamma: '1.236', alphaRatio: '0.653', gapSlope: '.022', DoverRef: '1.23', Pserved: '8606' },
+    },
+    mirror: {
+      '1.35': { rho: '1.291', DoverMiss: '0.870', H: '0.825', Gamma: '1.055', DoverRef: '0.91' },
+      '1.65': { DoverMiss: '0.771', H: '0.699', Gamma: '1.103', DoverRef: '0.81' },
+    },
+  };
+  const LAMMISS_REF: Partial<Record<Key, string>> = { standard: '1.004', mirror: '1.046' };
+
+  const tP = (x: number, c: Cost) =>
+    c.a * Math.max(1, x / c.Bc) + Math.max(c.f0, c.b * x) + c.cp * x * (x + 1) / 2;
+
+  function build(key: Key, q: number, K: number, cost: (k: number) => number,
+                 prompt: ((k: number) => number) | null, engine: boolean, truncGeom: boolean): Workload {
+    const G: number[] = [], c: number[] = [], p: number[] = [], P: number[] = [];
+    for (let k = 1; k <= K; k++) {
+      G.push(Math.pow(q, k - 1));
+      c.push(cost(k));
+      if (prompt) P.push(prompt(k));
+    }
+    for (let i = 0; i < K; i++) p.push(G[i] - (i + 1 < K ? G[i + 1] : 0));
+    let ET = 0, cG = 0, kcG = 0;
+    for (let i = 0; i < K; i++) { ET += G[i]; cG += c[i] * G[i]; kcG += (i + 1) * c[i] * G[i]; }
+    return { key, engine, truncGeom, q, K, G, c, p, P: prompt ? P : null, ET, cG, lamMiss: 1 / cG, kbar: kcG / cG };
+  }
+
+  function workloads(cfg: Cfg): Record<Key, Workload> {
+    const { cost, wl, lamRef } = cfg;
+    const L = (k: number) => wl.L0 + wl.step * (k - 1);
+    const standard = build('standard', wl.q, wl.K, (k) => tP(L(k), cost) + cost.delta, L, true, true);
+    // MIRROR: delta solved so that lam_miss = 1.046 lam_ref exactly.
+    let tG = 0, ETm = 0;
+    for (let k = 1; k <= MIRROR.K; k++) { const g = Math.pow(MIRROR.q, k - 1); tG += tP(L(k), cost) * g; ETm += g; }
+    const deltaM = (1 / (MIRROR.lamMissOverRef * lamRef) - tG) / ETm;
+    const mirror = build('mirror', MIRROR.q, MIRROR.K, (k) => tP(L(k), cost) + deltaM, L, true, true);
+    const slow = build('slow', wl.q, wl.K, (k) => 1 + SLOW_SLOPE * (k - 1), null, false, true);
+    const geom = build('geom', wl.q, GEOM_K, () => 1, null, false, false);
+    return { standard, mirror, slow, geom };
+  }
+
+  /** Perron root of lam sum_k c_k G_k z^-k = 1 (rho > 1), by bisection on log z. */
+  function perron(lam: number, w: Workload): number {
+    const f = (lz: number) => {
+      const x = Math.exp(-lz);
+      let s = 0, pw = 1;
+      for (let i = 0; i < w.K; i++) { pw *= x; s += w.c[i] * w.G[i] * pw; }
+      return lam * s - 1;
+    };
+    let lo = 0, hi = 1;
+    while (f(hi) > 0) hi *= 2;
+    for (let i = 0; i < 100; i++) { const m = 0.5 * (lo + hi); if (f(m) > 0) lo = m; else hi = m; }
+    return Math.exp(0.5 * (lo + hi));
+  }
+
+  function limits(s: number, w: Workload, lamRef: number): Lim {
+    const lam = w.engine ? s * lamRef : s * w.lamMiss;
+    const z = perron(lam, w);
+    const x = 1 / z;
+    let S = 0, Ez = 0, cGz = 0, PS = 0, PG = 0, pw = 1;
+    const nuz: number[] = [], nu: number[] = [];
+    for (let i = 0; i < w.K; i++) {
+      pw *= x;
+      S += w.G[i] * pw; Ez += w.p[i] * pw; cGz += w.c[i] * w.G[i] * pw;
+      if (w.P) { PS += w.P[i] * w.G[i] * pw; PG += w.P[i] * w.G[i]; }
+    }
+    pw = 1;
+    for (let i = 0; i < w.K; i++) { pw *= x; nuz.push(w.G[i] * pw / S); nu.push(w.G[i] / w.ET); }
+    let Hcf: number | null = null;
+    if (w.truncGeom) {
+      let SK = 0;
+      for (let i = 0; i < w.K; i++) SK += w.G[i] * Math.pow(z, w.K - (i + 1));
+      Hcf = 1 - Math.pow(w.q, w.K) * (1 - w.ET / SK);
+    }
+    const D = lam * Ez;
+    return {
+      s, lam, rho: lam / w.lamMiss, z, gapSlope: 1 - 1 / z,
+      alphaRatio: lam * (1 - Ez) / (lam - w.lamMiss),
+      D, DoverMiss: D / w.lamMiss,
+      H: w.ET * Ez / S, Gamma: (w.cG / w.ET) / (cGz / S),
+      nu, nuz,
+      Pserved: w.P ? PS / S : null, Pstat: w.P ? PG / w.ET : null,
+      DoverRef: w.engine ? D / lamRef : null,
+      Hcf, perronRes: Math.abs(lam * cGz - 1),
+    };
+  }
+
+  const loads = (lo: number, hi: number, step: number) => {
+    const out: number[] = [];
+    for (let i = 0; lo + i * step <= hi + 1e-9; i++) out.push(Math.round((lo + i * step) * 1e6) / 1e6);
+    return out;
+  };
+
+  /** Agreement within one unit of the paper's last printed digit. */
+  function matches(value: number, paper: string): boolean {
+    const dec = paper.includes('.') ? paper.split('.')[1].length : 0;
+    return Math.abs(value - Number(paper)) <= Math.pow(10, -dec) + 1e-12;
+  }
+
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  function el(parent: Element, tag: string, attrs: Record<string, string | number>, text?: string): SVGElement {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
+    if (text !== undefined) e.textContent = text;
+    parent.appendChild(e);
+    return e;
+  }
+  /** Text with a subscript, e.g. ("D/λ", "miss", " against load"). */
+  function subText(parent: Element, attrs: Record<string, string | number>, a: string, sub: string, b = ''): void {
+    const t = el(parent, 'text', attrs);
+    t.appendChild(document.createTextNode(a));
+    const s = document.createElementNS(SVGNS, 'tspan');
+    s.setAttribute('dy', '4'); s.setAttribute('font-size', '10'); s.textContent = sub; t.appendChild(s);
+    if (b) { const r = document.createElementNS(SVGNS, 'tspan'); r.setAttribute('dy', '-4'); r.textContent = b; t.appendChild(r); }
+  }
+
+  function niceStep(span: number): number {
+    const steps = [0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 1];
+    return steps.find((st) => span / st <= 6) ?? 1;
+  }
+  const decimals = (st: number) => (st >= 1 ? 0 : st >= 0.1 && st !== 0.25 ? 1 : 2);
+
+  function draw(svg: SVGSVGElement, w: Workload, L: Lim, curve: { s: number; v: number }[]): void {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    // Left: the tilted turn mix (bars) against the stationary mix (line).
+    const A = { x0: 54, x1: 322, y0: 46, y1: 294 };
+    const Kshow = Math.min(w.K, 60);
+    const bw = (A.x1 - A.x0) / Kshow;
+    const top = Math.max(L.nuz[0], L.nu[0], ...L.nu.slice(0, Kshow)) * 1.08;
+    const yst = niceStep(top);
+    const ymax = Math.ceil(top / yst) * yst;
+    const ya = (v: number) => A.y1 - (v / ymax) * (A.y1 - A.y0);
+    el(svg, 'text', { x: A.x0 - 46, y: 24, class: 'tp-title' }, 'Turns served in the trap');
+    for (let v = 0; v <= ymax + 1e-9; v += yst) {
+      el(svg, 'line', { x1: A.x0, x2: A.x1, y1: ya(v), y2: ya(v), class: 'tp-grid' });
+      el(svg, 'text', { x: A.x0 - 6, y: ya(v) + 4, 'text-anchor': 'end', class: 'tp-num' }, v.toFixed(decimals(yst)));
+    }
+    for (let i = 0; i < Kshow; i++) {
+      const y = ya(L.nuz[i]);
+      el(svg, 'rect', { x: A.x0 + i * bw + 0.4, y, width: Math.max(bw - 0.8, 0.6), height: A.y1 - y, class: 'tp-bar' });
+    }
+    let d = '';
+    for (let i = 0; i < Kshow; i++) d += `${i === 0 ? 'M' : 'L'}${(A.x0 + i * bw).toFixed(1)},${ya(L.nu[i]).toFixed(1)}H${(A.x0 + (i + 1) * bw).toFixed(1)}`;
+    el(svg, 'path', { d, class: 'tp-stat' });
+    el(svg, 'line', { x1: A.x0, x2: A.x1, y1: A.y1, y2: A.y1, class: 'tp-axis' });
+    el(svg, 'text', { x: A.x0 + bw / 2, y: A.y1 + 18, 'text-anchor': 'middle', class: 'tp-num' }, '1');
+    el(svg, 'text', { x: A.x1 - bw / 2, y: A.y1 + 18, 'text-anchor': 'middle', class: 'tp-num' }, String(Kshow));
+    el(svg, 'text', { x: (A.x0 + A.x1) / 2, y: A.y1 + 18, 'text-anchor': 'middle', class: 'tp-muted' },
+      w.key === 'geom' ? 'turn k (first 60)' : 'turn k');
+    // Key
+    el(svg, 'rect', { x: A.x0, y: 334, width: 12, height: 10, class: 'tp-key-bar' });
+    el(svg, 'text', { x: A.x0 + 18, y: 343, class: 'tp-muted' }, 'served (tilted)');
+    el(svg, 'path', { d: `M${A.x0 + 132},339 h22`, class: 'tp-stat' });
+    el(svg, 'text', { x: A.x0 + 160, y: 343, class: 'tp-muted' }, 'stationary');
+
+    // Right: D / lam_miss against load, with the all-miss capacity at 1.
+    const B = { x0: 396, x1: 624, y0: 46, y1: 294 };
+    const vs = curve.map((c) => c.v);
+    let lo = Math.min(1, ...vs), hi = Math.max(1, ...vs);
+    if (hi - lo < 0.1) { const m = (hi + lo) / 2; lo = m - 0.05; hi = m + 0.05; }
+    const pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+    const st = niceStep(hi - lo);
+    const xb = (s: number) => B.x0 + ((s - S_MIN) / (S_MAX - S_MIN)) * (B.x1 - B.x0);
+    const yb = (v: number) => B.y1 - ((v - lo) / (hi - lo)) * (B.y1 - B.y0);
+    subText(svg, { x: B.x0 - 46, y: 24, class: 'tp-title' }, 'Completions D/λ', 'miss', ' against load');
+    for (let v = Math.ceil(lo / st) * st; v <= hi + 1e-9; v += st) {
+      el(svg, 'line', { x1: B.x0, x2: B.x1, y1: yb(v), y2: yb(v), class: 'tp-grid' });
+      el(svg, 'text', { x: B.x0 - 6, y: yb(v) + 4, 'text-anchor': 'end', class: 'tp-num' }, v.toFixed(decimals(st)));
+    }
+    el(svg, 'line', { x1: B.x0, x2: B.x1, y1: yb(1), y2: yb(1), class: 'tp-one' });
+    subText(svg, { x: B.x1, y: yb(1) - 6, 'text-anchor': 'end', class: 'tp-muted' }, '1 = λ', 'miss');
+    el(svg, 'path', { d: curve.map((c, i) => `${i ? 'L' : 'M'}${xb(c.s).toFixed(1)},${yb(c.v).toFixed(1)}`).join(''), class: 'tp-curve' });
+    el(svg, 'circle', { cx: xb(L.s), cy: yb(L.DoverMiss), r: 5, class: 'tp-dot' });
+    el(svg, 'line', { x1: B.x0, x2: B.x1, y1: B.y1, y2: B.y1, class: 'tp-axis' });
+    for (let t = 2; t <= 6; t++) el(svg, 'text', { x: xb(t), y: B.y1 + 18, 'text-anchor': 'middle', class: 'tp-num' }, String(t));
+    if (w.engine) subText(svg, { x: (B.x0 + B.x1) / 2, y: B.y1 + 40, 'text-anchor': 'middle', class: 'tp-muted' }, 'λ/λ', 'ref');
+    else subText(svg, { x: (B.x0 + B.x1) / 2, y: B.y1 + 40, 'text-anchor': 'middle', class: 'tp-muted' }, 'ρ = λ/λ', 'miss');
+  }
+
+  function row(name: string, value: string, paper?: string, ok?: boolean): string {
+    const ref = paper === undefined ? '' :
+      `<span class="tp-ref">paper ${paper} ${ok ? '<span class="tp-ok">✓</span>' : '✗ differs'}</span>`;
+    return `<div class="tp-row"><span>${name}</span><b>${value}</b>${ref}</div>`;
+  }
+
+  function readings(w: Workload, L: Lim, refs: RefSet): string {
+    const r = (k: RefKey, name: string, v: number | null, digits: number) => {
+      if (v === null) return '';
+      const p = refs[k];
+      return row(name, v.toFixed(digits), p, p === undefined ? undefined : matches(v, p));
+    };
+    let html = r('rho', 'ρ = λ/λ<sub>miss</sub>', L.rho, 4);
+    if (w.engine) {
+      const p = LAMMISS_REF[w.key];
+      html += row('λ<sub>miss</sub>/λ<sub>ref</sub>', (w.lamMiss / (L.lam / L.s)).toFixed(4), p, p === undefined ? undefined : matches(w.lamMiss / (L.lam / L.s), p));
+    }
+    html += row('Perron root z', L.z.toFixed(5));
+    html += r('gapSlope', 'gap slope 1 − 1/z', L.gapSlope, 4);
+    html += r('alphaRatio', 'backlog α/(λ − λ<sub>miss</sub>)', L.alphaRatio, 4);
+    html += r('DoverMiss', 'D/λ<sub>miss</sub> = HΓ', L.DoverMiss, 4);
+    html += r('H', 'turn-count factor H', L.H, 4);
+    html += r('Gamma', 'cost-growth factor Γ', L.Gamma, 4);
+    html += r('DoverRef', 'D/λ<sub>ref</sub>', L.DoverRef, 4);
+    if (L.Pserved !== null && L.Pstat !== null) {
+      const p = refs.Pserved;
+      html += row('served prompt (tokens)', L.Pserved.toFixed(1), p, p === undefined ? undefined : matches(L.Pserved, p));
+      html += row('stationary mean prompt', L.Pstat.toFixed(1));
+    }
+    return html;
+  }
+
+  function headRef(w: Workload, s: number): string {
+    const at = s.toFixed(2);
+    if (w.key === 'standard' && at === '1.65') return 'exact reference: paper, model F, 300k cell at 1.65 λ<sub>ref</sub>: D/λ<sub>miss</sub> = 1.223 = 0.989 × 1.236';
+    if (w.key === 'standard' && at === '1.35') return 'exact reference: paper, model F, 300k cell at 1.35 λ<sub>ref</sub>: D/λ<sub>miss</sub> = 1.126';
+    if (w.key === 'mirror' && at === '1.65') return 'exact reference: paper, frozen before the runs, 1.65 λ<sub>ref</sub>: D/λ<sub>miss</sub> = 0.771 (H = 0.699, Γ = 1.103)';
+    if (w.key === 'mirror' && at === '1.35') return 'exact reference: paper, frozen before the runs, 1.35 λ<sub>ref</sub>: ρ = 1.291, D/λ<sub>miss</sub> = 0.870 = 0.825 × 1.055';
+    if (w.key === 'slow') return 'exact reference: paper, premium negative at every load checked (D/λ<sub>miss</sub> &lt; 1)';
+    if (w.key === 'geom') return 'exact reference: paper, no premium for geometric T with constant costs (D/λ<sub>miss</sub> = 1)';
+    return 'exact reference: paper values at 1.35 and 1.65 λ<sub>ref</sub>; use the buttons below the slider';
+  }
+
+  function runChecks(W: Record<Key, Workload>, lamRef: number): string {
+    const grid = loads(S_MIN, S_MAX, S_STEP);
+    const keys: Key[] = ['standard', 'mirror', 'slow', 'geom'];
+    let r1 = 0, r2 = 0, g1 = 0, g2 = 0;
+    for (const k of keys) {
+      const w = W[k];
+      for (const s of grid) {
+        const L = limits(s, w, lamRef);
+        r1 = Math.max(r1, Math.abs(L.DoverMiss - L.H * L.Gamma));
+        if (L.Hcf !== null && (k === 'standard' || k === 'mirror')) r2 = Math.max(r2, Math.abs(L.H - L.Hcf));
+        if (k === 'geom') {
+          g1 = Math.max(g1, Math.abs(L.DoverMiss - 1));
+          g2 = Math.max(g2, Math.abs(L.z - (w.q + L.rho * (1 - w.q))));
+        }
+      }
+    }
+    const std = W.standard;
+    const eps = 1e-6;
+    const dz = (perron((1 + eps) * std.lamMiss, std) - 1) / eps;
+    const ratio = std.ET / std.kbar;
+    let smin = Infinity, smax = -Infinity;
+    for (const rho of loads(1.01, 6.5, 0.01)) {
+      const L = limits(rho, W.slow, lamRef);
+      smin = Math.min(smin, L.DoverMiss - 1); smax = Math.max(smax, L.DoverMiss - 1);
+    }
+    const tag = (ok: boolean) => `<b>${ok ? 'pass' : 'FAIL'}</b>`;
+    const e = (x: number) => x.toExponential(1);
+    const c4ok = Math.abs(dz * std.kbar - 1) < 1e-4 && ratio >= 0.60 && ratio <= 0.62;
+    return [
+      '<div>Checks run in your browser, over every workload and load on the slider:</div>',
+      `<div>${tag(r1 < 1e-12)} Theorem 2: D/λ<sub>miss</sub> = H·Γ, max residual ${e(r1)}</div>`,
+      `<div>${tag(r2 < 1e-12)} App. A closed form for H, truncated geometric T (standard, MIRROR): max residual ${e(r2)}</div>`,
+      `<div>${tag(g1 < 1e-10 && g2 < 1e-10)} Geometric T, constant cost: D/λ<sub>miss</sub> = 1 (paper), max residual ${e(g1)}; z = q + ρ(1 − q) (derived for this page), max residual ${e(g2)}</div>`,
+      `<div>${tag(c4ok)} Standard workload at ρ → 1: dz/dρ = ${dz.toFixed(6)} against 1/k̄<sub>c</sub> = ${(1 / std.kbar).toFixed(6)}; E[T]/k̄<sub>c</sub> = ${ratio.toFixed(3)} (paper: 0.60–0.62)</div>`,
+      `<div>${tag(smax < 0)} Slowly growing costs: D/λ<sub>miss</sub> − 1 between ${e(smin)} and ${e(smax)} for ρ from 1.01 to 6.5, negative throughout (paper: negative at every load checked)</div>`,
+    ].join('');
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-trap-perron]').forEach((root) => {
+    const cfg = JSON.parse(root.dataset.cfg ?? '{}') as Cfg;
+    const W = workloads(cfg);
+    const svg = root.querySelector<SVGSVGElement>('[data-plot]')!;
+    const sel = root.querySelector<HTMLSelectElement>('[data-wl]')!;
+    const slider = root.querySelector<HTMLInputElement>('[data-load]')!;
+    const out = root.querySelector<HTMLOutputElement>('[data-out]')!;
+    const labEngine = root.querySelector<HTMLElement>('[data-lab-engine]')!;
+    const labRho = root.querySelector<HTMLElement>('[data-lab-rho]')!;
+    const presets = root.querySelector<HTMLElement>('[data-presets]')!;
+    const readOut = root.querySelector<HTMLElement>('[data-readings]')!;
+    const refOut = root.querySelector<HTMLElement>('[data-ref]')!;
+    const checksOut = root.querySelector<HTMLElement>('[data-checks]')!;
+    const curves = new Map<Key, { s: number; v: number }[]>();
+
+    const curveFor = (w: Workload) => {
+      let c = curves.get(w.key);
+      if (!c) {
+        c = loads(S_MIN, S_MAX, S_STEP).map((s) => ({ s, v: limits(s, w, cfg.lamRef).DoverMiss }));
+        curves.set(w.key, c);
+      }
+      return c;
+    };
+
+    const update = () => {
+      const w = W[sel.value as Key];
+      const s = Math.round(Number(slider.value) * 100) / 100;
+      const L = limits(s, w, cfg.lamRef);
+      out.textContent = s.toFixed(2);
+      labEngine.hidden = !w.engine;
+      labRho.hidden = w.engine;
+      presets.hidden = !w.engine;
+      const refs = REFS[w.key]?.[s.toFixed(2)] ?? {};
+      readOut.innerHTML = readings(w, L, refs);
+      const h = headRef(w, s);
+      refOut.innerHTML = h;
+      draw(svg, w, L, curveFor(w));
+      svg.setAttribute('aria-label',
+        `Model F, ${sel.options[sel.selectedIndex].text}, at ${w.engine ? `λ/λref = ${s.toFixed(2)}` : `ρ = ${s.toFixed(2)}`}: ` +
+        `Perron root z = ${L.z.toFixed(5)}, completions D/λmiss = ${L.DoverMiss.toFixed(4)}. Left: the turns served are younger than the stationary mix. Right: D/λmiss against load.`);
+    };
+
+    sel.addEventListener('change', update);
+    slider.addEventListener('input', update);
+    presets.querySelectorAll<HTMLButtonElement>('[data-preset]').forEach((b) =>
+      b.addEventListener('click', () => { slider.value = b.dataset.preset ?? '1.65'; update(); }));
+    update();
+    checksOut.innerHTML = runChecks(W, cfg.lamRef);
+  });
+</script>

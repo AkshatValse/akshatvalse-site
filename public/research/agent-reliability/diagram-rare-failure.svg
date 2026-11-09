@@ -56,7 +56,6 @@
 <text class="t" x="484" y="256">all it supports (95%):</text>
 <text class="t" x="484" y="274">p &lt; 1 − 0.05^(1/N) ≈ 3/N</text>
 <text class="ts" x="484" y="298">relative s.e.: √((1 − p)/(Np)), ≫ 1 when Np ≪ 1</text>
-<text class="ts" x="30" y="336">The problem only. The rare-event figure shows the classical tilt-and-reweight mechanism on a Gaussian tail;</text>
-<text class="ts" x="30" y="350">this project's approach is held back.</text>
+<text class="ts" x="30" y="343">The problem only; this project's approach is held back.</text>
 
 </svg>

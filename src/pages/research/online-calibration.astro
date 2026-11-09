@@ -1,0 +1,372 @@
+---
+/**
+ * Online calibration with early, one-sided feedback (Hongyang Gao, Computer
+ * Science). The paper is in preparation, so this page describes the problem
+ * and what we are doing at the CV's level of detail: the observation
+ * structure, formalized, two schematics and a classical toy with an exact
+ * reference. The method's construction, the theory and every result stay
+ * private. Sources: the CV research entry, the public overview README
+ * (AkshatValse/neural-forecasting-research-overview) and the site's own text.
+ */
+import ProjectLayout from '../../layouts/ProjectLayout.astro';
+import Container from '../../components/clarity/Container.astro';
+import Icon from '../../components/clarity/Icon.astro';
+import Tex from '../../components/Tex.astro';
+import CalibEarlyMiss from '../../components/widgets/CalibEarlyMiss.astro';
+
+const OVERVIEW = 'https://github.com/AkshatValse/neural-forecasting-research-overview';
+const ASSETS = '/research/online-calibration';
+
+const ABSTRACT =
+  'Risk forecasts for a cumulative quantity, such as the realized variance of an asset over the next six or ' +
+  'twenty-four hours, are usually scored when the horizon ends, so a calibrator that waits for the complete ' +
+  'outcome receives feedback one full horizon later. Yet the increments of such a target are non-negative: once ' +
+  'the running sum crosses the issued upper bound, the miss is certain, while coverage is only confirmed at the ' +
+  'end. We are developing a model-agnostic calibration method for quantile forecasts that uses this early, ' +
+  'one-sided feedback, with theory and experiments in progress. The paper is in preparation; code, proofs ' +
+  'and results are held back pending submission.';
+
+/** χ² toy, α = 0.1: exact closed-form values (toy values, not project results). */
+const REFERENCE = [
+  { H: 12, u: '18.549347787', c: 1, miss: '0.100000', early: '0.696783', lead: '1.8129' },
+  { H: 12, u: '18.549347787', c: 2, miss: '0.679308', early: '0.878181', lead: '3.5596' },
+  { H: 72, u: '87.743047749', c: 1, miss: '0.100000', early: '0.864984', lead: '5.2231' },
+  { H: 72, u: '87.743047749', c: 2, miss: '0.996409', early: '0.998892', lead: '26.7387' },
+  { H: 288, u: '319.153638462', c: 1, miss: '0.100000', early: '0.929895', lead: '10.9193' },
+  { H: 288, u: '319.153638462', c: 2, miss: '1.000000', early: '1.000000', lead: '126.9232' },
+];
+
+/* Figure 1: vertices of the toy draw behind public/research/online-calibration/early-miss-schematic.svg
+   (H = 24; covered path Z² increments, seed 5005; missing path 2Z² increments, seed 1008;
+   bound at the upper 0.1 quantile of χ²₂₄), rescaled. First crossing at the vertex k = τ = 16. */
+const D1_MISS_SOLID = '72.0,330.0 92.3,322.6 112.7,317.4 133.0,317.4 153.3,304.8 173.7,296.0 194.0,247.6 214.3,238.0 234.7,236.9 255.0,230.2 275.3,229.4 295.7,226.9 316.0,215.4 336.3,214.9 356.7,213.8 377.0,203.4 397.3,174.6';
+const D1_MISS_AFTER = '397.3,174.6 417.7,162.5 438.0,130.2 458.3,130.1 478.7,128.7 499.0,126.7 519.3,126.5 539.7,108.2 560.0,92.8';
+const D1_COVERED = '72.0,330.0 92.3,304.3 112.7,302.5 133.0,301.8 153.3,300.3 173.7,300.3 194.0,293.6 214.3,290.0 234.7,289.8 255.0,285.6 275.3,272.0 295.7,251.7 316.0,250.8 336.3,249.5 356.7,242.1 377.0,242.0 397.3,240.6 417.7,239.5 438.0,238.8 458.3,229.9 478.7,229.9 499.0,229.9 519.3,227.4 539.7,206.0 560.0,203.7';
+---
+
+<ProjectLayout
+  slug="online-calibration"
+  pageTitle="Calibrating volatility forecasts with early, one-sided feedback · Akshat Valse"
+  description="Calibrating volatility forecasts when a miss becomes certain before the horizon ends: a model-agnostic method that uses early, one-sided feedback."
+  authors="Akshat Valse"
+  affiliation="Department of Computer Science, Iowa State University · Advisor: Hongyang Gao"
+  abstract={ABSTRACT}
+  buttons={[{ label: 'Public overview', href: OVERVIEW, icon: 'github' }]}
+  info="Ongoing · Aug. 2026 – present · Paper in preparation"
+  cover={{
+    src: `${ASSETS}/early-miss-schematic.svg`,
+    alt: 'Schematic of one forecast horizon: two running sums against the same issued upper bound. One crosses the bound partway through, so its miss is certain from that step on; the other stays below, and its coverage is confirmed only when the horizon ends. Toy simulation, not project data.',
+    width: 640,
+    height: 340,
+  }}
+>
+  <!-- ============================================================ Problem -->
+  <Container first>
+    <h1>The problem</h1>
+    <p class="text">
+      Forecast how turbulent an asset will be over the next twenty-four hours, as its realized
+      variance (a running total of squared returns), and commit to an upper bound. The total can
+      only grow, so if it passes the bound at hour ten you already know you missed. If it stays
+      below, you learn you were right only when the day ends.
+    </p>
+    <p class="text">
+      Risk forecasts for a cumulative quantity like this are usually scored when the horizon ends.
+      A calibrator that waits for the complete outcome receives feedback one full horizon after it
+      issues each forecast, and that delay can slow its response to a volatility shift.
+    </p>
+    <p class="text">
+      But the target’s increments are non-negative, so the running partial sum is monotone. If it
+      crosses the issued upper bound before the horizon ends, the miss is <b>certain</b> immediately,
+      while coverage is only confirmed at the end (Figure 1). The feedback is early but one-sided.
+    </p>
+  </Container>
+
+  <Container width="large" tone="gray">
+    <svg class="diagram" viewBox="0 0 760 400" role="img"
+      aria-label="Diagram. Two running sums over one forecast horizon against the same dashed issued upper bound. One path first exceeds the bound at step tau; a marker reads miss certain here, and a shaded band from tau to H reads known for the rest of the horizon. Its end at H is marked scored here if you wait for the complete outcome. The other path, in gray, stays below the bound and ends at a hollow marker, covered: confirmed only at H. A bracket under the axis from tau to H reads lead: H minus tau steps.">
+      <rect class="oc-band" x="397.3" y="48" width="162.7" height="282" />
+      <path class="line" d="M72,48 V330 H560" />
+      <line class="oc-bound" x1="72" y1="180" x2="560" y2="180" />
+      <text x="80" y="170" font-size="13">issued upper bound</text>
+
+      <polyline class="oc-path-b" points={D1_COVERED} />
+      <polyline class="oc-path-a" points={D1_MISS_SOLID} />
+      <polyline class="oc-path-a oc-faded" points={D1_MISS_AFTER} />
+
+      <line class="oc-acc-s" x1="397.3" y1="48" x2="397.3" y2="330" stroke-dasharray="2 3" />
+      <circle class="oc-acc" cx="397.3" cy="174.6" r="6.5" />
+      <text x="389" y="66" text-anchor="end" font-size="13" font-weight="500">miss certain here</text>
+      <text class="muted-t" x="407" y="66" font-size="12.5">known for the rest</text>
+      <text class="muted-t" x="407" y="82" font-size="12.5">of the horizon</text>
+
+      <line class="line" x1="551" y1="92.8" x2="569" y2="92.8" />
+      <text class="muted-t" x="578" y="89" font-size="12.5">scored here if you wait</text>
+      <text class="muted-t" x="578" y="105" font-size="12.5">for the complete outcome</text>
+
+      <circle class="oc-hollow" cx="560" cy="203.7" r="6.5" />
+      <text x="578" y="201" font-size="13">covered:</text>
+      <text x="578" y="218" font-size="13">confirmed only at <tspan class="oc-m">H</tspan></text>
+
+      <text class="muted-t" x="72" y="350" text-anchor="middle" font-size="12.5">0</text>
+      <text x="397.3" y="351" text-anchor="middle"><tspan class="oc-m">τ</tspan></text>
+      <text x="560" y="351" text-anchor="middle"><tspan class="oc-m">H</tspan></text>
+      <path class="line" d="M397.3,358 v6 H560 v-6" />
+      <text x="478.7" y="384" text-anchor="middle" font-size="13">lead: <tspan class="oc-m">H</tspan> − <tspan class="oc-m">τ</tspan> steps</text>
+      <text class="muted-t" x="234" y="384" text-anchor="middle" font-size="12.5">steps into the forecast horizon</text>
+      <text class="muted-t" transform="translate(50 189) rotate(-90)" text-anchor="middle" font-size="12.5">running sum of the target</text>
+    </svg>
+    <p class="caption">
+      <b>Figure 1.</b> One forecast horizon, two running sums against the same issued upper bound.
+      One path first exceeds the bound at step <Tex src={String.raw`\tau`} />, so from that step on
+      its miss is certain; a scorer that waits for the complete outcome still records it only at
+      <Tex src={String.raw`H`} />. The other path, drawn in gray, stays below, and its coverage is
+      confirmed only at <Tex src={String.raw`H`} />. Schematic drawn from a seeded toy simulation, not
+      project data: 24 steps of squared-Gaussian increments (doubled for the path that crosses), with
+      the bound at the upper 0.1 quantile of <Tex src={String.raw`\chi^2_{24}`} />.
+    </p>
+  </Container>
+
+  <!-- ===================================================== What we are doing -->
+  <Container>
+    <h1>What we are doing</h1>
+    <p class="text">
+      We are developing a model-agnostic calibration method for quantile forecasts of a cumulative
+      target that uses this early, one-sided feedback instead of waiting for each horizon to end.
+      Model-agnostic means it does not depend on which forecaster issues the bounds. Theory and
+      experiments are both in progress.
+    </p>
+    <p class="text">
+      The question the evaluation asks is whether acting on early misses lets a calibrator respond to
+      a volatility shift sooner than delayed-feedback conformal baselines, <em>without</em>
+      systematically widening its bounds the rest of the time. The question is open, and nothing on
+      this page answers it.
+    </p>
+    <p class="text">
+      For that evaluation we have built a leakage-audited data pipeline with a sealed test set, a
+      simulation framework with pre-registered hypotheses, and delayed-feedback conformal and classical
+      volatility baselines, including a temporal convolutional network. The main simulation study
+      and the real-data evaluation are still in progress.
+    </p>
+    <p class="text">
+      The rest of this page sets out the observation structure the method starts from: what is known
+      about a forecast, and when (Figures 1 and 2), and how early that knowledge arrives in a
+      classical toy (Figure 3). The method’s construction, the theory and all results are held back
+      pending submission.
+    </p>
+  </Container>
+
+  <!-- ======================================================= Formalization -->
+  <Container>
+    <h1>What is known, and when</h1>
+    <p class="text">
+      The public overview states this structure in words; the notation below is introduced for this
+      page. It formalizes what can be observed about a forecast, and when, and says nothing about how
+      the project’s calibrator uses it. Let <Tex src={String.raw`x_s\ge 0`} /> be the target’s
+      increment at step <Tex src={String.raw`s`} />, and let a forecast issued at time
+      <Tex src={String.raw`t`} /> have a horizon of <Tex src={String.raw`H`} /> steps and issued upper
+      bound <Tex src={String.raw`\hat u_t`} />. Its target and its running partial sums are
+    </p>
+    <Tex block src={String.raw`Y_t=\sum_{h=1}^{H}x_{t+h},\qquad S_{t,k}=\sum_{h=1}^{k}x_{t+h},\qquad 0=S_{t,0}\le S_{t,1}\le\cdots\le S_{t,H}=Y_t .`} />
+    <p class="text">
+      A miss here is a strict crossing, <Tex src={String.raw`Y_t>\hat u_t`} />; with continuous
+      increments a tie has probability zero. Because the partial sums never decrease, a crossing
+      settles the outcome before the horizon ends:
+    </p>
+    <Tex block src={String.raw`S_{t,k}>\hat u_t\ \Longrightarrow\ Y_t\ge S_{t,k}>\hat u_t .`} />
+    <p class="text">Let <Tex src={String.raw`\tau_t`} /> be the step at which the miss becomes certain:</p>
+    <Tex block src={String.raw`\tau_t=\min\{k\in\{1,\dots,H\}:S_{t,k}>\hat u_t\}\quad(\min\varnothing=\infty),\qquad \{\tau_t\le H\}=\{Y_t>\hat u_t\}.`} />
+    <p class="text">
+      A miss is known at <Tex src={String.raw`t+\tau_t`} />, which is
+      <Tex src={String.raw`H-\tau_t`} /> steps before the horizon ends. Coverage,
+      <Tex src={String.raw`\tau_t=\infty`} />, is known only at <Tex src={String.raw`t+H`} />. That
+      asymmetry is what one-sided means here: crossing the bound settles the outcome at once, while
+      staying below it settles the outcome only when the horizon ends (Figure 2).
+    </p>
+  </Container>
+
+  <Container width="large" tone="gray">
+    <svg class="diagram" viewBox="0 0 760 290" role="img"
+      aria-label="Diagram. An information timeline for one forecast, with ticks at issued at t, crossing at t plus tau, and horizon ends at t plus H. Lane one, watching the running sum: a filled marker at the crossing reads miss known, if it misses; a hollow marker at the horizon end reads coverage known, if it is covered; a bracket from the crossing to the horizon end reads lead: H minus tau steps. Lane two, waiting for the complete outcome: both markers sit at the horizon end, miss or coverage known, and nothing is learned before the horizon ends.">
+      <defs>
+        <marker id="oc-d3-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path class="oc-arrowhead" d="M0,0 L10,5 L0,10 z" />
+        </marker>
+      </defs>
+      <line class="oc-guide" x1="300" y1="40" x2="300" y2="240" />
+      <line class="oc-guide" x1="500" y1="40" x2="500" y2="240" />
+      <line class="oc-guide" x1="670" y1="40" x2="670" y2="240" />
+
+      <text x="20" y="105" font-size="13.5" font-weight="500">Watching the running sum</text>
+      <line class="oc-track" x1="300" y1="100" x2="670" y2="100" />
+      <line class="oc-track" x1="300" y1="93" x2="300" y2="107" />
+      <circle class="oc-acc" cx="500" cy="100" r="7" />
+      <text x="500" y="66" text-anchor="middle" font-size="13" font-weight="500">miss known</text>
+      <text class="muted-t" x="500" y="83" text-anchor="middle" font-size="12.5">if it misses</text>
+      <circle class="oc-hollow" cx="670" cy="100" r="7" />
+      <text x="670" y="66" text-anchor="middle" font-size="13" font-weight="500">coverage known</text>
+      <text class="muted-t" x="670" y="83" text-anchor="middle" font-size="12.5">if it is covered</text>
+      <path class="line" d="M500,115 v6 H670 v-6" />
+      <text x="585" y="140" text-anchor="middle" font-size="13">lead: <tspan class="oc-m">H</tspan> − <tspan class="oc-m">τ</tspan> steps</text>
+
+      <text x="20" y="195" font-size="13.5" font-weight="500">Waiting for the complete outcome</text>
+      <line class="oc-track" x1="300" y1="190" x2="670" y2="190" />
+      <line class="oc-track" x1="300" y1="183" x2="300" y2="197" />
+      <circle class="oc-acc" cx="658" cy="190" r="7" />
+      <circle class="oc-hollow" cx="682" cy="190" r="7" />
+      <text x="670" y="168" text-anchor="middle" font-size="13" font-weight="500">miss or coverage known</text>
+      <text class="muted-t" x="480" y="213" text-anchor="middle" font-size="12.5">nothing is learned before the horizon ends</text>
+
+      <line class="line" x1="290" y1="240" x2="730" y2="240" marker-end="url(#oc-d3-arrow)" />
+      <line class="line" x1="300" y1="235" x2="300" y2="245" />
+      <line class="line" x1="500" y1="235" x2="500" y2="245" />
+      <line class="line" x1="670" y1="235" x2="670" y2="245" />
+      <text x="300" y="264" text-anchor="middle" font-size="12.5">issued at <tspan class="oc-m">t</tspan></text>
+      <text x="500" y="264" text-anchor="middle" font-size="12.5">crossing at <tspan class="oc-m">t</tspan> + <tspan class="oc-m">τ</tspan></text>
+      <text x="670" y="264" text-anchor="middle" font-size="12.5">horizon ends at <tspan class="oc-m">t</tspan> + <tspan class="oc-m">H</tspan></text>
+    </svg>
+    <p class="caption">
+      <b>Figure 2.</b> When the outcome of one forecast becomes known. Watching the running sum, a miss
+      is known at the crossing <Tex src={String.raw`t+\tau`} />, a lead of
+      <Tex src={String.raw`H-\tau`} /> steps, and coverage only when the horizon ends. Waiting for
+      the complete outcome, both are known only at <Tex src={String.raw`t+H`} />. The diagram shows
+      the observation structure only; it says nothing about how a calibrator uses it.
+    </p>
+  </Container>
+
+  <!-- ======================================================= Toy and widget -->
+  <Container>
+    <h1>How early is early: a classical toy</h1>
+    <p class="text">
+      Figure 1 shows that a miss can become certain early; how early depends on the increments. A
+      simple model with an exact answer gives a textbook baseline for intuition: a classical
+      first-passage calculation, not the project’s method, model or data. Take one horizon of i.i.d. increments <Tex src={String.raw`x_h=c\,\xi_h`} />,
+      where <Tex src={String.raw`\xi_h\sim\chi^2_1`} /> is a squared standard normal, the classical
+      toy for squared returns at constant volatility, or <Tex src={String.raw`\xi_h\sim\mathrm{Exp}(1)`} />.
+      The bound <Tex src={String.raw`u_\alpha`} /> solves
+      <Tex src={String.raw`\Pr\big(\sum_{h\le H}\xi_h>u_\alpha\big)=\alpha`} />, so it is exact in the
+      calm regime <Tex src={String.raw`c=1`} />, and <Tex src={String.raw`c>1`} /> is a volatility jump
+      the bound has not seen. Nothing is recalibrated: every bound stays fixed.
+    </p>
+  </Container>
+
+  <Container width="extra-large" tone="gray">
+    <CalibEarlyMiss />
+    <p class="caption">
+      <b>Figure 3.</b> Classical baseline, not project data or method. Left: one seeded run of the running sum
+      against a bound fixed at the calm-regime quantile; the filled marker is the step
+      <Tex src={String.raw`\tau`} /> at which its miss becomes certain (a run that stays below the
+      bound ends in a hollow marker instead). Right:
+      <Tex src={String.raw`\tau`} /> over <Tex src={String.raw`N`} /> seeded runs against its exact law,
+      with Monte Carlo readouts at ± one standard error beside the exact values. No calibration is
+      applied; bounds are fixed. Whether early misses make recovery faster is the project’s open
+      question.
+    </p>
+  </Container>
+
+  <Container>
+    <h2>Exact reference</h2>
+    <p class="text">
+      Drop the index <Tex src={String.raw`t`} /> and let <Tex src={String.raw`\bar F_k`} /> be the
+      survival function of <Tex src={String.raw`\xi_1+\cdots+\xi_k`} />. Monotonicity turns the
+      stopping time into a marginal probability:
+    </p>
+    <Tex block src={String.raw`\Pr(\tau\le k)=\Pr(S_k>u_\alpha)=\bar F_k(u_\alpha/c),\qquad k=1,\dots,H.`} />
+    <p class="text">
+      Both families have elementary survival functions. For <Tex src={String.raw`\mathrm{Exp}(1)`} />
+      increments it is the Poisson identity, since <Tex src={String.raw`\xi_1+\cdots+\xi_k>x`} />
+      exactly when a unit-rate Poisson process has had fewer than <Tex src={String.raw`k`} /> arrivals
+      by time <Tex src={String.raw`x`} />; for
+      <Tex src={String.raw`\chi^2_1`} /> increments it depends on the parity of
+      <Tex src={String.raw`k`} />, with <Tex src={String.raw`\bar\Phi`} /> and
+      <Tex src={String.raw`\varphi`} /> the standard normal upper tail and density:
+    </p>
+    <Tex block src={String.raw`\mathrm{Exp}(1):\quad \bar F_k(x)=e^{-x}\sum_{j=0}^{k-1}\frac{x^j}{j!},`} />
+    <Tex block src={String.raw`\chi^2_1:\quad \bar F_{2m}(x)=e^{-x/2}\sum_{j=0}^{m-1}\frac{(x/2)^j}{j!},\qquad \bar F_{2m+1}(x)=2\bar\Phi(\sqrt x)+2\varphi(\sqrt x)\sum_{j=1}^{m}\frac{x^{j-1/2}}{(2j-1)!!}.`} />
+    <p class="text">
+      The quantities the widget reports follow directly:
+    </p>
+    <Tex block src={String.raw`\Pr(\text{miss})=\bar F_H(u_\alpha/c),\qquad \Pr(\tau<H\mid\text{miss})=\frac{\bar F_{H-1}(u_\alpha/c)}{\bar F_H(u_\alpha/c)},`} />
+    <Tex block src={String.raw`\mathbb E[H-\tau\mid\text{miss}]=\frac{1}{\bar F_H(u_\alpha/c)}\sum_{k=1}^{H-1}\bar F_k(u_\alpha/c),`} />
+    <p class="text">the last from the identity</p>
+    <Tex block src={String.raw`(H-\tau)\,\mathbf 1\{\tau\le H\}=\sum_{k=1}^{H-1}\mathbf 1\{\tau\le k\},`} />
+    <p class="text">
+      which holds because both sides equal <Tex src={String.raw`H-j`} /> when
+      <Tex src={String.raw`\tau=j\le H`} /> and vanish when <Tex src={String.raw`\tau=\infty`} />.
+      <Tex src={String.raw`\Pr(\tau<H\mid\text{miss})`} /> is the share of misses that become certain
+      strictly before the horizon ends; a crossing at the last step, <Tex src={String.raw`\tau=H`} />,
+      gives no lead.
+    </p>
+    <p class="text">
+      The bound <Tex src={String.raw`u_\alpha`} /> itself comes from bisection on the closed form.
+      These closed forms were cross-checked against R’s <code>pchisq</code> and <code>pgamma</code>,
+      with a worst relative error of 1.7 × 10<sup>−14</sup>. The widget computes every exact value
+      from them; at each setting in Table 1 its exact readouts match the tabulated values, rounded
+      to the digits the widget displays.
+    </p>
+  </Container>
+
+  <Container>
+    <div class="table-wrapper">
+      <table>
+        <thead class="center">
+          <tr>
+            <th><Tex src={String.raw`H`} /></th>
+            <th><Tex src={String.raw`u_\alpha`} /></th>
+            <th><Tex src={String.raw`c`} /></th>
+            <th><Tex src={String.raw`\Pr(\text{miss})`} /></th>
+            <th><Tex src={String.raw`\Pr(\tau<H\mid\text{miss})`} /></th>
+            <th><Tex src={String.raw`\mathbb E[H-\tau\mid\text{miss}]`} /></th>
+          </tr>
+        </thead>
+        <tbody class="center">
+          {REFERENCE.map((r) => (
+            <tr>
+              <td>{r.H}</td><td>{r.u}</td><td>{r.c}</td><td>{r.miss}</td><td>{r.early}</td><td>{r.lead}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">
+      <b>Table 1.</b> Exact values for the <Tex src={String.raw`\chi^2_1`} /> toy at
+      <Tex src={String.raw`\alpha=0.1`} />, from the closed forms above, with
+      <Tex src={String.raw`c=1`} /> calm and <Tex src={String.raw`c=2`} /> after the increments double.
+      Toy values, not project results; every row was also reproduced in R. Set the widget to any row
+      to compare.
+    </p>
+  </Container>
+
+  <!-- ============================================================= Status -->
+  <Container>
+    <h1>Status</h1>
+    <p class="text">
+      The paper is in preparation. Results are held back pending submission, together with the code,
+      proofs, experiment logs and write-ups. Nothing on this page is a result of the project: the
+      figures and the toy describe the observation structure only, with every bound held fixed.
+    </p>
+    <p class="text">
+      <a href={OVERVIEW} class="button icon">Public overview <Icon name="github" /></a>
+    </p>
+  </Container>
+</ProjectLayout>
+
+<style>
+  /* Figure 1 and Figure 2 internals only (inline SVG diagrams). */
+  .oc-m { font-family: 'Charter', Georgia, serif; font-style: italic; font-size: 15px; }
+  .oc-bound { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 7 5; fill: none; }
+  .oc-path-a { stroke: var(--ink); stroke-width: 2.4; fill: none; stroke-linejoin: round; }
+  .oc-path-b { stroke: var(--ink-2); stroke-width: 2.4; fill: none; stroke-linejoin: round; }
+  .oc-faded { opacity: 0.35; }
+  .oc-band { fill: var(--seq-lo); opacity: 0.08; }
+  .oc-acc { fill: var(--seq-lo); }
+  .oc-acc-s { stroke: var(--seq-lo); stroke-width: 1.25; fill: none; }
+  .oc-hollow { fill: var(--ground); stroke: var(--ink-2); stroke-width: 2; }
+  .oc-track { stroke: var(--ink-2); stroke-width: 1.5; fill: none; }
+  .oc-guide { stroke: var(--rule-strong); stroke-width: 1; stroke-dasharray: 2 4; fill: none; }
+  .oc-arrowhead { fill: var(--ink-2); }
+  @media (prefers-color-scheme: dark) {
+    .oc-band { fill: var(--seq-hi); opacity: 0.07; }
+    .oc-acc { fill: var(--seq-hi); }
+    .oc-acc-s { stroke: var(--seq-hi); }
+  }
+</style>

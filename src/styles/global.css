@@ -113,7 +113,8 @@ div.container.blog#first-content div.blog-title .blog-cover img.foreground,
 div.container.blog#first-content div.blog-title .blog-cover img.background,
 div.container.blog#first-content div.blog-title .blog-cover .cover-tile { border-radius: var(--radius); }
 .blog-cover .cover-tile { position: relative; z-index: 2; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; background: var(--panel); }
-.blog-cover .cover-tile + .cover-glow { position: absolute; z-index: 1; inset: 8%; filter: blur(24px); opacity: 0.6; background: var(--sim-contour); border-radius: 30px; }
+.blog-cover .cover-wrap { position: relative; width: 100%; }
+.blog-cover .cover-tile + .cover-glow { position: absolute; z-index: 1; inset: 4%; filter: blur(24px); opacity: 0.45; background: var(--sim-contour); border-radius: var(--radius); }
 div.container.blog img.rounded, .tile .thumb, .slider-item .thumb, img-comparison-slider.slider-container { border-radius: var(--radius); overflow: hidden; }
 
 /* Project tiles inside Clarity columns: an image, then a caption */
@@ -275,6 +276,20 @@ p .katex, li .katex { font-size: 1.05em; }
 
 @media print {
   .site-nav, .nav-container, .hero, .figure-frame, .skip-link, footer { display: none; }
+}
+
+/* Site components size with padding inside width: 100%. Clarity sets no
+   box-sizing, so give these border-box to stop 2-5px overflows on phones. */
+.trap-hero, .trap-hero *, .hero, .figure-frame, .widget, .widget *, .tex-tile, .cover-tile { box-sizing: border-box; }
+
+/* Clarity's comment container sets fixed vw columns (e.g. 24vw + 60vw + 18vw
+   at 1200px+) that exceed the viewport; keep its layout, fit its width. */
+@media screen and (min-width: 1200px) {
+  div.container.blog.main.comment {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+    column-gap: 2vw;
+    padding-right: 4vw;
+  }
 }
 
 /* Clarity sizes images by width only; keep intrinsic width/height attributes

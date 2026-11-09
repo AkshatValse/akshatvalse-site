@@ -1,0 +1,320 @@
+---
+/**
+ * W2 · How many runs before you see a failure? Classical crude-Monte-Carlo
+ * arithmetic for a failure of probability p per run over N independent runs.
+ *
+ * CLASSICAL ARITHMETIC, NOT PROJECT DATA, NOT THE PROJECT'S METHOD.
+ *   Pr(K = 0)        = (1 − p)^N, evaluated as exp(N log1p(−p))
+ *   E[K]             = N p
+ *   sd(K/N) / p      = sqrt((1 − p) / (N p))
+ *   95% bound, K = 0 : 1 − 0.05^(1/N), evaluated as −expm1(ln(0.05) / N) ≈ 3/N
+ *
+ * Beside the exact value, a seeded direct simulation (site makeRng): whole
+ * experiments of N Bernoulli(p) runs, each run one uniform built from two
+ * 32-bit draws so that p down to 1e-12 is represented, spread over frames.
+ */
+interface Props { id?: string }
+const { id = 'rare-widget' } = Astro.props;
+---
+
+<div class="widget agent-rare" id={id} data-agent-rare>
+  <div class="widget-head">
+    <h3>How many runs before you see a failure? (classical arithmetic)</h3>
+    <span class="ref">not project data · exact: (1 − p)<sup>N</sup> · reference: p = 0.001, N = 1000 gives 0.3677 · check: seeded direct simulation</span>
+  </div>
+
+  <div class="widget-body">
+    <div>
+      <div class="widget-plot">
+        <svg viewBox="0 0 640 360" role="img" data-plot
+          aria-label="Probability of seeing no failure at all in N independent runs, against N on a logarithmic axis, for the chosen per-run failure probability p, with a seeded simulation at the chosen N.">
+          <defs>
+            <clipPath id="ar-w2-clip"><rect x="58" y="12" width="568" height="294"></rect></clipPath>
+          </defs>
+          <g data-grid></g>
+          <g clip-path="url(#ar-w2-clip)">
+            <line class="rc-inv" data-inv y1="12" y2="306"></line>
+            <path class="rc-curve" data-curve></path>
+          </g>
+          <text class="rc-inv-t" data-inv-t y="28" text-anchor="start">N = 1/p</text>
+          <line class="rc-cursor" data-cursor y1="12" y2="306"></line>
+          <line class="rc-bar" data-bar></line>
+          <circle class="rc-sim" data-sim r="5"></circle>
+          <circle class="rc-pt" data-pt r="3.5"></circle>
+        </svg>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span><svg class="sw" viewBox="0 0 22 10"><line class="rc-curve" x1="1" y1="5" x2="21" y2="5"></line></svg> exact (1 − p)<sup>N</sup></span>
+        <span><svg class="sw" viewBox="0 0 22 10"><circle class="rc-sim" cx="11" cy="5" r="4"></circle></svg> simulated, ±1 s.e.</span>
+        <span><svg class="sw" viewBox="0 0 22 10"><line class="rc-inv" x1="1" y1="5" x2="21" y2="5"></line></svg> N = 1/p</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="control">
+        <label for={`${id}-p`}>p, failure chance per run <output data-out="p">0.001</output></label>
+        <input id={`${id}-p`} type="range" min="-12" max="-1" step="0.01" value="-3" data-in="p" />
+      </div>
+      <div class="control">
+        <label for={`${id}-n`}>N, runs you can afford <output data-out="n">1,000</output></label>
+        <input id={`${id}-n`} type="range" min="1" max="7" step="0.01" value="3" data-in="n" />
+      </div>
+
+      <div class="readings">
+        <div><span>expected failures, Np</span> <b data-r="np">—</b></div>
+        <div><span>P(no failure in N runs), exact</span> <b data-r="p0">—</b></div>
+        <div><span>simulated</span> <b data-r="sim">—</b></div>
+        <div><span data-r="simn">—</span></div>
+        <div><span>relative s.e. of K/N</span> <b data-r="rse">—</b></div>
+        <div><span>if none seen, 95% bound on p</span> <b data-r="bound">—</b></div>
+        <div><span>3/N, for comparison</span> <b data-r="three">—</b></div>
+      </div>
+    </div>
+  </div>
+  <noscript><p class="caption">This figure needs JavaScript. The formulas in the text give the same quantities.</p></noscript>
+</div>
+
+<style>
+  .agent-rare .legend { gap: 0.4em 1.2em; }
+  .agent-rare .legend span { display: inline-flex; align-items: center; gap: 0.4em; }
+  .agent-rare .sw { width: 22px; height: 10px; overflow: visible; }
+  .agent-rare .widget-plot svg { touch-action: pan-y; cursor: ew-resize; }
+
+  .agent-rare :global(.rc-grid) { stroke: var(--rule-strong); stroke-width: 0.6; opacity: 0.6; }
+  .agent-rare :global(.rc-axis) { stroke: var(--ink-2); stroke-width: 1; }
+  .agent-rare :global(.rc-tick) { font-family: 'Fira Code', monospace; font-size: 12px; fill: var(--ink-2); }
+  .agent-rare :global(.rc-title) { font-family: 'Poppins', sans-serif; font-size: 13px; fill: var(--ink-2); }
+  .rc-curve { fill: none; stroke: var(--seq-lo); stroke-width: 2.4; }
+  .rc-inv { stroke: var(--ink-2); stroke-width: 1.1; stroke-dasharray: 6 4; }
+  .rc-inv-t { font-family: 'Poppins', sans-serif; font-size: 13px; fill: var(--ink-2); }
+  .rc-cursor { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; }
+  .rc-pt { fill: var(--seq-lo); }
+  .rc-sim { fill: var(--ground); stroke: var(--ink); stroke-width: 1.6; }
+  .rc-bar { stroke: var(--ink); stroke-width: 1.6; }
+
+  @media (prefers-color-scheme: dark) {
+    .rc-curve { stroke: var(--seq-hi); }
+    .rc-pt { fill: var(--seq-hi); }
+  }
+</style>
+
+<script>
+  import { makeRng } from '../../sim/rng.js';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const X0 = 58, X1 = 626, Y0 = 12, Y1 = 306;
+  const LN0 = 1, LN1 = 7;
+  const CURVE_POINTS = 241;
+  /** Runs simulated per frame, and in total per setting (experiments = total / N, within limits). */
+  const FRAME_RUNS = 1_000_000;
+  const TOTAL_RUNS = 20_000_000;
+  const MIN_EXPERIMENTS = 4;
+  const MAX_EXPERIMENTS = 2_000;
+  const TWO_M32 = 2.3283064365386963e-10;
+
+  const SUP: Record<string, string> = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+  function fmt(x: number, digits = 4): string {
+    if (Number.isNaN(x)) return '—';
+    if (!Number.isFinite(x)) return '∞';
+    if (x === 0) return '0';
+    const ax = Math.abs(x);
+    if (ax >= 1e5 || ax < 1e-3) {
+      const e = Math.floor(Math.log10(ax));
+      return `${(x / 10 ** e).toFixed(2)} × 10${String(e).split('').map((ch) => SUP[ch] ?? ch).join('')}`;
+    }
+    return String(Number(x.toPrecision(digits)));
+  }
+
+  const el = (tag: string, attrs: Record<string, string | number>, text?: string): SVGElement => {
+    const node = document.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, String(v));
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+
+  const xOf = (n: number) => X0 + ((Math.log10(n) - LN0) / (LN1 - LN0)) * (X1 - X0);
+  const yOf = (v: number) => Y1 - v * (Y1 - Y0);
+  const pZero = (p: number, n: number) => Math.exp(n * Math.log1p(-p));
+
+  /** Direct simulation: experiments of N Bernoulli(p) runs, resumable across frames. */
+  class RareSim {
+    experiments = 0;
+    zero = 0;
+    private done = 0;
+    private current = 0;
+    private readonly rand: () => number;
+    readonly target: number;
+    constructor(readonly p: number, readonly n: number, seed: string) {
+      this.rand = makeRng(seed).rand;
+      this.target = Math.min(MAX_EXPERIMENTS, Math.max(MIN_EXPERIMENTS, Math.floor(TOTAL_RUNS / n)));
+    }
+    advance(budget: number): void {
+      const { rand, p, n } = this;
+      let left = budget;
+      while (left > 0 && this.experiments < this.target) {
+        const take = Math.min(left, n - this.done);
+        let k = 0;
+        for (let i = 0; i < take; i++) if (rand() + rand() * TWO_M32 < p) k++;
+        this.current += k;
+        this.done += take;
+        left -= take;
+        if (this.done === n) {
+          this.experiments++;
+          if (this.current === 0) this.zero++;
+          this.current = 0;
+          this.done = 0;
+        }
+      }
+    }
+  }
+
+  function init(root: HTMLElement): void {
+    const q1 = <T extends Element>(sel: string): T => {
+      const node = root.querySelector<T>(sel);
+      if (!node) throw new Error(`agent-rare widget: missing ${sel}`);
+      return node;
+    };
+    const svg = q1<SVGSVGElement>('[data-plot]');
+    const gGrid = q1<SVGGElement>('[data-grid]');
+    const curve = q1<SVGPathElement>('[data-curve]');
+    const inv = q1<SVGLineElement>('[data-inv]');
+    const invT = q1<SVGTextElement>('[data-inv-t]');
+    const cursor = q1<SVGLineElement>('[data-cursor]');
+    const pt = q1<SVGCircleElement>('[data-pt]');
+    const simDot = q1<SVGCircleElement>('[data-sim]');
+    const bar = q1<SVGLineElement>('[data-bar]');
+    const inP = q1<HTMLInputElement>('[data-in="p"]');
+    const inN = q1<HTMLInputElement>('[data-in="n"]');
+    const out = (k: string) => q1<HTMLOutputElement>(`[data-out="${k}"]`);
+    const reading = (k: string) => q1<HTMLElement>(`[data-r="${k}"]`);
+
+    let p = 1e-3;
+    let n = 1000;
+    let exact = pZero(p, n);
+    let sim: RareSim | null = null;
+    let raf = 0;
+    let visible = false;
+
+    // Static frame: decades of N, quarters of probability.
+    for (let e = LN0; e <= LN1; e++) {
+      const x = xOf(10 ** e);
+      gGrid.append(el('line', { class: 'rc-grid', x1: x, x2: x, y1: Y0, y2: Y1 }));
+      const label = el('text', { class: 'rc-tick', x, y: Y1 + 19, 'text-anchor': 'middle' }, '10');
+      label.append(el('tspan', { dy: -5, 'font-size': 10 }, String(e)));
+      gGrid.append(label);
+    }
+    for (const v of [0, 0.25, 0.5, 0.75, 1]) {
+      const y = yOf(v);
+      gGrid.append(el('line', { class: 'rc-grid', x1: X0, x2: X1, y1: y, y2: y }));
+      gGrid.append(el('text', { class: 'rc-tick', x: X0 - 7, y: y + 4, 'text-anchor': 'end' }, String(v)));
+    }
+    gGrid.append(el('line', { class: 'rc-axis', x1: X0, x2: X1, y1: Y1, y2: Y1 }));
+    gGrid.append(el('line', { class: 'rc-axis', x1: X0, x2: X0, y1: Y0, y2: Y1 }));
+    gGrid.append(el('text', { class: 'rc-title', x: (X0 + X1) / 2, y: 352, 'text-anchor': 'middle' },
+      'N: independent runs simulated (log axis)'));
+    gGrid.append(el('text', { class: 'rc-title', transform: `translate(15 ${(Y0 + Y1) / 2}) rotate(-90)`, 'text-anchor': 'middle' },
+      'P(no failure in N runs)'));
+
+    function update(): void {
+      p = 10 ** Number(inP.value);
+      n = Math.round(10 ** Number(inN.value));
+      exact = pZero(p, n);
+      out('p').value = fmt(p, 3);
+      out('n').value = n.toLocaleString('en-US');
+
+      let d = '';
+      for (let i = 0; i < CURVE_POINTS; i++) {
+        const nn = 10 ** (LN0 + ((LN1 - LN0) * i) / (CURVE_POINTS - 1));
+        d += `${i ? 'L' : 'M'}${xOf(nn).toFixed(1)} ${yOf(pZero(p, nn)).toFixed(1)}`;
+      }
+      curve.setAttribute('d', d);
+
+      const ninv = 1 / p;
+      const showInv = ninv >= 10 ** LN0 && ninv <= 10 ** LN1;
+      inv.style.display = showInv ? '' : 'none';
+      invT.style.display = showInv ? '' : 'none';
+      if (showInv) {
+        const xi = xOf(ninv);
+        inv.setAttribute('x1', xi.toFixed(1));
+        inv.setAttribute('x2', xi.toFixed(1));
+        const right = xi > X1 - 70;
+        invT.setAttribute('x', (right ? xi - 6 : xi + 6).toFixed(1));
+        invT.setAttribute('text-anchor', right ? 'end' : 'start');
+      }
+
+      const x = xOf(n);
+      cursor.setAttribute('x1', x.toFixed(1));
+      cursor.setAttribute('x2', x.toFixed(1));
+      pt.setAttribute('cx', x.toFixed(1));
+      pt.setAttribute('cy', yOf(exact).toFixed(1));
+      simDot.style.display = 'none';
+      bar.style.display = 'none';
+
+      reading('np').textContent = fmt(n * p);
+      // Near 1, four significant figures would print "1"; show the small complement instead.
+      reading('p0').textContent = exact >= 0.9995 ? `1 − ${fmt(-Math.expm1(n * Math.log1p(-p)), 3)}` : fmt(exact);
+      reading('rse').textContent = fmt(Math.sqrt((1 - p) / (n * p)), 3);
+      reading('bound').textContent = fmt(-Math.expm1(Math.log(0.05) / n), 3);
+      reading('three').textContent = fmt(3 / n, 3);
+      reading('sim').textContent = '—';
+
+      // Seed from the numeric settings, so a drag and the slider reaching the same N agree.
+      sim = new RareSim(p, n, `agent-rare/${Number(inP.value)}/${n}`);
+      schedule();
+    }
+
+    function step(): void {
+      raf = 0;
+      if (!sim || !visible) return;
+      sim.advance(FRAME_RUNS);
+      if (sim.experiments > 0) {
+        const m = sim.experiments;
+        const frac = sim.zero / m;
+        const se = Math.sqrt((exact * (1 - exact)) / m);
+        const z = se > 0 ? (frac - exact) / se : NaN;
+        reading('sim').textContent = `${fmt(frac)} ± ${fmt(se, 2)}`;
+        const count = m < sim.target ? `${m.toLocaleString('en-US')} of ${sim.target.toLocaleString('en-US')}` : m.toLocaleString('en-US');
+        reading('simn').textContent = `${count} experiments · z = ${Number.isFinite(z) ? z.toFixed(2) : '—'}`;
+        const x = xOf(n).toFixed(1);
+        simDot.setAttribute('cx', x);
+        simDot.setAttribute('cy', yOf(frac).toFixed(1));
+        bar.setAttribute('x1', x);
+        bar.setAttribute('x2', x);
+        bar.setAttribute('y1', yOf(Math.min(1, frac + se)).toFixed(1));
+        bar.setAttribute('y2', yOf(Math.max(0, frac - se)).toFixed(1));
+        simDot.style.display = '';
+        bar.style.display = '';
+      } else {
+        reading('simn').textContent = `first experiment of ${n.toLocaleString('en-US')} runs in progress`;
+      }
+      if (sim.experiments < sim.target) schedule();
+    }
+
+    function schedule(): void {
+      if (!raf && sim && visible && sim.experiments < sim.target) raf = requestAnimationFrame(step);
+    }
+
+    let dragging = false;
+    const moveTo = (clientX: number) => {
+      const r = svg.getBoundingClientRect();
+      const xv = Math.min(X1, Math.max(X0, ((clientX - r.left) / r.width) * 640));
+      inN.value = (LN0 + ((xv - X0) / (X1 - X0)) * (LN1 - LN0)).toFixed(2);
+      update();
+    };
+    svg.addEventListener('pointerdown', (ev) => { dragging = true; svg.setPointerCapture(ev.pointerId); moveTo(ev.clientX); });
+    svg.addEventListener('pointermove', (ev) => { if (dragging) moveTo(ev.clientX); });
+    svg.addEventListener('pointerup', () => { dragging = false; });
+    svg.addEventListener('pointercancel', () => { dragging = false; });
+
+    inP.addEventListener('input', update);
+    inN.addEventListener('input', update);
+    new IntersectionObserver((entries) => {
+      visible = entries.some((en) => en.isIntersecting);
+      schedule();
+    }).observe(root);
+
+    update();
+  }
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-agent-rare]')) init(root);
+</script>

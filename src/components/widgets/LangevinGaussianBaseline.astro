@@ -1,0 +1,603 @@
+---
+/**
+ * Classical baseline: ULA and MALA on a one-dimensional Gaussian N(0, s^2),
+ * run live against the exact law.
+ *
+ * This is one coordinate of langevin-samplers' Gaussian experiment. ULA acts
+ * coordinatewise, so a single coordinate is exactly one coordinate of the
+ * repository's run. The update, closed form and acceptance rule are the
+ * repository's:
+ *
+ *   ULA    X' = (1 - h/s^2) X + sqrt(2h) xi              (README.md:14-15)
+ *   v(h) = s^2 / (1 - h/(2 s^2)),  stationary iff 0 < h < 2 s^2  (README.md:15-19)
+ *   MALA   alpha = min(1, pi(y) q(x|y) / (pi(x) q(y|x))),
+ *          q(y|x) = N(y; x + h grad log pi(x), 2h)       (samplers.py:72-75)
+ *
+ * Transient reference for ULA: iterating the README's recursion
+ * v_{k+1} = a^2 v_k + 2h (a = 1 - h/s^2) from Var(X_0). For |a| < 1 this is
+ * the AR(1) identity Var(X_k) = v(h) + a^{2k} (Var(X_0) - v(h)); iterating the
+ * recursion directly is exact for every h, including h >= 2 s^2, where there
+ * is no stationary law and the widget says so from the formula rather than
+ * waiting for the chains to overflow.
+ *
+ * Uncertainty: the variance standard error is the spread of (X_i - mean)^2
+ * across the independent chains at the current step, divided by sqrt(N),
+ * with the repository's N/(N-1) factor (diagnostics.py:101-123).
+ *
+ * MALA's acceptance rate has no closed form here and is reported without a
+ * reference: the repository's rates are for its three-coordinate target,
+ * where the accept/reject step is joint across coordinates.
+ *
+ * Seeded with the site's sfc32 generator (src/sim/rng.js). No dependencies.
+ */
+---
+
+<div class="widget" data-lv-ula>
+  <div class="widget-head">
+    <h3>Classical baseline: ULA and MALA on a Gaussian, against the exact law</h3>
+    <span class="ref" data-ref>exact: v(h) = s²/(1 − h/2s²)</span>
+  </div>
+  <div class="widget-body">
+    <div
+      class="widget-plot"
+      role="img"
+      aria-label="Histogram of 4096 independent Langevin chains on a one-dimensional Gaussian target, drawn against the target density N(0, s^2) as a dashed curve and ULA's exact stationary density N(0, v(h)) as a solid curve, above a trace of the ensemble variance against the step number with its exact reference."
+    >
+      <canvas data-canvas aria-hidden="true"></canvas>
+    </div>
+    <div class="controls">
+      <div class="control">
+        <label for="lv-ula-s">Target scale s <output data-out-s>0.5</output></label>
+        <input id="lv-ula-s" type="range" min="0" max="2" step="1" value="0" data-in-s />
+      </div>
+      <div class="control">
+        <label for="lv-ula-h">Step size h (log scale) <output data-out-h>0.400</output></label>
+        <input id="lv-ula-h" type="range" min="0" max="1000" step="1" value="900" data-in-h />
+      </div>
+      <div class="control">
+        <label for="lv-ula-sampler">Sampler</label>
+        <select id="lv-ula-sampler" data-in-sampler>
+          <option value="ula" selected>ULA (no correction)</option>
+          <option value="mala">MALA (accept/reject)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="lv-ula-start">Start</label>
+        <select id="lv-ula-start" data-in-start>
+          <option value="zero" selected>X₀ = 0</option>
+          <option value="wide">X₀ ~ N(0, 4), the repo's start</option>
+        </select>
+      </div>
+      <div class="lv-buttons">
+        <button type="button" class="button" data-reset>Reset</button>
+        <button type="button" class="button" data-pause aria-pressed="false">Pause</button>
+      </div>
+      <div class="readings">
+        <div>step k <b data-r-k>0</b></div>
+        <div>measured Var <b data-r-meas>–</b> ± <b data-r-se>–</b></div>
+        <div><span data-r-ref-label>exact Var(X_k)</span> <b data-r-ref>–</b></div>
+        <div>(measured − ref)/SE <b data-r-z>–</b></div>
+        <div>stationary law <b data-r-stat>–</b></div>
+        <div>target s² <b data-r-s2>–</b>, limit 2s² <b data-r-lim>–</b></div>
+        <div>acceptance <b data-r-acc>–</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .lv-buttons { display: flex; gap: 0.6em; flex-wrap: wrap; }
+  .control select { width: 100%; font-family: 'Poppins', sans-serif; font-size: 13px; }
+</style>
+
+<script>
+  import { makeRng } from '../../sim/rng.js';
+
+  type Sampler = 'ula' | 'mala';
+  type Start = 'zero' | 'wide';
+
+  const SCALES = [0.5, 1, 2];
+  const N = 4096;
+  const H_MIN = 0.005;
+  const BINS = 61;
+  /** The repository's overdispersed start: standard normal times 2. */
+  const WIDE_VAR = 4;
+  const DIVERGED = 1e12;
+
+  const root = document.querySelector<HTMLElement>('[data-lv-ula]');
+  if (root) {
+    try {
+      mount(root);
+    } catch (err) {
+      console.error('[langevin-baseline] widget stopped:', err);
+    }
+  }
+
+  function mount(root: HTMLElement): void {
+    const q = <T extends Element>(sel: string): T => {
+      const el = root.querySelector<T>(sel);
+      if (!el) throw new Error(`missing ${sel}`);
+      return el;
+    };
+    const canvas = q<HTMLCanvasElement>('[data-canvas]');
+    const maybeCtx = canvas.getContext('2d');
+    if (!maybeCtx) return;
+    const ctx: CanvasRenderingContext2D = maybeCtx;
+
+    const inS = q<HTMLInputElement>('[data-in-s]');
+    const inH = q<HTMLInputElement>('[data-in-h]');
+    const inSampler = q<HTMLSelectElement>('[data-in-sampler]');
+    const inStart = q<HTMLSelectElement>('[data-in-start]');
+    const outS = q<HTMLOutputElement>('[data-out-s]');
+    const outH = q<HTMLOutputElement>('[data-out-h]');
+    const btnReset = q<HTMLButtonElement>('[data-reset]');
+    const btnPause = q<HTMLButtonElement>('[data-pause]');
+    const refHead = q<HTMLElement>('[data-ref]');
+    const r = {
+      k: q<HTMLElement>('[data-r-k]'),
+      meas: q<HTMLElement>('[data-r-meas]'),
+      se: q<HTMLElement>('[data-r-se]'),
+      refLabel: q<HTMLElement>('[data-r-ref-label]'),
+      ref: q<HTMLElement>('[data-r-ref]'),
+      z: q<HTMLElement>('[data-r-z]'),
+      stat: q<HTMLElement>('[data-r-stat]'),
+      s2: q<HTMLElement>('[data-r-s2]'),
+      lim: q<HTMLElement>('[data-r-lim]'),
+      acc: q<HTMLElement>('[data-r-acc]'),
+    };
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const dark = window.matchMedia('(prefers-color-scheme: dark)');
+
+    // ---- state -------------------------------------------------------------
+    let s = 0.5;
+    let h = 0.4;
+    let sampler: Sampler = 'ula';
+    let start: Start = 'zero';
+    const x = new Float64Array(N);
+    let normal: () => number = () => 0;
+    let rand: () => number = () => 0;
+    let k = 0;
+    let horizon = 100;
+    let perFrame = 1;
+    let measured: number[] = [];
+    let exact: number[] = [];
+    let exactNow = 0;
+    let accepted = 0;
+    let proposed = 0;
+    let diverged = false;
+    let measNow = 0;
+    let seNow = 0;
+    let paused = false;
+    let visible = false;
+    let raf = 0;
+
+    const hMax = (): number => 1.2 * 2 * s * s;
+    const coef = (): number => 1 - h / (s * s);
+    const stable = (): boolean => h < 2 * s * s;
+    /** ULA's exact stationary variance; NaN where there is no stationary law. */
+    const vh = (): number => (stable() ? (s * s) / (1 - h / (2 * s * s)) : NaN);
+    const var0 = (): number => (start === 'wide' ? WIDE_VAR : 0);
+
+    const sliderToH = (t: number): number =>
+      Math.exp(Math.log(H_MIN) + (Math.log(hMax()) - Math.log(H_MIN)) * (t / 1000));
+    const hToSlider = (hv: number): number =>
+      Math.round((1000 * (Math.log(hv) - Math.log(H_MIN))) / (Math.log(hMax()) - Math.log(H_MIN)));
+
+    function chooseHorizon(): void {
+      const a = coef();
+      const rate = 1 - a * a;
+      if (sampler === 'ula') {
+        horizon = rate > 0 ? Math.min(3000, Math.max(80, Math.ceil(5 / rate))) : 120;
+      } else {
+        horizon = rate > 0 ? Math.min(3000, Math.max(200, Math.ceil(8 / rate))) : 1500;
+      }
+      perFrame = Math.max(1, Math.ceil(horizon / 150));
+    }
+
+    /**
+     * Sample variance with the independent-chain standard error, as in the
+     * repository's variance_mc_standard_error with one kept draw per chain:
+     * N/(N-1) times the ddof=1 spread of (X_i - mean)^2 across chains / sqrt(N).
+     */
+    function moments(): { v: number; se: number } {
+      let m = 0;
+      for (let i = 0; i < N; i++) m += x[i];
+      m /= N;
+      let s2 = 0;
+      let s4 = 0;
+      for (let i = 0; i < N; i++) {
+        const d = x[i] - m;
+        const d2 = d * d;
+        s2 += d2;
+        s4 += d2 * d2;
+      }
+      const m2 = s2 / N;
+      const m4 = s4 / N;
+      const corr = N / (N - 1);
+      const spread = Math.max(m4 - m2 * m2, 0) * corr; // ddof = 1 variance of (X_i - mean)^2
+      return { v: m2 * corr, se: Math.sqrt(spread / N) * corr };
+    }
+
+    function reset(): void {
+      const init = makeRng('langevin-baseline/init/2026');
+      const chain = makeRng('langevin-baseline/chain/2026');
+      normal = chain.normal;
+      rand = chain.rand;
+      const sd0 = Math.sqrt(var0());
+      for (let i = 0; i < N; i++) x[i] = sd0 > 0 ? sd0 * init.normal() : 0;
+      k = 0;
+      accepted = 0;
+      proposed = 0;
+      diverged = false;
+      chooseHorizon();
+      const m = moments();
+      measNow = m.v;
+      seNow = m.se;
+      exactNow = var0();
+      measured = [measNow];
+      exact = [exactNow];
+      if (reduced.matches) {
+        while (k < horizon && !diverged) step();
+      }
+      readout();
+      draw();
+    }
+
+    function step(): void {
+      const s2 = s * s;
+      const sq = Math.sqrt(2 * h);
+      if (sampler === 'ula') {
+        const a = 1 - h / s2;
+        for (let i = 0; i < N; i++) x[i] = a * x[i] + sq * normal();
+        exactNow = (1 - h / s2) * (1 - h / s2) * exactNow + 2 * h;
+      } else {
+        const fourH = 4 * h;
+        let acc = 0;
+        for (let i = 0; i < N; i++) {
+          const xi = x[i];
+          const gx = -xi / s2;
+          const y = xi + h * gx + sq * normal();
+          const gy = -y / s2;
+          const logPx = -(xi * xi) / (2 * s2);
+          const logPy = -(y * y) / (2 * s2);
+          const fwd = y - xi - h * gx;
+          const bwd = xi - y - h * gy;
+          const logFwd = -(fwd * fwd) / fourH;
+          const logBwd = -(bwd * bwd) / fourH;
+          let logAlpha = logPy + logBwd - (logPx + logFwd);
+          if (!Number.isFinite(logAlpha)) logAlpha = -Infinity;
+          if (Math.log(rand()) < logAlpha) {
+            x[i] = y;
+            acc++;
+          }
+        }
+        accepted += acc;
+        proposed += N;
+        exactNow = NaN;
+      }
+      k++;
+      const m = moments();
+      measNow = m.v;
+      seNow = m.se;
+      if (!Number.isFinite(measNow) || measNow > DIVERGED) diverged = true;
+      if (k <= horizon) {
+        measured.push(measNow);
+        exact.push(exactNow);
+      }
+    }
+
+    // ---- readout -----------------------------------------------------------
+    const f4 = (v: number): string => {
+      if (!Number.isFinite(v)) return '–';
+      if (v !== 0 && (Math.abs(v) >= 1e5 || Math.abs(v) < 1e-3)) return v.toExponential(3);
+      return v.toFixed(4);
+    };
+
+    function reference(): { value: number; label: string } {
+      if (sampler === 'ula') return { value: exactNow, label: 'exact Var(X_k)' };
+      return { value: s * s, label: 'ref s² (in stationarity)' };
+    }
+
+    function readout(): void {
+      outS.value = String(s);
+      outH.value = h < 0.1 ? h.toFixed(4) : h.toFixed(3);
+      const v = vh();
+      if (sampler === 'ula') {
+        refHead.textContent = stable()
+          ? `exact: v(h) = s²/(1 − h/2s²) = ${f4(v)}`
+          : 'exact: h ≥ 2s², no stationary law';
+        r.stat.textContent = stable() ? `N(0, ${f4(v)})` : 'none (h ≥ 2s²)';
+        r.acc.textContent = 'no accept/reject step';
+      } else {
+        refHead.textContent = `exact in stationarity: s² = ${f4(s * s)}`;
+        r.stat.textContent = `N(0, ${f4(s * s)}), in stationarity`;
+        r.acc.textContent = proposed > 0 ? `${(accepted / proposed).toFixed(3)} (1D, no closed form)` : '–';
+      }
+      const ref = reference();
+      r.k.textContent = diverged ? `${k} (diverged)` : String(k);
+      r.meas.textContent = f4(measNow);
+      r.se.textContent = f4(seNow);
+      r.refLabel.textContent = ref.label;
+      r.ref.textContent = f4(ref.value);
+      const z = seNow > 0 && Number.isFinite(ref.value) && !diverged ? (measNow - ref.value) / seNow : NaN;
+      r.z.textContent = Number.isFinite(z) ? `${z >= 0 ? '+' : '−'}${Math.abs(z).toFixed(2)}` : '–';
+      r.s2.textContent = f4(s * s);
+      r.lim.textContent = f4(2 * s * s);
+    }
+
+    // ---- drawing -----------------------------------------------------------
+    let colors = readColors();
+    function readColors() {
+      const cs = getComputedStyle(document.documentElement);
+      const get = (name: string, fallback: string): string => cs.getPropertyValue(name).trim() || fallback;
+      const isDark = dark.matches;
+      return {
+        ink: get('--ink', '#353535'),
+        ink2: get('--ink-2', '#666667'),
+        ink3: get('--ink-3', '#9f9fa0'),
+        rule: get('--rule-strong', '#c6c6c6'),
+        accent: isDark ? get('--seq-hi', '#fee838') : get('--seq-lo', '#00224e'),
+      };
+    }
+
+    let dpr = 1;
+    let W = 0;
+    let H = 0;
+    function layout(): void {
+      const rect = canvas.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = Math.max(1, rect.width);
+      H = Math.max(1, rect.height);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+    }
+
+    const gauss = (z: number, v: number): number => Math.exp(-(z * z) / (2 * v)) / Math.sqrt(2 * Math.PI * v);
+
+    function draw(): void {
+      if (W < 2) return;
+      const c = colors;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = '12px "Fira Code", monospace';
+      ctx.textBaseline = 'alphabetic';
+
+      // Panel geometry: histogram on top, variance trace underneath.
+      const L = 14;
+      const R = W - 14;
+      const top = 30;
+      const base = Math.round(H * 0.6);
+      const tTop = base + 34;
+      const tBase = H - 22;
+
+      // ---- histogram against the two exact densities ----
+      const v = vh();
+      const spread = Math.max(s * s, Number.isFinite(v) ? v : 0, var0());
+      const xr = 4.2 * Math.sqrt(spread);
+      const peak = Math.max(gauss(0, s * s), Number.isFinite(v) ? gauss(0, v) : 0);
+      const yMax = 1.3 * peak;
+      const X = (z: number): number => L + ((z + xr) / (2 * xr)) * (R - L);
+      const Y = (d: number): number => base - (Math.min(d, yMax) / yMax) * (base - top);
+
+      const counts = new Float64Array(BINS);
+      const bw = (2 * xr) / BINS;
+      for (let i = 0; i < N; i++) {
+        const b = Math.floor((x[i] + xr) / bw);
+        if (b >= 0 && b < BINS) counts[b]++;
+      }
+      ctx.fillStyle = c.accent;
+      ctx.globalAlpha = 0.28;
+      for (let b = 0; b < BINS; b++) {
+        if (!counts[b]) continue;
+        const d = counts[b] / (N * bw);
+        const x0 = X(-xr + b * bw);
+        const x1 = X(-xr + (b + 1) * bw);
+        ctx.fillRect(x0 + 0.5, Y(d), Math.max(1, x1 - x0 - 1), base - Y(d));
+      }
+      ctx.globalAlpha = 1;
+
+      ctx.strokeStyle = c.rule;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(L, base + 0.5);
+      ctx.lineTo(R, base + 0.5);
+      ctx.stroke();
+
+      const curve = (variance: number, dash: number[], color: string, width: number): void => {
+        ctx.setLineDash(dash);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        for (let i = 0; i <= 240; i++) {
+          const z = -xr + (2 * xr * i) / 240;
+          const px = X(z);
+          const py = Y(gauss(z, variance));
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      };
+      if (Number.isFinite(v)) curve(v, [], c.ink, 1.8);
+      curve(s * s, [6, 4], c.ink2, 1.5);
+
+      // Legend.
+      let lx = L;
+      const ly = 18;
+      const swatch = (dash: number[] | null, color: string, label: string): void => {
+        if (dash === null) {
+          ctx.fillStyle = color;
+          ctx.globalAlpha = 0.45;
+          ctx.fillRect(lx, ly - 8, 14, 9);
+          ctx.globalAlpha = 1;
+        } else {
+          ctx.setLineDash(dash);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.moveTo(lx, ly - 4);
+          ctx.lineTo(lx + 16, ly - 4);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        ctx.fillStyle = c.ink2;
+        ctx.fillText(label, lx + 20, ly);
+        lx += 20 + ctx.measureText(label).width + 16;
+      };
+      // Short labels on narrow (phone-width) canvases so the legend is not clipped.
+      const narrow = W < 560;
+      swatch(null, c.accent, narrow ? `${N} chains` : `${N} chains, step ${k}`);
+      if (Number.isFinite(v)) swatch([], c.ink, narrow ? 'N(0, v(h))' : 'N(0, v(h)) exact ULA law');
+      swatch([6, 4], c.ink2, narrow ? 'N(0, s²)' : 'N(0, s²) target');
+
+      // ---- variance trace against its exact reference ----
+      const ref = reference();
+      let vmax = Math.max(s * s, Number.isFinite(v) ? v : 0, var0());
+      for (let i = 0; i < measured.length; i++) if (Number.isFinite(measured[i])) vmax = Math.max(vmax, measured[i]);
+      for (let i = 0; i < exact.length; i++) if (Number.isFinite(exact[i])) vmax = Math.max(vmax, exact[i]);
+      vmax *= 1.15;
+      const TX = (kk: number): number => L + (kk / horizon) * (R - L);
+      const TY = (vv: number): number => tBase - (Math.min(vv, vmax) / vmax) * (tBase - tTop);
+
+      ctx.fillStyle = c.ink2;
+      ctx.fillText(narrow ? `variance vs step k (0 to ${horizon})` : `ensemble variance against step k (0 to ${horizon})`, L, tTop - 12);
+
+      ctx.strokeStyle = c.rule;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(L, tBase + 0.5);
+      ctx.lineTo(R, tBase + 0.5);
+      ctx.stroke();
+
+      const hline = (val: number, dash: number[], color: string, label: string): void => {
+        if (!Number.isFinite(val) || val > vmax) return;
+        ctx.setLineDash(dash);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(L, TY(val));
+        ctx.lineTo(R, TY(val));
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = color;
+        const tw = ctx.measureText(label).width;
+        ctx.fillText(label, R - tw, TY(val) - 4);
+      };
+      hline(s * s, [6, 4], c.ink2, 's²');
+      if (Number.isFinite(v) && Math.abs(v - s * s) > 0.04 * vmax) hline(v, [2, 3], c.ink3, 'v(h)');
+
+      if (sampler === 'ula') {
+        ctx.strokeStyle = c.ink;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        for (let i = 0; i < exact.length; i++) {
+          const px = TX(i);
+          const py = TY(exact[i]);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+      ctx.strokeStyle = c.accent;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      let begun = false;
+      for (let i = 0; i < measured.length; i++) {
+        if (!Number.isFinite(measured[i])) break;
+        const px = TX(i);
+        const py = TY(measured[i]);
+        if (!begun) {
+          ctx.moveTo(px, py);
+          begun = true;
+        } else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = c.ink2;
+      const legend2 =
+        sampler === 'ula'
+          ? (narrow ? 'measured (color), exact (ink)' : 'measured (color) vs exact Var(X_k) (ink)')
+          : (narrow ? 'measured; no closed-form transient' : 'measured (color); MALA has no closed-form transient');
+      ctx.fillText(legend2, L, tBase + 16);
+      if (ref.value > vmax && Number.isFinite(ref.value)) {
+        const t = 'exact value above the plotted range';
+        ctx.fillText(t, R - ctx.measureText(t).width, tBase + 16);
+      }
+    }
+
+    // ---- loop --------------------------------------------------------------
+    function frame(): void {
+      raf = 0;
+      if (paused || !visible || reduced.matches) return;
+      if (!diverged) {
+        for (let i = 0; i < perFrame && !diverged; i++) step();
+      }
+      readout();
+      draw();
+      if (!diverged) raf = requestAnimationFrame(frame);
+    }
+    function kick(): void {
+      if (!raf && !paused && visible && !reduced.matches && !diverged) raf = requestAnimationFrame(frame);
+    }
+
+    // ---- controls ----------------------------------------------------------
+    function syncH(): void {
+      h = Math.min(Math.max(h, H_MIN), hMax());
+      inH.value = String(hToSlider(h));
+    }
+    inS.addEventListener('input', () => {
+      s = SCALES[Number(inS.value)] ?? 0.5;
+      syncH();
+      reset();
+      kick();
+    });
+    inH.addEventListener('input', () => {
+      h = sliderToH(Number(inH.value));
+      reset();
+      kick();
+    });
+    inSampler.addEventListener('change', () => {
+      sampler = inSampler.value === 'mala' ? 'mala' : 'ula';
+      reset();
+      kick();
+    });
+    inStart.addEventListener('change', () => {
+      start = inStart.value === 'wide' ? 'wide' : 'zero';
+      reset();
+      kick();
+    });
+    btnReset.addEventListener('click', () => {
+      reset();
+      kick();
+    });
+    btnPause.addEventListener('click', () => {
+      paused = !paused;
+      btnPause.textContent = paused ? 'Play' : 'Pause';
+      btnPause.setAttribute('aria-pressed', String(paused));
+      kick();
+    });
+
+    dark.addEventListener('change', () => {
+      colors = readColors();
+      draw();
+    });
+    reduced.addEventListener('change', () => {
+      reset();
+      kick();
+    });
+    new ResizeObserver(() => {
+      layout();
+      draw();
+    }).observe(canvas);
+    new IntersectionObserver((entries) => {
+      visible = entries.some((e) => e.isIntersecting);
+      kick();
+    }).observe(root);
+
+    if (reduced.matches) btnPause.hidden = true;
+    syncH();
+    layout();
+    reset();
+  }
+</script>

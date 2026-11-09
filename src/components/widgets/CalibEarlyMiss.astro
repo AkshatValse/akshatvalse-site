@@ -1,0 +1,397 @@
+---
+/**
+ * Classical toy, not project data: when does a miss on a cumulative target
+ * become certain?
+ *
+ * One forecast horizon of H i.i.d. non-negative increments x_h = c·ξ_h, with
+ * ξ_h ~ χ²₁ (a squared standard normal, the textbook toy for squared returns
+ * at constant volatility) or ξ_h ~ Exp(1). The issued bound u_α is FIXED at
+ * the calm-regime quantile, P(Σ_{h≤H} ξ_h > u_α) = α, so c = 1 is calm and
+ * c > 1 is a volatility jump the bound has not seen. No calibrator runs.
+ *
+ * τ is the first step k with S_k > u_α. Because S is monotone,
+ *   P(τ ≤ k) = P(S_k > u_α) = F̄_k(u_α / c),
+ * with F̄_k the survival function of Σ_{h≤k} ξ_h, which is elementary for both
+ * families (Poisson identity for Exp; parity formulas for χ²). From it:
+ *   P(miss)            = F̄_H(u/c)
+ *   P(τ < H | miss)    = F̄_{H-1}(u/c) / F̄_H(u/c)
+ *   E[H - τ | miss]    = Σ_{k=1}^{H-1} F̄_k(u/c) / F̄_H(u/c)
+ * u_α comes from bisection on the closed form. The widget shows these exact
+ * values beside a seeded Monte Carlo estimate (mulberry32, polar Box–Muller,
+ * ± one standard error). The exact functions reproduce the closed-form test
+ * vectors to every printed digit (χ², α = 0.1; e.g. H = 72: u = 87.743047749;
+ * c = 2: 0.996409, 0.998892, 26.7387), which were cross-checked in R.
+ */
+interface Props { id?: string }
+const { id = 'calib-early-miss' } = Astro.props;
+---
+
+<div class="widget calib-w" id={id} data-calib-early-miss>
+  <div class="widget-head">
+    <h3>Classical toy, not project data: when does a miss become certain?</h3>
+    <span class="ref">exact reference: P(τ ≤ k) = F̄<sub>k</sub>(u<sub>α</sub>/c), closed form</span>
+  </div>
+  <div class="widget-body">
+    <div class="widget-plot">
+      <svg viewBox="0 0 640 360" role="img" aria-label="One seeded run of the running sum against a fixed bound, and the distribution of the step at which the miss becomes certain against its exact law." data-plot></svg>
+    </div>
+    <div class="controls">
+      <div class="control">
+        <label for={`${id}-H`}>Horizon H (steps) <output data-out="H">72</output></label>
+        <input id={`${id}-H`} type="range" min="4" max="288" step="1" value="72" data-in="H" />
+      </div>
+      <div class="control">
+        <label for={`${id}-alpha`}>Bound's calm miss rate α <output data-out="alpha">0.10</output></label>
+        <input id={`${id}-alpha`} type="range" min="0.01" max="0.3" step="0.01" value="0.1" data-in="alpha" />
+      </div>
+      <div class="control">
+        <label for={`${id}-c`}>Volatility multiplier c <output data-out="c">2.00</output></label>
+        <input id={`${id}-c`} type="range" min="1" max="4" step="0.05" value="2" data-in="c" />
+      </div>
+      <div class="control">
+        <label for={`${id}-kind`}>Increments ξ</label>
+        <select id={`${id}-kind`} data-in="kind">
+          <option value="chi2" selected>χ²₁ (squared normal)</option>
+          <option value="exp">Exp(1)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for={`${id}-N`}>Runs N <output data-out="N">10,000</output></label>
+        <input id={`${id}-N`} type="range" min="1000" max="20000" step="1000" value="10000" data-in="N" />
+      </div>
+      <div class="control">
+        <label for={`${id}-seed`}>Seed <output data-out="seed">1</output></label>
+        <input id={`${id}-seed`} type="range" min="1" max="100" step="1" value="1" data-in="seed" />
+      </div>
+      <div class="readings" aria-live="polite" data-readings>
+        <div>Bound u<sub>α</sub>: <b data-r="u">–</b> exact</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .calib-w select { width: 100%; height: auto; padding: 4px 6px; font-family: 'Poppins', sans-serif; font-size: 13px; }
+  .calib-w :global(text) { font-family: 'Poppins', sans-serif; fill: var(--ink); font-size: 12.5px; }
+  .calib-w :global(.cw-muted) { fill: var(--ink-2); }
+  .calib-w :global(.cw-title) { font-size: 13px; font-weight: 500; }
+  .calib-w :global(.cw-m) { font-family: 'Charter', Georgia, serif; font-style: italic; font-size: 14px; }
+  .calib-w :global(.cw-axis) { stroke: var(--ink-2); stroke-width: 1; fill: none; }
+  .calib-w :global(.cw-bound) { stroke: var(--ink); stroke-width: 1.4; stroke-dasharray: 6 4; fill: none; }
+  .calib-w :global(.cw-path) { stroke: var(--ink); stroke-width: 2; fill: none; stroke-linejoin: round; }
+  .calib-w :global(.cw-path.after) { opacity: 0.35; }
+  .calib-w :global(.cw-band) { fill: var(--seq-lo); opacity: 0.09; }
+  .calib-w :global(.cw-acc) { fill: var(--seq-lo); }
+  .calib-w :global(.cw-acc-s) { stroke: var(--seq-lo); fill: none; }
+  .calib-w :global(.cw-hollow) { fill: var(--ground); stroke: var(--ink-2); stroke-width: 2; }
+  .calib-w :global(.cw-bar) { fill: var(--ink-3); }
+  .calib-w :global(.cw-exact) { stroke: var(--seq-lo); stroke-width: 1.8; fill: none; stroke-linejoin: round; }
+  @media (prefers-color-scheme: dark) {
+    .calib-w :global(.cw-band) { fill: var(--seq-hi); opacity: 0.08; }
+    .calib-w :global(.cw-acc) { fill: var(--seq-hi); }
+    .calib-w :global(.cw-acc-s) { stroke: var(--seq-hi); }
+    .calib-w :global(.cw-exact) { stroke: var(--seq-hi); }
+  }
+</style>
+
+<script>
+  // ---------------------------------------------------------------- exact ---
+  const INV_SQRT_2PI = 0.3989422804014327;
+
+  /** erf(x) for |x| <= ~1.5 by the confluent series (all terms positive). */
+  function erfSeries(x: number): number {
+    const x2 = x * x;
+    let term = x;
+    let sum = x;
+    for (let n = 1; n < 200; n++) {
+      term *= (2 * x2) / (2 * n + 1);
+      sum += term;
+      if (term < 1e-18 * sum) break;
+    }
+    return (2 / Math.sqrt(Math.PI)) * Math.exp(-x2) * sum;
+  }
+
+  /** Mills ratio Φ̄(a)/φ(a) by the Laplace continued fraction (modified Lentz), a >= 1.5. */
+  function millsRatio(a: number): number {
+    const TINY = 1e-300;
+    let f = TINY;
+    let C = f;
+    let D = 0;
+    for (let j = 1; j < 400; j++) {
+      const aj = j === 1 ? 1 : j - 1;
+      D = a + aj * D;
+      if (D === 0) D = TINY;
+      C = a + aj / C;
+      if (C === 0) C = TINY;
+      D = 1 / D;
+      const delta = C * D;
+      f *= delta;
+      if (Math.abs(delta - 1) < 1e-16) break;
+    }
+    return f;
+  }
+
+  /** Upper normal tail Φ̄(a), a >= 0. */
+  function normalTail(a: number): number {
+    if (a < 1.5) return 0.5 * (1 - erfSeries(a / Math.SQRT2));
+    return INV_SQRT_2PI * Math.exp(-0.5 * a * a) * millsRatio(a);
+  }
+
+  type Kind = 'chi2' | 'exp';
+
+  /** F̄_k(x) = P(ξ_1 + … + ξ_k > x), closed form. */
+  function surv(kind: Kind, k: number, x: number): number {
+    if (k <= 0) return x < 0 ? 1 : 0;
+    if (x <= 0) return 1;
+    if (kind === 'exp') {
+      // Poisson identity: Gamma(k,1) exceeds x iff fewer than k arrivals by time x.
+      let term = Math.exp(-x);
+      let sum = term;
+      for (let j = 1; j <= k - 1; j++) { term *= x / j; sum += term; }
+      return Math.min(1, sum);
+    }
+    if (k % 2 === 0) {
+      const y = x / 2;
+      let term = Math.exp(-y);
+      let sum = term;
+      for (let j = 1; j <= k / 2 - 1; j++) { term *= y / j; sum += term; }
+      return Math.min(1, sum);
+    }
+    // k = 2m + 1: 2 Φ̄(√x) + 2 φ(√x) Σ_{j=1}^{m} x^{j-1/2} / (2j-1)!!
+    const r = Math.sqrt(x);
+    const phi = INV_SQRT_2PI * Math.exp(-x / 2);
+    let term = r;
+    let acc = 0;
+    for (let j = 1; j <= (k - 1) / 2; j++) {
+      if (j > 1) term *= x / (2 * j - 1);
+      acc += term;
+    }
+    return Math.min(1, 2 * normalTail(r) + 2 * phi * acc);
+  }
+
+  /** u_α with F̄_H(u_α) = α, by bisection on the closed form. */
+  function boundFor(kind: Kind, H: number, alpha: number): number {
+    let lo = 0;
+    let hi = 10 * H + 100;
+    for (let i = 0; i < 200; i++) {
+      const mid = 0.5 * (lo + hi);
+      if (surv(kind, H, mid) > alpha) lo = mid; else hi = mid;
+    }
+    return 0.5 * (lo + hi);
+  }
+
+  interface Exact { u: number; Fbar: Float64Array; pmiss: number; early: number; lead: number }
+
+  function exact(kind: Kind, H: number, alpha: number, c: number): Exact {
+    const u = boundFor(kind, H, alpha);
+    const Fbar = new Float64Array(H + 1); // Fbar[0] = 0 since u > 0
+    for (let k = 1; k <= H; k++) Fbar[k] = surv(kind, k, u / c);
+    let lead = 0;
+    for (let k = 1; k <= H - 1; k++) lead += Fbar[k];
+    const pmiss = Fbar[H];
+    return { u, Fbar, pmiss, early: Fbar[H - 1] / pmiss, lead: lead / pmiss };
+  }
+
+  // ---------------------------------------------------------- Monte Carlo ---
+  function mulberry32(seed: number): () => number {
+    let a = seed | 0;
+    return () => {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  interface Sim {
+    path: Float64Array; tau0: number; hist: Float64Array;
+    misses: number; early: number; leadSum: number; leadSq: number; N: number;
+  }
+
+  function simulate(kind: Kind, H: number, c: number, u: number, N: number, seed: number): Sim {
+    const rand = mulberry32(seed);
+    let spare: number | null = null;
+    const gauss = (): number => {
+      if (spare !== null) { const s = spare; spare = null; return s; }
+      let x: number, y: number, s: number;
+      do { x = 2 * rand() - 1; y = 2 * rand() - 1; s = x * x + y * y; } while (s === 0 || s >= 1);
+      const m = Math.sqrt((-2 * Math.log(s)) / s);
+      spare = y * m;
+      return x * m;
+    };
+    const draw = kind === 'exp' ? () => -Math.log(1 - rand()) : () => { const z = gauss(); return z * z; };
+    const path = new Float64Array(H + 1);
+    const hist = new Float64Array(H + 1);
+    let tau0 = 0, misses = 0, early = 0, leadSum = 0, leadSq = 0;
+    for (let n = 0; n < N; n++) {
+      let S = 0;
+      let tau = 0;
+      if (n === 0) {
+        // the displayed run is kept in full, past the crossing
+        for (let k = 1; k <= H; k++) { S += c * draw(); path[k] = S; if (!tau && S > u) tau = k; }
+        tau0 = tau;
+      } else {
+        // once the running sum crosses u the miss is certain: stop drawing
+        for (let k = 1; k <= H; k++) { S += c * draw(); if (S > u) { tau = k; break; } }
+      }
+      if (tau) {
+        hist[tau]++; misses++;
+        if (tau < H) early++;
+        const L = H - tau; leadSum += L; leadSq += L * L;
+      }
+    }
+    return { path, tau0, hist, misses, early, leadSum, leadSq, N };
+  }
+
+  // ------------------------------------------------------------- drawing ---
+  const f = (x: number, d = 1) => x.toFixed(d);
+  const pct = (x: number) => x.toFixed(4);
+
+  function render(svg: SVGSVGElement, H: number, ex: Exact, sim: Sim, seed: number, N: number): void {
+    const out: string[] = [];
+    // left panel: one run
+    const L = { x0: 58, x1: 292, y0: 290, y1: 52 };
+    const ymax = Math.max(ex.u * 1.3, sim.path[H] * 1.06);
+    const px = (k: number) => L.x0 + (k / H) * (L.x1 - L.x0);
+    const py = (v: number) => L.y0 - (v / ymax) * (L.y0 - L.y1);
+    const yu = py(ex.u);
+    out.push(`<text class="cw-title" x="${L.x0 - 40}" y="20">One run, seed ${seed}</text>`);
+    const tau = sim.tau0;
+    if (tau) {
+      out.push(`<rect class="cw-band" x="${f(px(tau))}" y="${L.y1}" width="${f(px(H) - px(tau))}" height="${L.y0 - L.y1}"/>`);
+    }
+    out.push(`<path class="cw-axis" d="M${L.x0},${L.y1} V${L.y0} H${L.x1}"/>`);
+    out.push(`<text class="cw-muted" x="${L.x0}" y="${L.y0 + 16}" text-anchor="middle">0</text>`);
+    out.push(`<text class="cw-muted" x="${L.x1}" y="${L.y0 + 16}" text-anchor="middle">${H}</text>`);
+    out.push(`<text class="cw-muted" x="${(L.x0 + L.x1) / 2}" y="${L.y0 + 32}" text-anchor="middle">step <tspan class="cw-m">k</tspan></text>`);
+    out.push(`<text class="cw-muted" transform="translate(${L.x0 - 14} ${(L.y0 + L.y1) / 2}) rotate(-90)" text-anchor="middle">running sum <tspan class="cw-m">S</tspan><tspan baseline-shift="sub" font-size="9">k</tspan></text>`);
+    out.push(`<line class="cw-bound" x1="${L.x0}" y1="${f(yu)}" x2="${L.x1}" y2="${f(yu)}"/>`);
+    // The path is below u up to step τ − 1 and above it from τ on, so the label sits above the line
+    // at the left unless the crossing segment starts under it; then it sits below the line at the right.
+    const boundLabel = 'fixed bound <tspan class="cw-m">u</tspan><tspan baseline-shift="sub" font-size="9">α</tspan>';
+    if (tau && px(tau - 1) < L.x0 + 106) {
+      out.push(`<text x="${L.x1 - 6}" y="${f(yu + 16)}" text-anchor="end">${boundLabel}</text>`);
+    } else {
+      out.push(`<text x="${L.x0 + 6}" y="${f(yu - 7)}">${boundLabel}</text>`);
+    }
+    const pts = (a: number, b: number) => {
+      const s: string[] = [];
+      for (let k = a; k <= b; k++) s.push(`${f(px(k))},${f(py(sim.path[k]))}`);
+      return s.join(' ');
+    };
+    if (tau) {
+      out.push(`<polyline class="cw-path" points="${pts(0, tau)}"/>`);
+      if (tau < H) out.push(`<polyline class="cw-path after" points="${pts(tau, H)}"/>`);
+      const mx = px(tau), my = py(sim.path[tau]);
+      out.push(`<line class="cw-acc-s" x1="${f(mx)}" y1="${L.y1}" x2="${f(mx)}" y2="${L.y0}" stroke-width="1.2" stroke-dasharray="2 3"/>`);
+      out.push(`<circle class="cw-acc" cx="${f(mx)}" cy="${f(my)}" r="5.5"/>`);
+      const right = mx < (L.x0 + L.x1) / 2;
+      const tx = right ? mx + 8 : mx - 8;
+      const anchor = right ? 'start' : 'end';
+      out.push(`<text x="${f(tx)}" y="${L.y1 + 14}" text-anchor="${anchor}">miss certain at <tspan class="cw-m">τ</tspan> = ${tau}</text>`);
+      out.push(`<text class="cw-muted" x="${f(tx)}" y="${L.y1 + 30}" text-anchor="${anchor}">lead <tspan class="cw-m">H</tspan> − <tspan class="cw-m">τ</tspan> = ${H - tau} steps</text>`);
+    } else {
+      out.push(`<polyline class="cw-path" points="${pts(0, H)}"/>`);
+      const ex2 = px(H), ey = py(sim.path[H]);
+      out.push(`<circle class="cw-hollow" cx="${f(ex2)}" cy="${f(ey)}" r="5.5"/>`);
+      // a covered path never rises above u, so the band above the bound is free for the label
+      out.push(`<text x="${f(ex2 - 4)}" y="${L.y1 + 14}" text-anchor="end">covered (hollow marker):</text>`);
+      out.push(`<text class="cw-muted" x="${f(ex2 - 4)}" y="${L.y1 + 30}" text-anchor="end">confirmed only at <tspan class="cw-m">H</tspan></text>`);
+    }
+
+    // right panel: distribution of τ over N runs against the exact pmf
+    const R = { x0: 370, x1: 616, y0: 290, y1: 52 };
+    const pmf = new Float64Array(H + 1);
+    let top = 0;
+    for (let k = 1; k <= H; k++) {
+      // clamp ulp-level negatives where F̄ saturates near 1 (seen down to −6.7e−16)
+      pmf[k] = Math.max(0, ex.Fbar[k] - ex.Fbar[k - 1]);
+      top = Math.max(top, pmf[k], sim.hist[k] / N);
+    }
+    top = top > 0 ? top * 1.12 : 1;
+    const bw = (R.x1 - R.x0) / H;
+    const qx = (k: number) => R.x0 + (k - 0.5) * bw;
+    const qy = (p: number) => R.y0 - (p / top) * (R.y0 - R.y1);
+    out.push(`<text class="cw-title" x="${R.x0 - 40}" y="20">Crossing step <tspan class="cw-m">τ</tspan>, ${N.toLocaleString('en-US')} runs</text>`);
+    for (let k = 1; k <= H; k++) {
+      const p = sim.hist[k] / N;
+      if (p > 0) out.push(`<rect class="cw-bar" x="${f(R.x0 + (k - 1) * bw + Math.min(0.15 * bw, 1), 2)}" y="${f(qy(p), 2)}" width="${f(Math.max(bw - Math.min(0.3 * bw, 2), 0.6), 2)}" height="${f(R.y0 - qy(p), 2)}"/>`);
+    }
+    const ep: string[] = [];
+    for (let k = 1; k <= H; k++) ep.push(`${f(qx(k), 2)},${f(qy(pmf[k]), 2)}`);
+    out.push(`<polyline class="cw-exact" points="${ep.join(' ')}"/>`);
+    out.push(`<path class="cw-axis" d="M${R.x0},${R.y1} V${R.y0} H${R.x1}"/>`);
+    out.push(`<text class="cw-muted" x="${R.x0 + bw / 2}" y="${R.y0 + 16}" text-anchor="middle">1</text>`);
+    out.push(`<text class="cw-muted" x="${R.x1 - bw / 2}" y="${R.y0 + 16}" text-anchor="middle">${H}</text>`);
+    out.push(`<text class="cw-muted" x="${(R.x0 + R.x1) / 2}" y="${R.y0 + 32}" text-anchor="middle">step <tspan class="cw-m">k</tspan></text>`);
+    const yTop = qy(top / 1.12);
+    out.push(`<text class="cw-muted" x="${R.x0 - 6}" y="${f(yTop + 4)}" text-anchor="end">${(top / 1.12).toFixed(top < 0.01 ? 4 : 3)}</text>`);
+    out.push(`<line class="cw-axis" x1="${R.x0 - 3}" y1="${f(yTop)}" x2="${R.x0}" y2="${f(yTop)}"/>`);
+    out.push(`<text class="cw-muted" x="${R.x0 - 6}" y="${R.y0}" text-anchor="end">0</text>`);
+    // legend, above the plot area so it never covers the bars
+    const lgx = R.x0 - 40, lgy = 30;
+    out.push(`<rect class="cw-bar" x="${lgx}" y="${lgy}" width="14" height="9"/>`);
+    out.push(`<text x="${lgx + 20}" y="${lgy + 9}">Monte Carlo</text>`);
+    out.push(`<line class="cw-exact" x1="${lgx + 112}" y1="${lgy + 5}" x2="${lgx + 128}" y2="${lgy + 5}"/>`);
+    out.push(`<text x="${lgx + 134}" y="${lgy + 9}">exact pmf</text>`);
+    svg.innerHTML = out.join('');
+    svg.setAttribute('aria-label', tau
+      ? `One seeded run crosses the fixed bound at step ${tau} of ${H}, so its miss is certain ${H - tau} steps early. Right: the distribution of that step over ${N} runs against the exact probability mass function.`
+      : `One seeded run stays below the fixed bound, so its coverage is confirmed only at step ${H}. Right: the distribution of the step at which the miss becomes certain over ${N} runs against the exact probability mass function.`);
+  }
+
+  function readings(el: HTMLElement, ex: Exact, sim: Sim): void {
+    const N = sim.N;
+    const p = sim.misses / N;
+    const pse = Math.sqrt((p * (1 - p)) / N);
+    const m = sim.misses;
+    let early = '–', lead = '–';
+    if (m > 0) {
+      const q = sim.early / m;
+      early = `${pct(q)} ± ${pct(Math.sqrt((q * (1 - q)) / m))}`;
+      const mean = sim.leadSum / m;
+      const v = m > 1 ? Math.max(0, (sim.leadSq - m * mean * mean) / (m - 1)) : 0;
+      lead = `${mean.toFixed(2)} ± ${Math.sqrt(v / m).toFixed(2)}`;
+    }
+    el.innerHTML = [
+      `<div>Bound u<sub>α</sub>: <b>${ex.u.toFixed(3)}</b> exact</div>`,
+      `<div>P(miss)<br/><b>exact ${pct(ex.pmiss)}</b> · MC ${pct(p)} ± ${pct(pse)}</div>`,
+      `<div>P(τ &lt; H | miss)<br/><b>exact ${pct(ex.early)}</b> · MC ${early}</div>`,
+      `<div>E[H − τ | miss], steps<br/><b>exact ${ex.lead.toFixed(2)}</b> · MC ${lead}</div>`,
+      `<div>MC: ${N.toLocaleString('en-US')} seeded runs, ± one standard error</div>`,
+    ].join('');
+  }
+
+  // --------------------------------------------------------------- wiring ---
+  document.querySelectorAll<HTMLElement>('[data-calib-early-miss]').forEach((root) => {
+    const svg = root.querySelector<SVGSVGElement>('[data-plot]')!;
+    const read = root.querySelector<HTMLElement>('[data-readings]')!;
+    const input = (name: string) => root.querySelector<HTMLInputElement | HTMLSelectElement>(`[data-in="${name}"]`)!;
+    const output = (name: string) => root.querySelector<HTMLOutputElement>(`[data-out="${name}"]`);
+    let queued = false;
+    const update = () => {
+      queued = false;
+      const H = Math.round(Number(input('H').value));
+      const alpha = Number(input('alpha').value);
+      const c = Number(input('c').value);
+      const kind = (input('kind').value === 'exp' ? 'exp' : 'chi2') as Kind;
+      const N = Math.round(Number(input('N').value));
+      const seed = Math.round(Number(input('seed').value));
+      output('H')!.textContent = String(H);
+      output('alpha')!.textContent = alpha.toFixed(2);
+      output('c')!.textContent = c.toFixed(2);
+      output('N')!.textContent = N.toLocaleString('en-US');
+      output('seed')!.textContent = String(seed);
+      const ex = exact(kind, H, alpha, c);
+      const sim = simulate(kind, H, c, ex.u, N, seed);
+      render(svg, H, ex, sim, seed, N);
+      readings(read, ex, sim);
+    };
+    const schedule = () => { if (!queued) { queued = true; requestAnimationFrame(update); } };
+    root.querySelectorAll('[data-in]').forEach((el) => {
+      el.addEventListener('input', schedule);
+      el.addEventListener('change', schedule);
+    });
+    update();
+  });
+</script>

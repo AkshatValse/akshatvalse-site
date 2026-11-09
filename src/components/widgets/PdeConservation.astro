@@ -1,0 +1,441 @@
+---
+/**
+ * Conservation for any weights (setting only; not the project's method).
+ *
+ * A rollout of the cell-average update (1) on a periodic grid of M cells,
+ *   v_j^{n+1} = v_j^n - lam * (F_{j+1/2} - F_{j-1/2}),   lam = dt/dx,
+ * with the face value F either the textbook upwind flux a * v_L (a = 1), or a
+ * width-8 tanh network F(v_L, v_R) = sum_h w_h tanh(a_h v_L + b_h v_R + c_h)
+ * whose weights are random and untrained, drawn from a seeded PRNG (mulberry32,
+ * Box-Muller). The architecture, activation and two-cell face input are
+ * placeholders for this illustration and do not describe the project's networks.
+ *
+ * Exact reference: identity (2). Every face value is computed once and enters
+ * two cells with opposite signs, so sum_j v_j^n - sum_j v_j^0 = 0 in exact
+ * arithmetic for every flux and every weight vector. In floating point the
+ * widget sums the cell averages exactly and rounds once (math.fsum's
+ * algorithm) and compares the drift with a rigorous bound on the rounding
+ * committed by the updates so far: with u = 2^-53, each step adds at most
+ *   u/(1-u)^2 * (1 + u/2) * sum_j ( |v_j^{n+1}| + 2 |lam (F_{j+1/2} - F_{j-1/2})| ).
+ * The rollout stops, and says so, if any value is non-finite.
+ */
+import Icon from '../clarity/Icon.astro';
+
+interface Props { id?: string }
+const { id = 'pde-cons' } = Astro.props;
+const ids = {
+  flux: `${id}-flux`, seed: `${id}-seed`, lam: `${id}-lam`, m: `${id}-m`, n: `${id}-n`,
+};
+---
+
+<div class="widget pde-cons" id={id} data-pde-cons>
+  <div class="widget-head">
+    <h3>Conservation for any weights (random weights, not a trained solver)</h3>
+    <span class="ref">exact reference: Σ v̄ⁿ − Σ v̄⁰ = 0 (sum over all cells) for every flux and every Θ, identity (2)</span>
+  </div>
+  <div class="widget-body">
+    <div class="widget-plot">
+      <canvas data-plot role="img"
+        aria-label="Cell averages over one period of a periodic grid: the initial data as a dashed line and the current step as a solid line."></canvas>
+    </div>
+    <div class="controls">
+      <div class="control">
+        <label for={ids.flux}>Face flux</label>
+        <select id={ids.flux} data-flux>
+          <option value="net" selected>tanh network, random weights</option>
+          <option value="upwind">textbook upwind, a = 1 (designed)</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for={ids.seed}>Network seed <output for={ids.seed} data-out="seed">20261110</output></label>
+        <input id={ids.seed} data-seed type="number" min="0" max="4294967295" step="1" value="20261110" inputmode="numeric" />
+      </div>
+      <div class="control">
+        <label for={ids.lam}>λ = Δt/Δx <output for={ids.lam} data-out="lam">0.40</output></label>
+        <input id={ids.lam} data-lam type="range" min="0.05" max="1" step="0.05" value="0.4" />
+      </div>
+      <div class="control">
+        <label for={ids.m}>Cells M <output for={ids.m} data-out="m">64</output></label>
+        <input id={ids.m} data-m type="range" min="32" max="256" step="32" value="64" />
+      </div>
+      <div class="control">
+        <label for={ids.n}>Rollout length <output for={ids.n} data-out="n">500 steps</output></label>
+        <input id={ids.n} data-n type="range" min="100" max="5000" step="100" value="500" />
+      </div>
+      <div class="pde-cons-buttons">
+        <button type="button" class="button icon" data-play><span data-play-label>Play</span> <Icon name="play" /></button>
+        <button type="button" class="button" data-reset>Reset</button>
+      </div>
+      <div class="readings">
+        <div>step <b data-r="step">0</b> of <span data-r="of">500</span></div>
+        <div>Σ v̄ⁿ (mass/Δx) <b data-r="mass">–</b></div>
+        <div>drift <b data-r="drift">0</b> <span>(exact 0)</span></div>
+        <div>|drift| / (M·max|v̄ⁿ|) <b data-r="rel">0</b></div>
+        <div>rounding bound <b data-r="bound">0</b></div>
+        <div>|drift| ≤ bound: <b data-r="check">yes</b></div>
+        <div>max |v̄ⁿ| <b data-r="max">–</b></div>
+        <div data-r="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .pde-cons input[type='number'] {
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    padding: 4px 6px;
+  }
+  .pde-cons-buttons { display: flex; flex-wrap: wrap; gap: 0.6em; }
+</style>
+
+<script>
+  // --- core start
+  /** Unit roundoff of IEEE double precision. */
+  const U = 2 ** -53;
+  /** Hidden width of the toy network (a placeholder for this illustration). */
+  const WIDTH = 8;
+
+  type FluxKind = 'upwind' | 'net';
+
+  interface Net { a: Float64Array; b: Float64Array; c: Float64Array; w: Float64Array }
+
+  /** mulberry32: a small seeded 32-bit PRNG with uniform output in [0, 1). */
+  function mulberry32(seed: number): () => number {
+    let s = seed >>> 0;
+    return () => {
+      s = (s + 0x6d2b79f5) >>> 0;
+      let t = s;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /** Standard normal by Box-Muller. */
+  function normal(rand: () => number): number {
+    let u = 0;
+    while (u === 0) u = rand();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rand());
+  }
+
+  /** Random, untrained weights: a_h, b_h, c_h ~ N(0, 1), w_h ~ N(0, 1/WIDTH). */
+  function makeNet(seed: number): Net {
+    const rand = mulberry32(seed);
+    const net: Net = {
+      a: new Float64Array(WIDTH), b: new Float64Array(WIDTH),
+      c: new Float64Array(WIDTH), w: new Float64Array(WIDTH),
+    };
+    for (let h = 0; h < WIDTH; h++) {
+      net.a[h] = normal(rand);
+      net.b[h] = normal(rand);
+      net.c[h] = normal(rand);
+      net.w[h] = normal(rand) / Math.sqrt(WIDTH);
+    }
+    return net;
+  }
+
+  /**
+   * Exact cell averages on [0, 1) of a constant background 1, a square pulse of
+   * height 1 on [0.1, 0.3) and a raised-cosine bump of height 1 on [0.5, 0.8].
+   */
+  function initialData(M: number): Float64Array {
+    const v = new Float64Array(M);
+    const dx = 1 / M;
+    const c = 0.65, half = 0.15, k = Math.PI / half;
+    for (let j = 0; j < M; j++) {
+      const lo = j * dx, hi = (j + 1) * dx;
+      let s = hi - lo;
+      const p0 = Math.max(lo, 0.1), p1 = Math.min(hi, 0.3);
+      if (p1 > p0) s += p1 - p0;
+      const q0 = Math.max(lo, c - half), q1 = Math.min(hi, c + half);
+      if (q1 > q0) s += 0.5 * ((q1 - q0) + (Math.sin(k * (q1 - c)) - Math.sin(k * (q0 - c))) / k);
+      v[j] = s / dx;
+    }
+    return v;
+  }
+
+  /** F[i] is the face value at x_{i+1/2}, between cell i and cell i+1 (periodic). */
+  function faceValues(v: Float64Array, F: Float64Array, kind: FluxKind, net: Net): void {
+    const M = v.length;
+    for (let i = 0; i < M; i++) {
+      const L = v[i];
+      if (kind === 'upwind') { F[i] = L; continue; }
+      const R = v[i + 1 === M ? 0 : i + 1];
+      let s = 0;
+      for (let h = 0; h < WIDTH; h++) s += net.w[h] * Math.tanh(net.a[h] * L + net.b[h] * R + net.c[h]);
+      F[i] = s;
+    }
+  }
+
+  /**
+   * One step of (1) in place. Returns sum_j (|v_j^{n+1}| + 2|t_j|), from which
+   * the caller forms the rounding bound for this step.
+   */
+  function update(v: Float64Array, F: Float64Array, lam: number): number {
+    const M = v.length;
+    let acc = 0;
+    for (let j = 0; j < M; j++) {
+      const t = lam * (F[j] - F[j === 0 ? M - 1 : j - 1]);
+      const next = v[j] - t;
+      v[j] = next;
+      acc += Math.abs(next) + 2 * Math.abs(t);
+    }
+    return acc;
+  }
+
+  /**
+   * sum(a) - sum(b), correctly rounded: exact non-overlapping partials
+   * (Shewchuk-style expansion), then rounded once, as CPython's math.fsum does.
+   */
+  function exactDiff(a: Float64Array, b: Float64Array | null): number {
+    const p: number[] = [];
+    const add = (x0: number) => {
+      let x = x0;
+      let i = 0;
+      for (let k = 0; k < p.length; k++) {
+        let y = p[k];
+        if (Math.abs(x) < Math.abs(y)) { const t = x; x = y; y = t; }
+        const hi = x + y;
+        const lo = y - (hi - x);
+        if (lo !== 0) p[i++] = lo;
+        x = hi;
+      }
+      p.length = i;
+      if (x !== 0) p.push(x);
+    };
+    for (let k = 0; k < a.length; k++) add(a[k]);
+    if (b) for (let k = 0; k < b.length; k++) add(-b[k]);
+    // Add the partials from the largest down until the sum becomes inexact,
+    // then settle a half-way case with the sign of the next partial.
+    let n = p.length;
+    if (n === 0) return 0;
+    let hi = p[--n];
+    let lo = 0;
+    while (n > 0) {
+      const x = hi;
+      const y = p[--n];
+      hi = x + y;
+      lo = y - (hi - x);
+      if (lo !== 0) break;
+    }
+    if (n > 0 && ((lo < 0 && p[n - 1] < 0) || (lo > 0 && p[n - 1] > 0))) {
+      const y = lo * 2;
+      const x = hi + y;
+      if (y === x - hi) hi = x;
+    }
+    return hi;
+  }
+
+  /** u/(1-u)^2 (1 + u/2), with slack for rounding in the bound itself. */
+  const BOUND_FACTOR = U * (1 + 1e-6);
+
+  class Rollout {
+    M: number; lam: number; kind: FluxKind; net: Net;
+    v: Float64Array; v0: Float64Array; F: Float64Array;
+    n = 0; bound = 0; finite = true;
+    constructor(M: number, lam: number, kind: FluxKind, net: Net) {
+      this.M = M; this.lam = lam; this.kind = kind; this.net = net;
+      this.v0 = initialData(M);
+      this.v = this.v0.slice();
+      this.F = new Float64Array(M);
+    }
+    advance(steps: number): void {
+      for (let s = 0; s < steps && this.finite; s++) {
+        faceValues(this.v, this.F, this.kind, this.net);
+        const acc = update(this.v, this.F, this.lam);
+        if (!Number.isFinite(acc)) { this.finite = false; this.n++; break; }
+        this.bound += acc * BOUND_FACTOR;
+        this.n++;
+      }
+    }
+    drift(): number { return exactDiff(this.v, this.v0); }
+    mass(): number { return exactDiff(this.v, null); }
+    maxAbs(): number { let m = 0; for (let j = 0; j < this.M; j++) m = Math.max(m, Math.abs(this.v[j])); return m; }
+  }
+  // --- core end
+
+  const minus = (s: string) => s.replace(/-/g, '−');
+  const sci = (x: number, d: number) => (x === 0 ? '0' : minus(x.toExponential(d)));
+
+  function init(root: HTMLElement): void {
+    const q = <T extends Element>(sel: string) => root.querySelector<T>(sel)!;
+    const canvas = q<HTMLCanvasElement>('[data-plot]');
+    const ctx = canvas.getContext('2d')!;
+    const fluxSel = q<HTMLSelectElement>('[data-flux]');
+    const seedIn = q<HTMLInputElement>('[data-seed]');
+    const lamIn = q<HTMLInputElement>('[data-lam]');
+    const mIn = q<HTMLInputElement>('[data-m]');
+    const nIn = q<HTMLInputElement>('[data-n]');
+    const playBtn = q<HTMLButtonElement>('[data-play]');
+    const playLabel = q<HTMLElement>('[data-play-label]');
+    const playIcon = playBtn.querySelector<HTMLElement>('i')!;
+    const resetBtn = q<HTMLButtonElement>('[data-reset]');
+    const out = (k: string) => q<HTMLOutputElement>(`[data-out="${k}"]`);
+    const r = (k: string) => q<HTMLElement>(`[data-r="${k}"]`);
+
+    let sim: Rollout;
+    let total = 500;
+    let playing = false;
+    let yLo = 0, yHi = 1;
+
+    const seedValue = () => {
+      const s = Math.floor(Number(seedIn.value));
+      return Number.isFinite(s) ? Math.min(Math.max(s, 0), 4294967295) : 0;
+    };
+
+    function setPlaying(p: boolean): void {
+      playing = p;
+      playLabel.textContent = p ? 'Pause' : 'Play';
+      playIcon.className = p ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+    }
+
+    function reset(): void {
+      const kind = fluxSel.value as FluxKind;
+      const seed = seedValue();
+      const lam = Number(lamIn.value);
+      const M = Number(mIn.value);
+      total = Number(nIn.value);
+      seedIn.disabled = kind === 'upwind';
+      out('seed').textContent = kind === 'upwind' ? 'not used' : String(seed);
+      out('lam').textContent = lam.toFixed(2);
+      out('m').textContent = String(M);
+      out('n').textContent = `${total} steps`;
+      sim = new Rollout(M, lam, kind, makeNet(seed));
+      yLo = Infinity; yHi = -Infinity;
+      setPlaying(false);
+      render();
+    }
+
+    function colors() {
+      const cs = getComputedStyle(document.documentElement);
+      const g = (n: string, f: string) => cs.getPropertyValue(n).trim() || f;
+      return { ink: g('--ink', '#353535'), ink2: g('--ink-2', '#666667'), ink3: g('--ink-3', '#9f9fa0'), rule: g('--rule-strong', '#c6c6c6') };
+    }
+
+    function steps(x0: number, x1: number, y: (v: number) => number, v: Float64Array): void {
+      const M = v.length;
+      const dx = (x1 - x0) / M;
+      ctx.beginPath();
+      ctx.moveTo(x0, y(v[0]));
+      for (let j = 0; j < M; j++) {
+        ctx.lineTo(x0 + (j + 1) * dx, y(v[j]));
+        if (j + 1 < M) ctx.lineTo(x0 + (j + 1) * dx, y(v[j + 1]));
+      }
+      ctx.stroke();
+    }
+
+    function draw(): void {
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      if (w === 0 || h === 0) return;
+      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      const c = colors();
+      for (const arr of [sim.v0, sim.v]) for (let j = 0; j < arr.length; j++) {
+        if (Number.isFinite(arr[j])) { yLo = Math.min(yLo, arr[j]); yHi = Math.max(yHi, arr[j]); }
+      }
+      let lo = yLo, hi = yHi;
+      if (!(hi - lo > 1e-12)) { lo -= 0.5; hi += 0.5; }
+      const padY = 0.08 * (hi - lo);
+      lo -= padY; hi += padY;
+      const L = 56, R = 14, T = 30, B = 26;
+      const y = (val: number) => T + (h - T - B) * (hi - val) / (hi - lo);
+      ctx.font = "12px 'Fira Code', monospace";
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = c.rule;
+      ctx.fillStyle = c.ink2;
+      ctx.textAlign = 'right';
+      for (let k = 0; k <= 2; k++) {
+        const val = lo + padY + (k / 2) * (hi - lo - 2 * padY);
+        const yy = Math.round(y(val)) + 0.5;
+        ctx.beginPath(); ctx.moveTo(L, yy); ctx.lineTo(w - R, yy); ctx.stroke();
+        ctx.fillText(minus(Number(val.toPrecision(3)).toString()), L - 8, yy);
+      }
+      ctx.textAlign = 'left';
+      ctx.fillText('x = 0', L, h - B / 2);
+      ctx.textAlign = 'right';
+      ctx.fillText('x = 1 (periodic)', w - R, h - B / 2);
+      ctx.lineJoin = 'round';
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = c.ink3;
+      ctx.lineWidth = 1.5;
+      steps(L, w - R, y, sim.v0);
+      ctx.setLineDash([]);
+      ctx.strokeStyle = c.ink;
+      ctx.lineWidth = 2;
+      if (sim.finite) steps(L, w - R, y, sim.v);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = c.ink;
+      const first = `solid: v̄ⁿ at step ${sim.n}`;
+      ctx.fillText(first, L, T / 2);
+      ctx.fillStyle = c.ink2;
+      ctx.fillText('dashed: v̄⁰', L + ctx.measureText(first).width + 24, T / 2);
+    }
+
+    function readings(): void {
+      r('step').textContent = String(sim.n);
+      r('of').textContent = String(total);
+      if (!sim.finite) {
+        for (const k of ['mass', 'drift', 'rel', 'bound', 'check', 'max']) r(k).textContent = '–';
+        r('status').textContent = `Non-finite value at step ${sim.n}: rollout stopped. Overflow breaks the floating-point identity.`;
+        return;
+      }
+      const drift = sim.drift();
+      const mx = sim.maxAbs();
+      r('mass').textContent = minus(sim.mass().toPrecision(15));
+      r('drift').textContent = sci(drift, 2);
+      r('rel').textContent = sci(mx > 0 ? Math.abs(drift) / (sim.M * mx) : 0, 1);
+      r('bound').textContent = sci(sim.bound, 1);
+      r('check').textContent = Math.abs(drift) <= sim.bound ? 'yes' : 'NO';
+      r('max').textContent = mx.toPrecision(4);
+      r('status').textContent = sim.n >= total ? 'Rollout complete.' : '';
+    }
+
+    function render(): void { draw(); readings(); }
+
+    function frame(): void {
+      if (playing) {
+        const k = Math.min(Math.max(1, Math.round(total / 300)), total - sim.n);
+        sim.advance(k);
+        if (sim.n >= total || !sim.finite) setPlaying(false);
+        render();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (!playing && (sim.n >= total || !sim.finite)) reset();
+      setPlaying(!playing);
+    });
+    resetBtn.addEventListener('click', reset);
+    for (const el of [fluxSel, seedIn, lamIn, mIn, nIn]) el.addEventListener('change', reset);
+    for (const el of [lamIn, mIn, nIn]) el.addEventListener('input', reset);
+
+    new ResizeObserver(() => draw()).observe(canvas);
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => draw());
+
+    reset();
+    requestAnimationFrame(frame);
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduce && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          if (sim.n === 0) setPlaying(true);
+        }
+      }, { threshold: 0.4 });
+      io.observe(root);
+    }
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-pde-cons]').forEach(init);
+</script>

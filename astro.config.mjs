@@ -32,7 +32,10 @@ export default defineConfig({
     build: {
       // The simulation islands are the only JS on the site. Keep them as
       // separate chunks so a page that has no figure downloads no physics.
-      assetsInlineLimit: 2048,
+      // 0: never inline. Small component scripts (Slides, Selector) would
+      // otherwise be inlined and blocked by the CSP in public/_headers, which
+      // allows scripts only from 'self' and cdnjs.
+      assetsInlineLimit: 0,
     },
   },
 });

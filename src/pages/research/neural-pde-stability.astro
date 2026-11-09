@@ -1,0 +1,489 @@
+---
+/**
+ * Stability of neural approximations to evolution equations (with Jue Yan and
+ * Mengyuan Yang). Unpublished joint work. The owner's rule: "Keep the
+ * unpublished work descriptive about what we are doing but do not give away
+ * any results or anything that will result in a scoop risk." So this page
+ * gives the problem and the setting (as the public write-up does,
+ * github.com/AkshatValse/research, cann-stability.md), a textbook von Neumann
+ * definition labelled as such, and what we are doing at the level of the CV
+ * research entry and the CV's manuscript title, no further. No results, no
+ * theorem statements, no form of the stability condition or certificate, no
+ * stencil, architecture, activation, PDE or experiment details. Facts are from
+ * the verified brief gh/briefs/neural-pde-stability.md and src/pages/cv.astro.
+ */
+import ProjectLayout from '../../layouts/ProjectLayout.astro';
+import Container from '../../components/clarity/Container.astro';
+import NoteRow from '../../components/clarity/NoteRow.astro';
+import Icon from '../../components/clarity/Icon.astro';
+import Tex from '../../components/Tex.astro';
+import PdeConservation from '../../components/widgets/PdeConservation.astro';
+
+const WRITEUP = 'https://github.com/AkshatValse/research/blob/main/cann-stability.md';
+
+/**
+ * Figure 2 (brief diagrams D1 and D3): three cells and the flux at the two
+ * faces of cell j, learned beside a textbook designed flux. Drawn inline rather
+ * than loading public/research/neural-pde-stability/stencil*.svg through <img>,
+ * so it follows the page tokens in dark mode (the files' monospace footer also
+ * overflows their viewBox when rendered as images). No stencil width for
+ * V_{j+1/2} is drawn: it is not public.
+ */
+const F2 = {
+  base: 226,
+  cells: [
+    { x: 45, cx: 110, top: 164, sub: 'j−1' },
+    { x: 175, cx: 240, top: 140, sub: 'j' },
+    { x: 305, cx: 370, top: 180, sub: 'j+1' },
+  ],
+  faces: [
+    { x: 45, sub: 'j−3/2', inner: false, left: '' },
+    { x: 175, sub: 'j−1/2', inner: true, left: 'j−1' },
+    { x: 305, sub: 'j+1/2', inner: true, left: 'j' },
+    { x: 435, sub: 'j+3/2', inner: false, left: '' },
+  ],
+  panels: [
+    {
+      key: 'learned', title: 'Learned flux', marker: 'npde-f2a-arrow',
+      label: 'Schematic of three finite-volume cells j-1, j and j+1 with illustrative cell averages drawn as bars. At the two faces of cell j the same network N(V; Theta), with the same weights, is evaluated. An arrow across each face marks the face value as subtracted from the cell on its left and added to the cell on its right.',
+    },
+    {
+      key: 'designed', title: 'Designed flux (textbook, for comparison)', marker: 'npde-f2b-arrow',
+      label: 'The same three cells with a textbook designed flux for comparison: first-order upwind for u_t + a u_x = 0 with a > 0, whose face values are a times the cell average upwind of each face. Each face value is subtracted from the cell on its left and added to the cell on its right.',
+    },
+  ],
+};
+
+/** Equation (1): the learned conservative update, as on the live research page. */
+const EQ1 = String.raw`\bar v_j^{\,n+1} = \bar v_j^{\,n} - \tfrac{\Delta t}{\Delta x}\big[\mathcal{N}(V_{j+1/2};\Theta) - \mathcal{N}(V_{j-1/2};\Theta)\big], \tag{1}`;
+/** Equation (2): (1) summed over the cells. */
+const EQ2 = String.raw`\sum_{j=1}^{M} \bar v_j^{\,n+1} = \sum_{j=1}^{M} \bar v_j^{\,n} - \tfrac{\Delta t}{\Delta x}\big[\mathcal N(V_{M+1/2};\Theta) - \mathcal N(V_{1/2};\Theta)\big]. \tag{2}`;
+/**
+ * Equation (3): textbook only. First-order upwind for u_t + a u_x = 0, a > 0,
+ * the designed flux of Figure 2, with nu = a dt/dx. Derivation:
+ * |(1-nu) + nu e^{-i theta}|^2 = 1 - 2 nu (1-nu)(1 - cos theta), so |G| <= 1
+ * for every theta iff 0 <= nu <= 1. Not the project's scheme or result.
+ */
+const EQ3 = String.raw`G(\theta) = 1 - \nu\big(1 - e^{-\mathrm{i}\theta}\big), \qquad |G(\theta)|^2 = 1 - 2\nu(1-\nu)(1-\cos\theta). \tag{3}`;
+
+/** Figure 3 geometry: a periodic row of five cells, bar heights illustrative. */
+const F3 = (() => {
+  const x0 = 105, w = 150, base = 250;
+  const heights = [70, 120, 150, 92, 64];
+  const faces = Array.from({ length: heights.length + 1 }, (_, k) => ({ x: x0 + w * k, sub: `${2 * k + 1}/2` }));
+  const cells = heights.map((h, j) => ({ x: x0 + w * j, cx: x0 + w * (j + 0.5), top: base - h, j: j + 1 }));
+  return { w, base, faces, cells, first: faces[0], last: faces[faces.length - 1] };
+})();
+---
+
+<ProjectLayout
+  slug="neural-pde-stability"
+  description="Adapting von Neumann stability analysis to cell-average neural network PDE solvers, which conserve mass for any weights but are not stable by construction."
+  authors="Akshat Valse, with Jue Yan and Mengyuan Yang"
+  affiliation="Department of Mathematics, Iowa State University"
+  abstract="A cell-average neural network solver advances a PDE solution one step at a time with a learned flux, and because the same network is evaluated at both faces of a cell, it conserves mass exactly, whatever its weights. Stability is not guaranteed by construction: networks trained identically up to the random seed, with training losses you cannot tell apart, can behave completely differently under long rollouts. The project asks whether you can tell, from a trained network alone and before committing to an expensive simulation, whether its rollout will hold together. We are adapting von Neumann stability analysis to trained solvers of this kind, toward stability conditions on the trained weights. The results are held back until the paper is submitted."
+  buttons={[{ label: 'Write-up', href: WRITEUP, icon: 'github' }]}
+  info="Project ongoing · paper in preparation · NSF D4 NRT · May 2026 – present"
+>
+  <!-- Introduction -->
+  <Container first>
+    <h1>Introduction</h1>
+    <p class="text">
+      A neural network can be trained to advance a PDE solution one step at a time, and it can be
+      built so that it never creates or destroys mass, whatever its weights are. What that
+      construction does not give you is stability.
+    </p>
+    <p class="text">
+      Networks trained identically up to the random seed, with training losses you cannot tell
+      apart, can behave completely differently over long rollouts: some track the reference
+      solution, others develop oscillations that grow until the output is worthless (Figure 1).
+      The project asks whether you can tell which one you have before paying for the simulation.
+    </p>
+    <p class="text">
+      We are adapting von Neumann stability analysis, the classical Fourier-mode test for
+      finite-difference schemes, to these trained solvers, toward stability conditions on the
+      trained weights.
+    </p>
+    <p class="text">
+      <em>This page sets out the problem and what we are doing about it. The results are held
+      back until the paper, in preparation with Prof. Jue Yan and Mengyuan Yang, is
+      submitted.</em>
+    </p>
+  </Container>
+
+  <Container width="large" tone="gray">
+    <svg class="diagram npde" viewBox="0 0 900 340" role="img"
+      aria-label="Schematic, not data. Seed A and seed B go through the same training, a one-step error on a short reference trajectory, and give network A and network B, whose losses are indistinguishable. Under long rollouts one tracks the reference and the other develops oscillations that grow until the output is worthless. Below, the question: can you tell which, from the trained network alone, before committing to the simulation?">
+      <defs>
+        <marker id="npde-f1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="npde-ah" />
+        </marker>
+      </defs>
+
+      <rect class="box" x="20" y="62" width="112" height="44" rx="6" />
+      <text x="76" y="89" text-anchor="middle" font-size="14">seed A</text>
+      <rect class="box" x="20" y="172" width="112" height="44" rx="6" />
+      <text x="76" y="199" text-anchor="middle" font-size="14">seed B</text>
+
+      <rect class="box npde-field" x="170" y="95" width="214" height="88" rx="6" />
+      <text x="277" y="124" text-anchor="middle" font-size="14" font-weight="600">training</text>
+      <text x="277" y="146" text-anchor="middle" font-size="14">one-step error on a</text>
+      <text x="277" y="167" text-anchor="middle" font-size="14">short reference trajectory</text>
+      <line class="line" x1="132" y1="84" x2="166" y2="116" marker-end="url(#npde-f1-arrow)" />
+      <line class="line" x1="132" y1="194" x2="166" y2="162" marker-end="url(#npde-f1-arrow)" />
+
+      <rect class="line dash" x="404" y="40" width="172" height="198" rx="10" />
+      <rect class="box" x="420" y="62" width="140" height="44" rx="6" />
+      <text x="490" y="89" text-anchor="middle" font-size="14">network A</text>
+      <rect class="box" x="420" y="172" width="140" height="44" rx="6" />
+      <text x="490" y="199" text-anchor="middle" font-size="14">network B</text>
+      <text x="490" y="134" text-anchor="middle" font-size="13" class="muted-t">losses</text>
+      <text x="490" y="152" text-anchor="middle" font-size="13" class="muted-t">indistinguishable</text>
+      <line class="line" x1="384" y1="124" x2="416" y2="90" marker-end="url(#npde-f1-arrow)" />
+      <line class="line" x1="384" y1="154" x2="416" y2="188" marker-end="url(#npde-f1-arrow)" />
+
+      <text x="752" y="46" text-anchor="middle" font-size="13" class="muted-t">under long rollouts</text>
+      <rect class="box" x="622" y="62" width="260" height="44" rx="6" />
+      <text x="752" y="89" text-anchor="middle" font-size="14">rollout tracks the reference</text>
+      <rect class="box" x="622" y="162" width="260" height="64" rx="6" />
+      <text x="752" y="189" text-anchor="middle" font-size="14">oscillations grow until</text>
+      <text x="752" y="210" text-anchor="middle" font-size="14">the output is worthless</text>
+      <line class="line" x1="560" y1="84" x2="618" y2="84" marker-end="url(#npde-f1-arrow)" />
+      <line class="line" x1="560" y1="194" x2="618" y2="194" marker-end="url(#npde-f1-arrow)" />
+
+      <line class="line dash" x1="490" y1="238" x2="490" y2="270" marker-end="url(#npde-f1-arrow)" />
+      <rect class="box dark" x="210" y="274" width="560" height="56" rx="8" />
+      <text x="490" y="298" text-anchor="middle" font-size="15" class="npde-on-dark">Can you tell which, from the trained network alone,</text>
+      <text x="490" y="319" text-anchor="middle" font-size="15" class="npde-on-dark">before committing to the simulation?</text>
+    </svg>
+    <p class="caption">
+      <b>Figure 1.</b> The problem, as a schematic rather than data. Networks trained identically up
+      to the random seed reach training losses you cannot tell apart, yet can behave completely
+      differently under long rollouts. The question at the bottom paraphrases the one the project
+      asks.
+    </p>
+  </Container>
+
+  <!-- The setting -->
+  <Container>
+    <h1>The setting</h1>
+    <p class="text">
+      A conservative finite-volume scheme advances cell averages by differencing a numerical flux
+      across cell interfaces. In a cell-average-based neural network solver that flux is learned
+      rather than designed: a small network is trained to reproduce the time-averaged flux at an
+      interface. One step of the solver reads
+    </p>
+    <Tex block src={EQ1} />
+    <p class="text">
+      where <Tex src={String.raw`\bar v_j^{\,n}`} /> is the average of the solution over cell
+      <Tex src="j" /> at time step <Tex src="n" />, <Tex src={String.raw`\Delta t`} /> and
+      <Tex src={String.raw`\Delta x`} /> are the time step and the cell width,
+      <Tex src={String.raw`\mathcal N(\cdot\,;\Theta)`} /> is the flux network with weights
+      <Tex src={String.raw`\Theta`} />, and <Tex src={String.raw`V_{j\pm1/2}`} /> is its input at
+      the face <Tex src={String.raw`x_{j\pm1/2}`} />. The public write-up does not say which cell
+      averages make up <Tex src={String.raw`V_{j+1/2}`} />, so Figures 2 and 3 leave the network's
+      input unspecified, and the toy network in Figure 4 uses a placeholder input.
+    </p>
+    <p class="text">
+      Figure 2 puts the learned flux in the slot that a designed flux would fill. The designed
+      flux on the right is one textbook example, first-order upwind for linear advection, shown
+      only for comparison: it does not stand for the project's equation or reference scheme,
+      neither of which is public.
+    </p>
+  </Container>
+
+  <Container width="extra-large" tone="gray">
+    <div class="columns-2">
+      {F2.panels.map((p) => (
+        <div>
+          <p class="caption inline center">{p.title}</p>
+          <svg class="diagram npde" viewBox="0 0 480 280" role="img" aria-label={p.label}>
+            <defs>
+              <marker id={p.marker} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" class="npde-ah" />
+              </marker>
+            </defs>
+            {p.key === 'learned'
+              ? <text x="240" y="24" text-anchor="middle" font-size="13" class="muted-t">one network, the same weights Θ, at every face</text>
+              : <text x="240" y="24" text-anchor="middle" font-size="13" class="muted-t">a formula: first-order upwind for <tspan class="npde-m">u</tspan><tspan dy="4">t</tspan><tspan dy="-4"> + </tspan><tspan class="npde-m">a u</tspan><tspan dy="4">x</tspan><tspan dy="-4"> = 0, </tspan><tspan class="npde-m">a</tspan> &gt; 0</text>}
+            <path class="line dash" d="M175,46 V38 H305 V46" />
+
+            {F2.cells.map((c) => (
+              <>
+                <rect class="npde-cell" x={c.x} y={c.top} width="130" height={F2.base - c.top} />
+                <line class="npde-bar" x1={c.x} y1={c.top} x2={c.x + 130} y2={c.top} />
+                <text x={c.cx} y={c.top - 10} text-anchor="middle" font-size="15"><tspan class="npde-m">v̄</tspan><tspan font-size="13" dy="5">{c.sub}</tspan><tspan font-size="13" dy="-13">n</tspan></text>
+                <text x={c.cx} y="268" text-anchor="middle" font-size="13" class="muted-t">cell {c.sub}</text>
+              </>
+            ))}
+            <line class="line" x1="30" y1={F2.base} x2="450" y2={F2.base} />
+            {F2.faces.map((f) => (
+              <>
+                {f.inner
+                  ? <line class="line dash" x1={f.x} y1="84" x2={f.x} y2={F2.base} />
+                  : <line class="line" x1={f.x} y1={F2.base} x2={f.x} y2={F2.base + 6} />}
+                <text x={f.x} y="246" text-anchor="middle" font-size="13" class="muted-t"><tspan class="npde-m">x</tspan><tspan dy="4">{f.sub}</tspan></text>
+              </>
+            ))}
+
+            {F2.faces.filter((f) => f.inner).map((f) => (
+              <>
+                <rect class="box" x={f.x - 58} y="48" width="116" height="36" rx="6" />
+                {p.key === 'learned'
+                  ? <text x={f.x} y="71" text-anchor="middle" font-size="14"><tspan class="npde-m">𝒩</tspan>(<tspan class="npde-m">V</tspan><tspan font-size="13" dy="4">{f.sub}</tspan><tspan dy="-4">; Θ)</tspan></text>
+                  : <text x={f.x} y="71" text-anchor="middle" font-size="15"><tspan class="npde-m">a v̄</tspan><tspan font-size="13" dy="4">{f.left}</tspan></text>}
+                <line class="line" x1={f.x - 26} y1="104" x2={f.x + 26} y2="104" marker-end={`url(#${p.marker})`} />
+                <text x={f.x - 32} y="100" text-anchor="end" font-size="15" font-weight="600">−</text>
+                <text x={f.x + 32} y="100" text-anchor="start" font-size="15" font-weight="600">+</text>
+              </>
+            ))}
+          </svg>
+        </div>
+      ))}
+    </div>
+    <p class="caption">
+      <b>Figure 2.</b> Schematics; bar heights are illustrative. Left: in a cell-average neural
+      network solver, one network with the same weights <Tex src={String.raw`\Theta`} /> is
+      evaluated at every face. Right, for comparison only: a designed flux, where the face value is
+      a formula, here textbook first-order upwind for <Tex src={String.raw`u_t + a\,u_x = 0`} />
+      with <Tex src="a > 0" />. Either way, each face value is subtracted from the cell on its left
+      and added to the cell on its right: what leaves cell <Tex src="j" /> enters cell
+      <Tex src="j+1" />.
+    </p>
+  </Container>
+
+  <!-- Conservation -->
+  <Container>
+    <h1>Conservation, whatever the weights</h1>
+    <p class="text">
+      Sum (1) over the cells <Tex src={String.raw`j = 1, \dots, M`} /> of the grid:
+    </p>
+    <Tex block src={EQ2} />
+    <p class="text">
+      Every interior face value appears twice, once with each sign, because what leaves cell
+      <Tex src="j" /> through <Tex src={String.raw`x_{j+1/2}`} /> is what enters cell
+      <Tex src="j+1" /> (Figure 3). On a periodic grid
+      <Tex src={String.raw`V_{M+1/2} = V_{1/2}`} />, so the bracket vanishes for every
+      <Tex src={String.raw`\Theta`} />: the update telescopes, and mass is conserved exactly,
+      whatever the weights turn out to be. The periodic grid is an assumption made on this page
+      for the illustration; the write-up does not say which boundary conditions the project uses.
+    </p>
+  </Container>
+
+  <Container width="extra-large" tone="gray">
+    <svg class="diagram npde" viewBox="0 0 960 456" role="img"
+      aria-label="Schematic of a periodic row of five cells with illustrative cell averages drawn as bars. One network with the same weights is evaluated once at each face, from x 1/2 to x 11/2. Under each interior face, the update of the cell on the left has minus N at that face and the update of the cell on the right has plus N, so the two cancel. On a periodic grid the first and last faces are the same face, so the two end terms cancel too, and the total mass does not change, whatever the weights are.">
+      <path class="line dash" d={`M${F3.first.x},58 V48 H${F3.last.x} V58`} />
+      <text x="480" y="36" text-anchor="middle" font-size="14" class="muted-t">one network, the same weights Θ, at every face</text>
+
+      {F3.cells.map((c) => (
+        <>
+          <rect class="npde-cell" x={c.x} y={c.top} width={F3.w} height={F3.base - c.top} />
+          <line class="npde-bar" x1={c.x} y1={c.top} x2={c.x + F3.w} y2={c.top} />
+          <text x={c.cx} y={c.top - 12} text-anchor="middle" font-size="16"><tspan class="npde-m">v̄</tspan><tspan font-size="13" dy="5">{c.j}</tspan><tspan font-size="13" dy="-13">n</tspan></text>
+          <text x={c.cx} y="276" text-anchor="middle" font-size="13" class="muted-t">cell {c.j}</text>
+        </>
+      ))}
+      <line class="line" x1="90" y1={F3.base} x2="870" y2={F3.base} />
+
+      {F3.faces.map((f) => (
+        <>
+          <line class="line dash" x1={f.x} y1="94" x2={f.x} y2={F3.base} />
+          <rect class="box" x={f.x - 40} y="60" width="80" height="34" rx="6" />
+          <text x={f.x} y="83" text-anchor="middle" font-size="16"><tspan class="npde-m">𝒩</tspan><tspan font-size="13" dy="4">{f.sub}</tspan></text>
+        </>
+      ))}
+
+      <text x="480" y="300" text-anchor="middle" font-size="13" class="muted-t">change of each cell average over one step, in units of Δt/Δx</text>
+      {F3.faces.slice(1, -1).map((f) => (
+        <>
+          <rect class="box" x={f.x - 64} y="312" width="128" height="32" rx="8" />
+          <text x={f.x - 33} y="333" text-anchor="middle" font-size="15">−<tspan class="npde-m">𝒩</tspan><tspan font-size="13" dy="4">{f.sub}</tspan></text>
+          <text x={f.x + 33} y="333" text-anchor="middle" font-size="15">+<tspan class="npde-m">𝒩</tspan><tspan font-size="13" dy="4">{f.sub}</tspan></text>
+          <text x={f.x} y="366" text-anchor="middle" font-size="13" class="muted-t">= 0</text>
+        </>
+      ))}
+      <rect class="box npde-dashed" x={F3.first.x + 1} y="312" width="64" height="32" rx="8" />
+      <text x={F3.first.x + 33} y="333" text-anchor="middle" font-size="15">+<tspan class="npde-m">𝒩</tspan><tspan font-size="13" dy="4">{F3.first.sub}</tspan></text>
+      <rect class="box npde-dashed" x={F3.last.x - 65} y="312" width="64" height="32" rx="8" />
+      <text x={F3.last.x - 33} y="333" text-anchor="middle" font-size="15">−<tspan class="npde-m">𝒩</tspan><tspan font-size="13" dy="4">{F3.last.sub}</tspan></text>
+      <path class="line dash" d={`M${F3.first.x + 33},344 V386 H${F3.last.x - 33} V344`} />
+      <text x="480" y="406" text-anchor="middle" font-size="13" class="muted-t">periodic grid: <tspan class="npde-m">x</tspan><tspan dy="4">{F3.first.sub}</tspan><tspan dy="-4"> and </tspan><tspan class="npde-m">x</tspan><tspan dy="4">{F3.last.sub}</tspan><tspan dy="-4"> are the same face, so the two end terms cancel too</tspan></text>
+
+      <text x="480" y="442" text-anchor="middle" font-size="15" font-weight="500">Summed over all cells, every term cancels: the total mass does not change, whatever Θ is.</text>
+    </svg>
+    <p class="caption">
+      <b>Figure 3.</b> Why conservation comes for free, drawn for a periodic row of five cells with
+      illustrative bar heights; <Tex src={String.raw`\mathcal N_{j+1/2}`} /> is short for
+      <Tex src={String.raw`\mathcal N(V_{j+1/2};\Theta)`} />. The network is evaluated once per
+      face, and that one value enters the updates of the two cells that share the face, with
+      opposite signs. Under each face the two terms cancel, and on a periodic grid the two end
+      terms belong to the same face. Nothing here depends on training.
+    </p>
+  </Container>
+
+  <Container>
+    <p class="text">
+      The argument never uses the values of the weights, so it holds for a network with random,
+      untrained weights just as well. Figure 4 checks this live, in floating point, where the
+      identity can only hold up to rounding: it computes the drift from an exact sum of the cell
+      averages, rounded once at the end, and compares it with a rigorous bound on the rounding
+      committed by the updates so far.
+    </p>
+  </Container>
+
+  <Container width="extra-large" tone="gray">
+    <PdeConservation />
+    <p class="caption">
+      <b>Figure 4.</b> A live check of identity (2) on a periodic grid, starting from a square pulse
+      and a smooth bump on a constant background, with
+      <Tex src={String.raw`\lambda = \Delta t/\Delta x`} />. The face flux is either a designed
+      one, the textbook upwind flux <Tex src={String.raw`a\,\bar v_j`} /> at
+      <Tex src={String.raw`x_{j+1/2}`} /> with <Tex src="a = 1" />, or a tanh network of width 8
+      whose weights are random and untrained, drawn from the seed shown. In exact arithmetic the
+      drift is zero for either flux and every seed; whatever the profile does, the mass stays put
+      up to rounding. The network is an illustration of "whatever the weights", not a trained
+      solver: its architecture, activation and two-cell input are placeholders chosen for this
+      illustration, not a description of the project's networks, and the rollout says nothing
+      about which trained networks are stable.
+    </p>
+  </Container>
+
+  <!-- The problem -->
+  <NoteRow>
+    <h1>The problem</h1>
+    <p class="text"><b>Conservation is guaranteed by construction. Stability is not.</b></p>
+    <p class="text">
+      Training minimizes a one-step prediction error against a short reference trajectory. Nothing
+      in that objective says anything about what happens when the scheme is iterated for thousands
+      of steps on states the network never saw during training. In practice, networks trained
+      identically up to the random seed, reaching training losses you cannot tell apart, can behave
+      completely differently under long rollouts. Some track the reference solution. Others
+      develop oscillations that grow until the output is worthless.
+    </p>
+    <p class="text">
+      Since the losses are indistinguishable, the loss cannot tell you which network you have. A
+      short validation rollout is not much better, because the instability may take far longer to
+      show itself than anyone is willing to simulate. So you are left choosing among minima with no
+      principled basis for the choice.
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Question</th><th>Answer</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Is mass conserved?</td><td><b>Yes</b>, exactly, for any weights</td><td>The update telescopes, identity (2)</td></tr>
+          <tr><td>Are long rollouts stable?</td><td><b>Not guaranteed</b></td><td>Stability is not built into the construction</td></tr>
+          <tr><td>Does the training loss tell stable from unstable networks?</td><td><b>No</b></td><td>The losses are indistinguishable</td></tr>
+          <tr><td>Is a short validation rollout a better test?</td><td><b>Not much better</b></td><td>The instability may take far longer to show itself than anyone is willing to simulate</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="note">
+      It is the autoregressive-surrogate failure mode, in the simplest setting where the
+      questions of classical numerical analysis can be put to it.
+    </Fragment>
+  </NoteRow>
+
+  <!-- The question -->
+  <Container>
+    <h1>The question</h1>
+    <p class="text">
+      <b>Can you tell, from a trained network alone and before committing to an expensive
+      simulation, whether its rollout will hold together?</b>
+    </p>
+    <p class="text">
+      A trained solver is still a numerical scheme. Its weights are frozen once training ends, so
+      what you have in front of you is a fixed, deterministic update rule that happens to have been
+      fitted rather than derived, and numerical analysis has a long history of asking exactly this
+      question about update rules of that kind. Whether that history carries over to a learned
+      flux, and what it says when it does, is what the project is about.
+    </p>
+    <h2>Why it matters</h2>
+    <p class="text">
+      Neural PDE solvers are usually assessed by running them: train, roll out, measure the error.
+      That is expensive, and it only certifies the trajectories you actually ran. Anything you can
+      check on the weights themselves is cheap by comparison and does not depend on having picked
+      the right test case.
+    </p>
+    <p class="text">
+      <b>Bears on:</b> learned operators · neural surrogates · rollout stability.
+    </p>
+  </Container>
+
+  <!-- What we are doing (CV level of detail, no further) -->
+  <Container>
+    <h1>What we are doing</h1>
+    <p class="text">
+      We are adapting von Neumann stability analysis to cell-average neural network solvers of
+      the form (1): deriving the linearized amplification factor of the learned time-stepping
+      scheme and characterizing how perturbations propagate through it, toward stability
+      conditions on the trained weights analogous to those of classical finite-difference
+      methods.
+    </p>
+    <p class="text">
+      I reimplemented the group's solver in Python to enable systematic stability experiments
+      across schemes and step sizes.
+    </p>
+    <h2>The classical test, for reference</h2>
+    <p class="text">
+      In its textbook form, von Neumann analysis applies to a linear scheme with constant
+      coefficients on a periodic grid. One step carries a single Fourier mode
+      <Tex src={String.raw`\bar v_j^{\,n} = \hat v^{\,n} e^{\mathrm{i} j\theta}`} />, with
+      <Tex src={String.raw`\mathrm{i} = \sqrt{-1}`} /> and
+      <Tex src={String.raw`\theta \in [-\pi, \pi]`} />, to a multiple of itself,
+      <Tex src={String.raw`\hat v^{\,n+1} = G(\theta)\,\hat v^{\,n}`} />, and the scheme is
+      stable in this sense when <Tex src={String.raw`|G(\theta)| \le 1`} /> for every
+      <Tex src={String.raw`\theta`} /> (more generally, <Tex src={String.raw`|G(\theta)| \le 1 + C\Delta t`} />
+      for a constant <Tex src="C" />). For the designed flux of Figure 2, first-order upwind with
+      <Tex src={String.raw`\nu = a\,\Delta t/\Delta x`} />,
+    </p>
+    <Tex block src={EQ3} />
+    <p class="text">
+      so <Tex src={String.raw`|G(\theta)| \le 1`} /> for every <Tex src={String.raw`\theta`} />
+      exactly when <Tex src={String.raw`0 \le \nu \le 1`} />. This is the textbook case, shown for
+      comparison only. It is not the project's scheme or result, and this page does not say how the
+      analysis carries over to a learned flux.
+    </p>
+  </Container>
+
+  <!-- Status -->
+  <Container>
+    <h1>Status</h1>
+    <p class="text">
+      Results are held back pending submission. The code and the results are in a private
+      repository; the problem statement on this page is also on GitHub.
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Item</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>Project</b></td><td>Ongoing, May 2026 – present</td></tr>
+          <tr><td><b>Paper</b></td><td><em>Stability Certificates for Cell-Average-Based Neural Network Solvers: von Neumann Analysis of Trained Flux Networks</em> (working title). In preparation, with Prof. Jue Yan and Mengyuan Yang (Iowa State, Mathematics)</td></tr>
+          <tr><td><b>Advisor</b></td><td>Prof. Jue Yan, Department of Mathematics, Iowa State University</td></tr>
+          <tr><td><b>Funding</b></td><td>NSF D4 NRT</td></tr>
+          <tr><td><b>What we are doing</b></td><td>Adapting von Neumann stability analysis to trained cell-average solvers, toward stability conditions on the weights</td></tr>
+          <tr><td><b>Results</b></td><td>Held back pending submission</td></tr>
+          <tr><td><b>Code</b></td><td>Private repository, pending submission</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text">
+      <a href={WRITEUP} class="button icon">Problem write-up <Icon name="github" /></a>
+    </p>
+  </Container>
+</ProjectLayout>
+
+<style>
+  /* Diagram internals only (Figures 1 and 3). */
+  .diagram .npde-ah { fill: var(--ink-2); }
+  .diagram .box.npde-field { fill: var(--field); }
+  .diagram .box.npde-dashed { stroke-dasharray: 4 4; }
+  .diagram text.npde-on-dark { fill: var(--ground); }
+  .diagram .npde-cell { fill: var(--field); stroke: none; }
+  .diagram .npde-bar { stroke: var(--ink); stroke-width: 2.5; fill: none; }
+  .diagram .npde-m { font-family: 'Charter', serif; font-style: italic; }
+</style>

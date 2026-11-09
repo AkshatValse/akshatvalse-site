@@ -1,0 +1,357 @@
+---
+/**
+ * Classical baseline: the power of d choices (JSQ(d) mean-field fixed point
+ * against a seeded finite-n simulation).
+ *
+ * Textbook model, assumed for illustration and not taken from the project:
+ * Poisson arrivals at rate lambda*n, unit-rate exponential service, each job
+ * samples d servers uniformly (with replacement) and joins the shortest.
+ * Mean-field ODE and its fixed point:
+ *   ds_k/dt = lambda (s_{k-1}^d - s_k^d) - (s_k - s_{k+1}),  s_0 = 1
+ *   => s_k = lambda s_{k-1}^d,  i.e. s_k = lambda^((d^k-1)/(d-1)) (d >= 2), lambda^k (d = 1).
+ * For d = 1 each server sees an independent Poisson(lambda) stream, so each
+ * queue is M/M/1 with load lambda and P(Q_i >= k) = lambda^k exactly at every n:
+ * that is the exact reference the simulation must reproduce. For d >= 2 the
+ * closed form is the n -> infinity limit only.
+ *
+ * The simulation is event-driven with exact exponential holding times, seeded
+ * (sfc32 seeded as in makeRng of src/sim/rng.js; one string seed per
+ * configuration, shown in the readout, with the runs drawn from consecutive
+ * stretches of that one stream), and averages the
+ * occupancy over a fixed time horizon. Error bars are +-1 s.e. across
+ * independent runs, each started from the closed-form law (exactly stationary
+ * when d = 1, so each run is unbiased for lambda^k; burned in when d >= 2).
+ * It touches nothing from the project's unpublished estimator.
+ */
+---
+
+<div class="widget ld-poc" data-ld-poc>
+  <div class="widget-head">
+    <h3>Classical baseline: the power of d choices</h3>
+    <span class="ref">reference: s_k = λ^((d^k − 1)/(d − 1)) as n → ∞; for d = 1, λ^k exactly at every n (stationary)</span>
+  </div>
+  <div class="widget-body">
+    <div class="widget-plot">
+      <svg viewBox="0 0 640 360" role="img" aria-label="Fraction of servers holding at least k jobs, on a logarithmic axis from 1 to 1e-12, against k from 0 to 10: the mean-field closed form for the chosen d and for d = 1, and points from a seeded simulation of n servers with plus or minus one standard error." data-plot>
+        <g class="grid">
+          {[0, 2, 4, 6, 8, 10, 12].map((e) => (
+            <line x1="70" x2="620" y1={22 + (e / 12) * 278} y2={22 + (e / 12) * 278} />
+          ))}
+        </g>
+        <g class="axis">
+          <line x1="70" x2="620" y1="300" y2="300" />
+          {Array.from({ length: 11 }, (_, k) => (
+            <line x1={70 + 55 * k} x2={70 + 55 * k} y1="300" y2="305" />
+          ))}
+        </g>
+        <g class="tick">
+          {[0, 2, 4, 6, 8, 10, 12].map((e) => (
+            <text x="62" y={22 + (e / 12) * 278} text-anchor="end" dominant-baseline="middle">{e === 0 ? '1' : `1e-${e}`}</text>
+          ))}
+          {Array.from({ length: 11 }, (_, k) => (
+            <text x={70 + 55 * k} y="318" text-anchor="middle">{k}</text>
+          ))}
+          <text x="345" y="346" text-anchor="middle">queue length k</text>
+          <text x="16" y="161" text-anchor="middle" transform="rotate(-90 16 161)">fraction of servers with ≥ k jobs</text>
+        </g>
+        <path class="ref1" data-ref1 d="" />
+        <path class="refd" data-refd d="" />
+        <g class="sim" data-sim></g>
+      </svg>
+    </div>
+    <div class="controls">
+      <div class="control">
+        <label for="ld-poc-lambda">load λ <output data-out="lambda">0.90</output></label>
+        <input id="ld-poc-lambda" type="range" min="0.5" max="0.99" step="0.01" value="0.9" data-in="lambda" />
+      </div>
+      <div class="control">
+        <label for="ld-poc-d">samples per job d <output data-out="d">2</output></label>
+        <input id="ld-poc-d" type="range" min="0" max="3" step="1" value="1" data-in="d" aria-valuetext="2" />
+      </div>
+      <div class="control">
+        <label for="ld-poc-n">servers n <output data-out="n">100</output></label>
+        <input id="ld-poc-n" type="range" min="0" max="2" step="1" value="1" data-in="n" aria-valuetext="100" />
+      </div>
+      <div class="readings" data-readings>
+        <div><svg class="sw" viewBox="0 0 24 10" aria-hidden="true"><line class="sw-refd" x1="1" x2="23" y1="5" y2="5" /></svg> closed form, d = <b data-r="d">2</b></div>
+        <div data-r="row1"><svg class="sw" viewBox="0 0 24 10" aria-hidden="true"><line class="sw-ref1" x1="1" x2="23" y1="5" y2="5" /></svg> closed form, d = 1</div>
+        <div><svg class="sw" viewBox="0 0 24 10" aria-hidden="true"><circle class="sw-sim" cx="12" cy="5" r="3.5" /></svg> simulation, n = <b data-r="n">100</b>, ±1 s.e.</div>
+        <div>seed <b data-r="seed"></b></div>
+        <div data-r="runs">runs: waiting to start</div>
+        <div class="rows" data-r="rows" aria-live="polite"></div>
+        <div data-r="z"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .ld-poc { --ld-acc: var(--seq-lo); }
+  @media (prefers-color-scheme: dark) { .ld-poc { --ld-acc: var(--seq-hi); } }
+  .ld-poc svg text { font-family: 'Fira Code', monospace; font-size: 12px; fill: var(--ink-2); }
+  .ld-poc .grid line { stroke: var(--rule-strong); stroke-width: 1; stroke-opacity: 0.55; }
+  .ld-poc .axis line { stroke: var(--ink-2); stroke-width: 1; }
+  .ld-poc .ref1 { fill: none; stroke: var(--ink-2); stroke-width: 1.4; stroke-dasharray: 5 4; }
+  .ld-poc .refd { fill: none; stroke: var(--ink); stroke-width: 1.8; }
+  .ld-poc :global(.sim circle) { fill: var(--ld-acc); stroke: var(--ground); stroke-width: 1; }
+  .ld-poc :global(.sim line) { stroke: var(--ld-acc); stroke-width: 1.6; }
+  .ld-poc .sw { display: inline-block; width: 24px; height: 10px; vertical-align: middle; margin-right: 0.3em; overflow: visible; }
+  .ld-poc .sw-refd { stroke: var(--ink); stroke-width: 1.8; }
+  .ld-poc .sw-ref1 { stroke: var(--ink-2); stroke-width: 1.4; stroke-dasharray: 5 4; }
+  .ld-poc .sw-sim { fill: var(--ld-acc); }
+  .ld-poc .rows {
+    margin: 0.4vh 0; padding: 0; background: transparent; border: 0; white-space: pre;
+    font-family: 'Fira Code', monospace; font-size: 12px; line-height: 1.5; color: var(--ink-2); overflow-x: auto;
+  }
+</style>
+
+<script>
+  // <core> (pure functions; mirrored by the scratch check that tests them)
+  const D_VALUES = [1, 2, 3, 5];
+  const N_VALUES = [10, 100, 1000];
+  const K_MAX = 10;
+  const RUNS = 20;
+  const EVENTS_PER_RUN = 100_000;
+  const BURN_EVENTS = 25_000;
+  const SEED = 'ld-pod-2026';
+
+  /** Closed-form mean-field fixed point s_0..s_K: s_k = lambda * s_{k-1}^d. */
+  function fixedPoint(lambda: number, d: number, K: number): number[] {
+    const s = [1];
+    for (let k = 1; k <= K; k++) s.push(lambda * Math.pow(s[k - 1], d));
+    return s;
+  }
+
+  /** sfc32 seeded from a string (FNV-1a variants) with 16 discarded draws, as makeRng in src/sim/rng.js. */
+  function makeRand(seed: string): () => number {
+    let a = 0x811c9dc5, b = 0x01000193, c = 0x9e3779b9, d = 0x85ebca6b;
+    for (let i = 0; i < seed.length; i++) {
+      const k = seed.charCodeAt(i);
+      a = Math.imul(a ^ k, 0x01000193);
+      b = Math.imul(b + k, 0x85ebca6b);
+      c = Math.imul(c ^ (k + i), 0xc2b2ae35);
+      d = Math.imul(d + k * (i + 1), 0x27d4eb2f);
+    }
+    a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
+    const rand = () => {
+      a |= 0; b |= 0; c |= 0; d |= 0;
+      const t = (((a + b) | 0) + d) | 0;
+      d = (d + 1) | 0;
+      a = b ^ (b >>> 9);
+      b = (c + (c << 3)) | 0;
+      c = (c << 21) | (c >>> 11);
+      c = (c + t) | 0;
+      return (t >>> 0) / 4294967296;
+    };
+    for (let i = 0; i < 16; i++) rand();
+    return rand;
+  }
+
+  /**
+   * One run of the n-server JSQ(d) chain over a fixed horizon, with exact
+   * exponential holding times. Returns the time-averaged occupancy
+   * occ[k] = (1/T) * integral over [0, T] of s_k(t) dt, k = 1..K (occ[0] = 1).
+   * Started from the stationary law (d = 1) and run for a fixed time, this is
+   * an unbiased estimate of P(Q_i >= k) = lambda^k. For d >= 2 the chain is
+   * first run for `burn` time units and the clock restarted (memorylessness).
+   */
+  function simulateRun(lambda: number, d: number, n: number, rand: () => number, burn: number, T: number): Float64Array {
+    const K = K_MAX;
+    const Q = new Int32Array(n);
+    const c = new Float64Array(K + 1); // c[k] = #{i : Q_i >= k}, k = 1..K
+    const busy = new Int32Array(n); // indices of busy servers, swap-removed
+    let nb = 0;
+    // Start from the closed-form law: P(Q_i >= k) = s_k (exactly stationary for d = 1).
+    for (let i = 0; i < n; i++) {
+      const u = rand();
+      let q = 0, sk = 1;
+      for (;;) {
+        const next = lambda * Math.pow(sk, d);
+        if (next > 0 && u < next) { q++; sk = next; } else break;
+      }
+      Q[i] = q;
+      if (q > 0) busy[nb++] = i;
+      for (let k = 1; k <= Math.min(q, K); k++) c[k]++;
+    }
+
+    const arr = lambda * n;
+    const acc = new Float64Array(K + 1);
+    const step = () => {
+      if (rand() * (arr + nb) < arr) {
+        // Arrival: sample d servers uniformly (with replacement), join the shortest.
+        let best = (rand() * n) | 0, bq = Q[best];
+        for (let j = 1; j < d; j++) {
+          const i = (rand() * n) | 0;
+          if (Q[i] < bq) { best = i; bq = Q[i]; }
+        }
+        const q = bq + 1;
+        Q[best] = q;
+        if (q <= K) c[q]++;
+        if (q === 1) busy[nb++] = best;
+      } else {
+        // Departure: each busy server completes at rate 1.
+        const slot = (rand() * nb) | 0;
+        const i = busy[slot];
+        const q = Q[i];
+        if (q <= K) c[q]--;
+        Q[i] = q - 1;
+        if (q === 1) busy[slot] = busy[--nb];
+      }
+    };
+    for (let t = 0; t < burn; ) {
+      t += -Math.log(1 - rand()) / (arr + nb);
+      if (t < burn) step();
+    }
+    for (let t = 0; t < T; ) {
+      const dt = Math.min(-Math.log(1 - rand()) / (arr + nb), T - t);
+      for (let k = 1; k <= K; k++) { if (c[k] === 0) break; acc[k] += c[k] * dt; }
+      t += dt;
+      if (t < T) step();
+    }
+    const occ = new Float64Array(K + 1);
+    occ[0] = 1;
+    for (let k = 1; k <= K; k++) occ[k] = acc[k] / (T * n);
+    return occ;
+  }
+
+  /** Horizon (time units) giving about `events` events at stationarity, where the total rate is 2 lambda n. */
+  function horizon(lambda: number, n: number, events: number): number {
+    return events / (2 * lambda * n);
+  }
+
+  /** One seeded stream per configuration; the runs use consecutive, disjoint stretches of it. */
+  function configSeed(lambda: number, d: number, n: number): string {
+    return `${SEED}:${lambda.toFixed(2)}:${d}:${n}`;
+  }
+  // </core>
+
+  const fmt = (v: number) => (v === 0 ? '0' : v >= 1e-3 ? v.toFixed(4) : v.toExponential(2));
+
+  document.querySelectorAll<HTMLElement>('[data-ld-poc]').forEach((root) => {
+    const q = <T extends Element>(sel: string) => root.querySelector<T>(sel)!;
+    const inL = q<HTMLInputElement>('[data-in="lambda"]');
+    const inD = q<HTMLInputElement>('[data-in="d"]');
+    const inN = q<HTMLInputElement>('[data-in="n"]');
+    const ref1 = q<SVGPathElement>('[data-ref1]');
+    const refd = q<SVGPathElement>('[data-refd]');
+    const simG = q<SVGGElement>('[data-sim]');
+    const NS = 'http://www.w3.org/2000/svg';
+
+    const X = (k: number) => 70 + 55 * k;
+    const Y = (v: number) => 22 + (-Math.log10(v) / 12) * 278;
+    const FLOOR = 1e-12;
+
+    const cfg = () => ({
+      lambda: Number(inL.value),
+      d: D_VALUES[Number(inD.value)],
+      n: N_VALUES[Number(inN.value)],
+    });
+
+    /** Polyline through (k, s_k) on the log axis, clipped where it leaves the frame at 1e-12. */
+    const curve = (s: number[]) => {
+      let p = `M${X(0)} ${Y(s[0]).toFixed(2)}`;
+      for (let k = 1; k < s.length; k++) {
+        if (s[k] >= FLOOR) { p += `L${X(k)} ${Y(s[k]).toFixed(2)}`; continue; }
+        const a = Math.log10(s[k - 1]), b = s[k] > 0 ? Math.log10(s[k]) : -1e9;
+        const t = (a + 12) / (a - b);
+        p += `L${(X(k - 1) + 55 * t).toFixed(2)} ${Y(FLOOR).toFixed(2)}`;
+        break;
+      }
+      return p;
+    };
+
+    const setText = (key: string, text: string) => { q<HTMLElement>(`[data-r="${key}"]`).textContent = text; };
+
+    let token = 0;
+
+    const drawClosedForm = () => {
+      const { lambda, d, n } = cfg();
+      q<HTMLOutputElement>('[data-out="lambda"]').value = lambda.toFixed(2);
+      q<HTMLOutputElement>('[data-out="d"]').value = String(d);
+      q<HTMLOutputElement>('[data-out="n"]').value = String(n);
+      inD.setAttribute('aria-valuetext', String(d));
+      inN.setAttribute('aria-valuetext', String(n));
+      setText('d', String(d));
+      setText('n', String(n));
+      setText('seed', configSeed(lambda, d, n));
+      refd.setAttribute('d', curve(fixedPoint(lambda, d, K_MAX)));
+      ref1.setAttribute('d', d === 1 ? '' : curve(fixedPoint(lambda, 1, K_MAX)));
+      q<HTMLElement>('[data-r="row1"]').style.display = d === 1 ? 'none' : '';
+    };
+
+    const drawSim = (mean: number[], se: number[]) => {
+      simG.replaceChildren();
+      for (let k = 1; k <= K_MAX; k++) {
+        if (!(mean[k] > 0) || mean[k] < FLOOR) continue;
+        const x = X(k);
+        const lo = mean[k] - se[k], hi = mean[k] + se[k];
+        const bar = document.createElementNS(NS, 'line');
+        bar.setAttribute('x1', String(x)); bar.setAttribute('x2', String(x));
+        bar.setAttribute('y1', Y(Math.min(1, hi)).toFixed(2));
+        bar.setAttribute('y2', Y(lo > FLOOR ? lo : FLOOR).toFixed(2));
+        const dot = document.createElementNS(NS, 'circle');
+        dot.setAttribute('cx', String(x)); dot.setAttribute('cy', Y(mean[k]).toFixed(2)); dot.setAttribute('r', '4');
+        simG.append(bar, dot);
+      }
+    };
+
+    const run = async () => {
+      const my = ++token;
+      const { lambda, d, n } = cfg();
+      const burn = d === 1 ? 0 : horizon(lambda, n, BURN_EVENTS);
+      const T = horizon(lambda, n, EVENTS_PER_RUN);
+      const ref = fixedPoint(lambda, d, K_MAX);
+      const seed = configSeed(lambda, d, n);
+      const rand = makeRand(seed);
+      const runs: Float64Array[] = [];
+      simG.replaceChildren();
+      setText('rows', '');
+      setText('z', '');
+      for (let r = 0; r < RUNS; r++) {
+        setText('runs', `runs: ${r} of ${RUNS} done`);
+        await new Promise((res) => setTimeout(res, 0));
+        if (my !== token) return;
+        runs.push(simulateRun(lambda, d, n, rand, burn, T));
+      }
+      const mean: number[] = [1], se: number[] = [0];
+      for (let k = 1; k <= K_MAX; k++) {
+        const xs = runs.map((o) => o[k]);
+        const m = xs.reduce((a, b) => a + b, 0) / RUNS;
+        const v = xs.reduce((a, b) => a + (b - m) * (b - m), 0) / (RUNS - 1);
+        mean.push(m);
+        se.push(Math.sqrt(v / RUNS));
+      }
+      drawSim(mean, se);
+      const lines = ['k  simulated ± s.e.     reference'];
+      let zmax = 0;
+      for (let k = 1; k <= 6; k++) {
+        if (ref[k] < 1e-6 && !(mean[k] > 0)) break;
+        lines.push(`${k}  ${(fmt(mean[k]) + ' ± ' + fmt(se[k])).padEnd(20)} ${fmt(ref[k])}`);
+        if (se[k] > 0) zmax = Math.max(zmax, Math.abs(mean[k] - ref[k]) / se[k]);
+      }
+      setText('runs', `${RUNS} independent runs, each T = ${T.toFixed(0)} mean service times${d === 1 ? ' from the stationary law' : ` after ${burn.toFixed(0)} of burn-in`}`);
+      setText('rows', lines.join('\n'));
+      setText('z', d === 1
+        ? `max |z| against the exact value: ${zmax.toFixed(2)}`
+        : `max |gap| / s.e. against the n → ∞ limit: ${zmax.toFixed(2)}`);
+    };
+
+    let started = false;
+    const start = () => { if (!started) { started = true; run(); } };
+
+    [inL, inD, inN].forEach((el) => {
+      el.addEventListener('input', () => { drawClosedForm(); simG.replaceChildren(); setText('rows', ''); setText('z', ''); setText('runs', 'runs: release the slider to simulate'); token++; });
+      el.addEventListener('change', () => { drawClosedForm(); started = true; run(); });
+    });
+
+    drawClosedForm();
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) { io.disconnect(); start(); }
+      }, { rootMargin: '200px' });
+      io.observe(root);
+    } else {
+      start();
+    }
+  });
+</script>

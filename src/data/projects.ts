@@ -88,7 +88,7 @@ export const PROJECTS: Project[] = [
     status: 'Ongoing',
     dates: 'Aug. 2026 – present',
     oneLiner:
-      'A cumulative forecast is scored only at the horizon, but a miss is certain the moment the running sum crosses the bound. A calibration layer that learns from those early misses.',
+      'A forecast of a cumulative quantity is scored when its horizon ends, yet a miss can become certain before then. Developing a calibration method that uses this early, one-sided feedback.',
     tags: ['conformal prediction', 'delayed feedback', 'forecasting'],
     cover: {
       kind: 'tex',

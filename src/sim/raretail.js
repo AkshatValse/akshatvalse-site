@@ -14,9 +14,8 @@
  * and the relative error grows only polynomially in a rather than like
  * exp(a^2/2).
  *
- * This is a textbook instance, deliberately. It demonstrates the mechanism that
- * makes large-deviation-guided importance sampling work without touching the
- * unpublished state-dependent tilting it stands in for.
+ * This is a textbook instance, deliberately: the classical mechanism behind
+ * large-deviation-guided importance sampling, on a target with an exact answer.
  *
  * Exact reference: p(a) = Phi(-a), computed by an erf series below 1.5 and by
  * the Laplace continued fraction for the Mills ratio above it. Both are checked

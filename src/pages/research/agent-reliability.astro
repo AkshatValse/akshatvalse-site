@@ -1,0 +1,675 @@
+---
+/**
+ * Reliability of tool-using agents (advisor: Yang Li). Ongoing; approach and
+ * results held back pending the choice of direction.
+ *
+ * Sources for every project fact: the public site (research.astro, CV) and the
+ * GitHub profile README, as collected in the verified brief. Everything beyond
+ * the public problem statement is a CLASSICAL BASELINE (a known run-time law,
+ * independent restarts; crude Monte Carlo arithmetic), computed and checked for
+ * this page, labelled as such wherever it appears, and never project data.
+ *
+ * Static charts are inlined (?raw) so their var(--token) colours resolve and
+ * dark mode works; they are not wrapped in .diagram, whose rules would restyle
+ * them. Hand-drawn diagrams use the site's .diagram classes and tokens only.
+ *
+ * Scoop rule: the page says what the project asks and plans (CV level) and
+ * nothing that points at a method or links the rare-failure question to any
+ * other project's figure. The rare-failure diagram's footer is rewritten below
+ * to "problem only", and the build fails if the old footer survives.
+ */
+import ProjectLayout from '../../layouts/ProjectLayout.astro';
+import Container from '../../components/clarity/Container.astro';
+import NoteRow from '../../components/clarity/NoteRow.astro';
+import Slides from '../../components/clarity/Slides.astro';
+import CodeBlock from '../../components/clarity/CodeBlock.astro';
+import Tex from '../../components/Tex.astro';
+import AgentRestartWidget from '../../components/widgets/AgentRestartWidget.astro';
+import AgentRareCount from '../../components/widgets/AgentRareCount.astro';
+import ruleSvg from '../../../public/research/agent-reliability/restart-rule.svg?raw';
+import lnC0Svg from '../../../public/research/agent-reliability/restart-lognormal-c0.svg?raw';
+import lnC05Svg from '../../../public/research/agent-reliability/restart-lognormal-c0.5.svg?raw';
+import mixSvg from '../../../public/research/agent-reliability/restart-mixture.svg?raw';
+import hangSvg from '../../../public/research/agent-reliability/restart-hang.svg?raw';
+import rareSvgRaw from '../../../public/research/agent-reliability/diagram-rare-failure.svg?raw';
+
+/** The asset's two-line footer pointed to another project's figure; keep only "problem only". */
+const RARE_FOOTER = "The problem only; this project's approach is held back.";
+const rareSvg = rareSvgRaw.replace(
+  /<text class="ts" x="30" y="336">[^<]*<\/text>\s*<text class="ts" x="30" y="350">[^<]*<\/text>/,
+  `<text class="ts" x="30" y="343">${RARE_FOOTER}</text>`,
+);
+if (!rareSvg.includes(RARE_FOOTER) || /rare-event figure|Gaussian tail/i.test(rareSvg)) {
+  throw new Error('agent-reliability: rare-failure diagram footer was not replaced with the problem-only line.');
+}
+
+/**
+ * Density of ln T for a lognormal with median 1 and spread sigma (a normal
+ * curve on a log-time axis), scaled into a box, for the hand-drawn diagrams.
+ * Drawn for sigma = 1.5 and age tau = 2, the brief's diagram case.
+ */
+const SIGMA = 1.5;
+const LN_TAU = Math.log(2);
+function bell(x0: number, x1: number, base: number, height: number, u0 = -4.5, u1 = 4.5) {
+  const xOf = (u: number) => x0 + ((u - u0) / (u1 - u0)) * (x1 - x0);
+  const yOf = (u: number) => base - height * Math.exp(-(u * u) / (2 * SIGMA * SIGMA));
+  const pts = (a: number, b: number, n: number) =>
+    Array.from({ length: n + 1 }, (_, i) => a + ((b - a) * i) / n).map((u) => `${xOf(u).toFixed(1)} ${yOf(u).toFixed(1)}`);
+  const curve = `M${pts(u0, u1, 120).join('L')}`;
+  const tail = `M${xOf(LN_TAU).toFixed(1)} ${base}L${pts(LN_TAU, u1, 70).join('L')}L${xOf(u1).toFixed(1)} ${base}Z`;
+  return { xOf, curve, tail, tauX: xOf(LN_TAU) };
+}
+const d1 = bell(40, 390, 262, 160);
+const d1Ticks = [0.1, 1, 10].map((t) => ({ t, x: d1.xOf(Math.log(t)) }));
+const cov = bell(36, 444, 168, 116);
+
+/** The lognormal baseline in a few lines (the widget's AgentRestartMath.ts, with mu = 0). */
+const CODE = `// Lognormal run time with median 1: T = exp(sigma * Z).
+// upper(x) = P(Z > x) and lower(x) = P(Z <= x), each on its accurate tail.
+function restartTime(tau, sigma, c) {
+  const z = Math.log(tau) / sigma;
+  const F = lower(z), S = upper(z);
+  const A = Math.exp(sigma * sigma / 2) * lower(z - sigma) + tau * S;  // E[min(T, tau)]
+  return (A + c * S) / F;                                              // E[T_{tau,c}]
+}
+
+function meanResidual(tau, sigma) {                                   // m(tau)
+  const z = Math.log(tau) / sigma;
+  return (Math.exp(sigma * sigma / 2) * upper(z - sigma) - tau * upper(z)) / upper(z);
+}`;
+
+/** Classical baseline, lognormal with median 1: brief "Tables" (log lines 350-470). */
+const ROWS = [
+  { s: '0.5', et: '1.133', c: '0', star: 'no measurable gain', ratio: '1.0000000 (gain 3.3 × 10⁻⁸)' },
+  { s: '1.0', et: '1.649', c: '0', star: '1.73', ratio: '0.892' },
+  { s: '1.0', et: '1.649', c: '0.5', star: '3.68', ratio: '0.955' },
+  { s: '1.5', et: '3.080', c: '0', star: '0.349', ratio: '0.413' },
+  { s: '1.5', et: '3.080', c: '0.5', star: '1.56', ratio: '0.601' },
+  { s: '2.0', et: '7.389', c: '0', star: '0.0512', ratio: '0.0976' },
+  { s: '2.0', et: '7.389', c: '0.5', star: '0.886', ratio: '0.248' },
+  { s: '2.5', et: '22.76', c: '0', star: '0.00502', ratio: '0.0128' },
+  { s: '2.5', et: '22.76', c: '0.5', star: '0.592', ratio: '0.0752' },
+];
+---
+
+<ProjectLayout
+  slug="agent-reliability"
+  description="When is restarting a stalled LLM agent worth more than waiting, and how can a failure too rare for direct simulation be estimated? With a classical baseline."
+  authors="Akshat Valse, with Yang Li"
+  affiliation="Department of Computer Science, Iowa State University"
+  abstract="Agents that run for a long time sometimes stall and sometimes fail. This project asks when restarting a stalled run is worth more than waiting, and what in the distribution of run times decides that; and how to estimate the probability of a failure too rare for direct simulation to reach. Two pilots on real agents are planned, one on restart policies and one on rare failures, each with its kill criteria registered before any data; the direction is still being chosen between them, and approach and results are held back pending that choice. This page sets out the problem and works out the textbook arithmetic behind each question, as a classical baseline rather than project data."
+  buttons={[
+    { label: 'Live baseline', href: '#restart-widget', icon: 'chart' },
+  ]}
+  info="Ongoing · Aug. 2026 – present · Approach and results held back pending the choice of direction"
+>
+  <Fragment slot="cover">
+    <svg class="diagram" viewBox="0 0 480 300" role="img"
+      aria-label="Classical restart rule. A bell-shaped density of log run time, with a vertical line at the current age tau and the tail beyond it shaded and labelled S of tau. Below: restart if and only if the mean residual life m of tau exceeds E[T] plus c. Classical baseline for a known run-time law.">
+      <path class="ar-tail" d={cov.tail}></path>
+      <path class="ar-curve" d={cov.curve}></path>
+      <line class="line" x1="36" y1="168" x2="444" y2="168"></line>
+      <line class="ar-now" x1={cov.tauX} y1="30" x2={cov.tauX} y2="168"></line>
+      <text x={cov.tauX + 7} y="42" font-size="15">age τ, not finished</text>
+      <text x={cov.tauX + 9} y="156" font-size="15">S(τ)</text>
+      <text class="muted-t" x="36" y="188" font-size="12.5">log run time</text>
+      <text x="240" y="234" font-size="21" text-anchor="middle" class="ar-strong">restart iff m(τ) &gt; E[T] + c</text>
+      <text class="muted-t" x="240" y="258" font-size="13" text-anchor="middle">m(τ): expected time still to go · c: relaunch cost</text>
+      <text class="muted-t" x="240" y="282" font-size="12.5" text-anchor="middle">classical baseline, for a known run-time law</text>
+    </svg>
+  </Fragment>
+
+  <!-- 1. The problem -->
+  <Container first>
+    <h1>Two questions about long-running agents</h1>
+    <p class="text">
+      Agents that run for a long time sometimes stall and sometimes fail. That raises two questions.
+      First, when a run stalls, should you restart it or wait, and what in the distribution of run
+      times decides? Second, how do you estimate the probability of a failure too rare for direct
+      simulation to reach?
+    </p>
+    <p class="text">
+      Two pilots on real agents are planned, one for each question, each with kill criteria
+      registered before any data. The direction is still being chosen between them, and approach
+      and results are held back pending that choice.
+    </p>
+  </Container>
+
+  <NoteRow>
+    <p class="text">
+      Both questions have textbook versions: for the first, a run-time law you know and restarts
+      that are independent of each other; for the second, failures that are independent across
+      runs. The first then has an exact answer, and for the second the classical arithmetic shows
+      why direct simulation usually sees nothing. This page works those versions out, draws them,
+      and lets you vary them. Every quantitative statement
+      below is about that classical arithmetic, computed and checked for this page. None of it is
+      project data, and none of it describes the project's method.
+    </p>
+    <Fragment slot="note">
+      <b>Bears on:</b> survival analysis · rare-event estimation · agent evaluation.<br />
+      <b>Advisor:</b> Yang Li, Computer Science.<br />
+      <b>Status:</b> ongoing, Aug. 2026 – present.
+    </Fragment>
+  </NoteRow>
+
+  <!-- 2. Restart or wait -->
+  <Container>
+    <h1>Restart or wait</h1>
+    <p class="text">
+      A run has been going for time <Tex src={String.raw`\tau`} /> and has not finished. Someone has
+      to decide whether to kill it and start again, or keep waiting. In the textbook setting, with
+      a known distribution of run times and independent restarts, that decision has an exact answer.
+      Waiting costs, in expectation, the time the run still has to go: its mean residual life
+      <Tex src={String.raw`m(\tau) = \mathbb{E}[T-\tau \mid T>\tau]`} />. Restarting costs a relaunch
+      <Tex src="c" /> plus a fresh run, <Tex src={String.raw`c + \mathbb{E}[T]`} />. So restart if and
+      only if
+    </p>
+    <Tex block src={String.raw`m(\tau) > \mathbb{E}[T] + c.`} />
+    <p class="text">
+      The same inequality decides whether a standing policy of restarting every run at cutoff
+      <Tex src={String.raw`\tau`} /> beats never restarting, as the next section shows. In the
+      classical setting, then, what in the distribution of run times decides is the mean residual
+      life, compared with a fresh run plus the cost of a relaunch.
+    </p>
+  </Container>
+
+  <Container width="large" tone="gray">
+    <svg class="diagram" viewBox="0 0 880 420" role="img"
+      aria-label="Diagram. Left: the density of log run time for a lognormal with sigma 1.5; a vertical line at age tau equals 2 marks a run that has not finished, and the shaded tail beyond it is the probability S of tau. Right: a run stalled at age tau either waits, expected to take m of tau, or restarts, paying relaunch cost c and then a fresh run of expected length E[T]. Rule: restart if and only if m of tau exceeds E[T] plus c; the same inequality decides whether always restarting at cutoff tau beats never restarting.">
+      <defs>
+        <marker id="ar-d1-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path class="ar-head" d="M0 0L10 5L0 10z"></path>
+        </marker>
+      </defs>
+
+      <text x="36" y="32" font-size="15" class="ar-strong">1. A run that is already τ old</text>
+      <path class="ar-tail" d={d1.tail}></path>
+      <path class="ar-curve" d={d1.curve}></path>
+      <line class="line" x1="40" y1="262" x2="390" y2="262"></line>
+      {d1Ticks.map(({ t, x }) => (
+        <>
+          <line class="line" x1={x} y1="262" x2={x} y2="268"></line>
+          <text class="muted-t" x={x} y="285" font-size="13" text-anchor="middle">{t}</text>
+        </>
+      ))}
+      <line class="ar-now" x1={d1.tauX} y1="66" x2={d1.tauX} y2="262"></line>
+      <text x={d1.tauX + 7} y="78" font-size="14">now: age τ, not finished</text>
+      <text class="muted-t" x="304" y="128" font-size="13">shaded:</text>
+      <text x="304" y="147" font-size="14">P(T &gt; τ) = S(τ)</text>
+      <path class="line" d="M326 156 L 298 226" marker-end="url(#ar-d1-arrow)"></path>
+      <text class="muted-t" x="40" y="307" font-size="13">run time T, multiples of the median (log axis)</text>
+      <text class="muted-t" x="40" y="327" font-size="13">curve: density of ln T, lognormal with σ = 1.5</text>
+      <text x="40" y="353" font-size="13">m(τ) = E[T − τ | T &gt; τ], the time still to go</text>
+
+      <text x="460" y="32" font-size="15" class="ar-strong">2. Wait, or restart?</text>
+      <rect class="box soft" x="460" y="128" width="140" height="58" rx="6"></rect>
+      <text x="530" y="152" font-size="14" text-anchor="middle">run stalled</text>
+      <text x="530" y="171" font-size="14" text-anchor="middle">at age τ</text>
+      <path class="line" d="M600 146 C 628 146, 622 93, 646 93" marker-end="url(#ar-d1-arrow)"></path>
+      <path class="line" d="M600 168 C 628 168, 622 223, 646 223" marker-end="url(#ar-d1-arrow)"></path>
+      <text class="muted-t" x="596" y="112" font-size="14" text-anchor="end">wait</text>
+      <text class="muted-t" x="596" y="212" font-size="14" text-anchor="end">restart</text>
+      <rect class="box" x="650" y="64" width="200" height="58" rx="6"></rect>
+      <text x="750" y="88" font-size="14" text-anchor="middle">expected to go:</text>
+      <text x="750" y="108" font-size="14" text-anchor="middle">m(τ)</text>
+      <rect class="box" x="650" y="194" width="200" height="58" rx="6"></rect>
+      <text x="750" y="218" font-size="14" text-anchor="middle">relaunch cost c,</text>
+      <text x="750" y="238" font-size="14" text-anchor="middle">then a fresh run: E[T]</text>
+
+      <rect class="box dark" x="460" y="272" width="390" height="92" rx="6"></rect>
+      <text class="ar-on-dark ar-strong" x="655" y="302" font-size="17" text-anchor="middle">restart iff m(τ) &gt; E[T] + c</text>
+      <text class="ar-on-dark" x="655" y="327" font-size="13" text-anchor="middle">the same inequality decides whether always</text>
+      <text class="ar-on-dark" x="655" y="346" font-size="13" text-anchor="middle">restarting at cutoff τ beats never restarting</text>
+
+      <text class="muted-t" x="36" y="392" font-size="13">Classical baseline for a known run-time law and independent restarts;</text>
+      <text class="muted-t" x="36" y="410" font-size="13">drawn for a lognormal with σ = 1.5, τ = 2.</text>
+    </svg>
+    <p class="caption">
+      <b>Figure 1.</b> Question 1 in its classical form. A run has been going for
+      <Tex src={String.raw`\tau`} /> without finishing. Waiting costs, in expectation, the time it
+      still has to go, <Tex src={String.raw`m(\tau)`} />; restarting costs the relaunch
+      <Tex src="c" /> plus a fresh run. Restart if and only if
+      <Tex src={String.raw`m(\tau) > \mathbb{E}[T] + c`} />. This assumes a known run-time law and
+      independent restarts. The project asks the question of real agents; its approach is held back.
+    </p>
+  </Container>
+
+  <!-- 3. The classical baseline -->
+  <Container>
+    <h1>The classical baseline</h1>
+    <p class="text">
+      This section assumes a run-time law that is known exactly and restarts that are independent and
+      identically distributed. Nothing is fitted to agent data. No public source of the project
+      states these derivations: they were derived for this page and checked numerically (the checks
+      are listed under Figure 5).
+    </p>
+
+    <h2>Notation</h2>
+    <p class="text">
+      <Tex src={String.raw`T \ge 0`} /> is the run time of one attempt, with CDF
+      <Tex src="F" />, survival function <Tex src="S = 1 - F" />, density <Tex src="f" /> and hazard
+      <Tex src="h = f/S" />. A cutoff-<Tex src={String.raw`\tau`} /> policy kills any attempt still
+      running at age <Tex src={String.raw`\tau`} /> and relaunches it at cost
+      <Tex src={String.raw`c \ge 0`} />, paid on each relaunch but not on the first launch.
+      <Tex src={String.raw`T_{\tau,c}`} /> is the total time until the first attempt finishes under
+      that policy.
+    </p>
+
+    <h2>Expected time under a cutoff</h2>
+    <p class="text">Write <Tex src={String.raw`A(\tau)`} /> for the truncated mean:</p>
+    <Tex block src={String.raw`A(\tau) = \mathbb{E}[\min(T,\tau)] = \int_0^\tau S(t)\,dt.`} />
+    <p class="text">
+      The number of attempts is geometric with success probability <Tex src={String.raw`F(\tau)`} />,
+      so the expected number of failed attempts is <Tex src="S/F" />, and each costs
+      <Tex src={String.raw`\tau + c`} />. The attempt that succeeds costs <Tex src="T" /> given
+      <Tex src={String.raw`T \le \tau`} />, and
+      <Tex src={String.raw`\mathbb{E}[T\,\mathbf 1\{T\le\tau\}] = A(\tau) - \tau S(\tau)`} />. Hence
+    </p>
+    <Tex block src={String.raw`\mathbb{E}[T_{\tau,c}] = \frac{A(\tau) + c\,S(\tau)}{F(\tau)}.`} />
+
+    <h2>An identity, and the rule</h2>
+    <p class="text">The mean residual life of a run that has reached age <Tex src={String.raw`\tau`} /> is</p>
+    <Tex block src={String.raw`m(\tau) = \mathbb{E}[T - \tau \mid T > \tau] = \frac{\mathbb{E}[(T-\tau)^+]}{S(\tau)}.`} />
+    <p class="text">
+      Splitting <Tex src={String.raw`\mathbb{E}[T]`} /> on whether the run finishes by
+      <Tex src={String.raw`\tau`} /> gives
+    </p>
+    <Tex block src={String.raw`\mathbb{E}[T] = \big(A(\tau) - \tau S(\tau)\big) + S(\tau)\big(\tau + m(\tau)\big) = A(\tau) + S(\tau)\,m(\tau).`} />
+    <p class="text">
+      By the previous display, <Tex src={String.raw`F(\tau)\,\mathbb{E}[T_{\tau,c}] = A + cS`} />.
+      Adding <Tex src={String.raw`S(\tau)\big(m(\tau) - c\big)`} /> gives the same quantity, so,
+      whenever <Tex src={String.raw`\mathbb{E}[T] < \infty`} />,
+    </p>
+    <Tex block src={String.raw`\mathbb{E}[T] = F(\tau)\,\mathbb{E}[T_{\tau,c}] + S(\tau)\,\big(m(\tau) - c\big).`} />
+    <p class="text">
+      So <Tex src={String.raw`\mathbb{E}[T]`} /> is a weighted average of
+      <Tex src={String.raw`\mathbb{E}[T_{\tau,c}]`} />, with weight <Tex src={String.raw`F(\tau)`} />,
+      and <Tex src={String.raw`m(\tau) - c`} />, with weight <Tex src={String.raw`S(\tau)`} />. For
+      <Tex src={String.raw`0 < F(\tau) < 1`} /> and finite <Tex src={String.raw`\mathbb{E}[T]`} />,
+      the first lies below the average exactly when the second lies above it:
+    </p>
+    <Tex block src={String.raw`\mathbb{E}[T_{\tau,c}] < \mathbb{E}[T] \iff m(\tau) > \mathbb{E}[T] + c.`} />
+    <p class="text">
+      The same inequality decides the one-shot question for a run stalled at age
+      <Tex src={String.raw`\tau`} />: restarting once and never again costs
+      <Tex src={String.raw`c + \mathbb{E}[T]`} />, and waiting costs <Tex src={String.raw`m(\tau)`} />.
+    </p>
+
+    <h2>The best cutoff</h2>
+    <p class="text">Differentiating the expected time under a cutoff,</p>
+    <Tex block src={String.raw`\frac{d}{d\tau}\,\mathbb{E}[T_{\tau,c}] = \frac{S F - f\,(A + c)}{F^2}.`} />
+    <p class="text">At an interior optimum <Tex src="A + c = SF/f" />, which gives</p>
+    <Tex block src={String.raw`\mathbb{E}[T_{\tau^*,c}] = \frac{1}{h(\tau^*)} - c.`} />
+    <p class="text">
+      Where restarting gains almost nothing, <Tex src={String.raw`\mathbb{E}[T_{\tau,c}]`} /> is flat
+      to machine precision, and a search on its values, such as golden-section search, cannot locate
+      <Tex src={String.raw`\tau^*`} />.
+      Bisection on the sign of the numerator <Tex src="SF - f(A + c)" /> still can, and that is how
+      the widget below finds it.
+    </p>
+
+    <h2>Lognormal closed forms</h2>
+    <p class="text">
+      Let <Tex src={String.raw`T = e^{\mu + \sigma Z}`} /> with <Tex src="Z" /> standard normal,
+      <Tex src={String.raw`z = (\ln\tau - \mu)/\sigma`} />, and <Tex src={String.raw`\Phi`} /> the
+      standard normal CDF. Then
+    </p>
+    <Tex block src={String.raw`A(\tau) = e^{\mu+\sigma^2/2}\,\Phi(z-\sigma) + \tau\,\big(1-\Phi(z)\big),`} />
+    <Tex block src={String.raw`\mathbb{E}[(T-\tau)^+] = e^{\mu+\sigma^2/2}\,\big(1-\Phi(z-\sigma)\big) - \tau\,\big(1-\Phi(z)\big).`} />
+    <p class="text">
+      <Tex src={String.raw`\Phi`} /> comes from the site's normal-tail routine (an erf series and the
+      Laplace continued fraction), always evaluated on the tail that avoids cancellation.
+      With median 1 (<Tex src={String.raw`\mu = 0`} />) the two main quantities take a few lines:
+    </p>
+    <CodeBlock code={CODE} lang="javascript" />
+  </Container>
+
+  <Container tone="gray">
+    <div class="ar-svg" set:html={ruleSvg} />
+    <p class="caption">
+      <b>Figure 2.</b> What in the distribution decides it, classically: the mean residual life.
+      Lognormal run time with <Tex src={String.raw`\sigma = 1.5`} /> and relaunch cost
+      <Tex src="c = 0.5" />, in multiples of the median. Restarting at cutoff
+      <Tex src={String.raw`\tau`} /> beats never restarting exactly where
+      <Tex src={String.raw`m(\tau)`} /> exceeds <Tex src={String.raw`\mathbb{E}[T] + c`} />. The two
+      crossings fall at the same <Tex src={String.raw`\tau_0 = 0.309`} />, because
+      <Tex src={String.raw`\mathbb{E}[T] = F(\tau)\,\mathbb{E}[T_{\tau,c}] + S(\tau)\,(m(\tau) - c)`} />.
+      Best cutoff <Tex src={String.raw`\tau^* = 1.56`} />, where expected time is 1.85 against 3.08.
+      Classical baseline, not project data.
+    </p>
+  </Container>
+
+  <NoteRow>
+    <p class="text">
+      Read Figure 2 from left to right. Before <Tex src={String.raw`\tau_0`} />, a run that has gone
+      <Tex src={String.raw`\tau`} /> is expected to finish sooner than a relaunch plus a fresh run, so a
+      cutoff there only adds time. Past <Tex src={String.raw`\tau_0`} />, every cutoff in the shaded
+      region beats never restarting, and the best of them is <Tex src={String.raw`\tau^*`} />.
+    </p>
+    <Fragment slot="note">
+      Why both crossings share <Tex src={String.raw`\tau_0`} />: with weights
+      <Tex src="F" /> and <Tex src="S" />, <Tex src={String.raw`\mathbb{E}[T]`} /> averages
+      <Tex src={String.raw`\mathbb{E}[T_{\tau,c}]`} /> and <Tex src="m - c" />, so one equals
+      <Tex src={String.raw`\mathbb{E}[T]`} /> exactly when the other does.
+    </Fragment>
+  </NoteRow>
+
+  <!-- 4. How much restarting buys -->
+  <Container>
+    <h1>How much restarting buys</h1>
+    <p class="text">
+      The rule says when restarting helps; how much it helps depends on the shape of the law.
+      Figure 3 holds the lognormal family at median 1 and varies <Tex src={String.raw`\sigma`} />,
+      with free relaunches on one side of the slider and a relaunch cost of half a median run time
+      on the other. Drag the divider to compare. Each curve is
+      <Tex src={String.raw`\mathbb{E}[T_{\tau,c}]/\mathbb{E}[T]`} />, and the dots mark the best cutoffs.
+    </p>
+  </Container>
+
+  <Container tone="gray">
+    <img-comparison-slider class="slider-container">
+      <figure slot="first" class="before">
+        <div class="ar-svg ar-cmp" set:html={lnC0Svg} />
+        <figcaption>c = 0</figcaption>
+      </figure>
+      <figure slot="second" class="after">
+        <div class="ar-svg ar-cmp" set:html={lnC05Svg} />
+        <figcaption>c = 0.5</figcaption>
+      </figure>
+    </img-comparison-slider>
+    <p class="caption">
+      <b>Figure 3.</b> Classical baseline, not project data. Lognormal run times with median 1.
+      With free restarts (left), restarts help high-variance runs enormously: at
+      <Tex src={String.raw`\sigma = 2`} /> the best cutoff, about a twentieth of the median, cuts
+      expected time below a tenth. They help low-variance runs essentially not at all: at
+      <Tex src={String.raw`\sigma = 0.5`} /> the gain is 3 parts in 10⁸. With a relaunch cost of
+      half a median run time (right), every best cutoff moves later and every gain shrinks:
+      <Tex src={String.raw`\sigma = 2`} /> now saves three quarters (ratio 0.248), not nine tenths.
+      Exact closed form, checked against quadrature and, at <Tex src={String.raw`\sigma = 2`} />, a
+      seeded simulation.
+    </p>
+  </Container>
+
+  <Container>
+    <p class="text">
+      A lognormal is one shape among many. Figure 4 has two others, chosen to make a point rather than
+      fitted to anything: a law with two modes, and runs that can hang forever.
+    </p>
+  </Container>
+
+  <Container tone="gray">
+    <Slides count={2} labels={['Two-mode law', 'Runs that hang']}>
+      <div class="slide-content" style="display: block;">
+        <div class="ar-svg" set:html={mixSvg} />
+      </div>
+      <div class="slide-content" style="display: none;">
+        <div class="ar-svg" set:html={hangSvg} />
+      </div>
+    </Slides>
+    <p class="caption">
+      <b>Figure 4.</b> Classical baseline, not project data: two illustrative laws, not fitted to
+      any agent (use the dots to switch).
+      <b>Two-mode:</b> 80% of runs are fast (median 1, <Tex src={String.raw`\sigma = 0.5`} />) and a
+      fifth are slow (median <Tex src="e^3" />, about 20, <Tex src={String.raw`\sigma = 0.5`} />), at
+      relaunch costs <Tex src="c = 0" />, 0.25 and 1. With free relaunches, killing any run still
+      going at about 1.8 fast medians cuts expected time from 5.46 to 1.72.
+      <b>Runs that hang:</b> each run hangs forever with probability <Tex src="q" /> = 0.01, 0.05 or
+      0.2, and finishing runs are lognormal with <Tex src={String.raw`\sigma = 1`} />. Never
+      restarting then takes infinitely long, so some cutoff is mandatory. With free relaunches the
+      best cutoff stays between about 1.1 and 1.7 medians as <Tex src="q" /> goes from 0.2 to 0.01.
+    </p>
+  </Container>
+
+  <!-- 5. Interactive -->
+  <Container>
+    <h1>Restart or wait, interactively</h1>
+    <p class="text">
+      Figure 5 computes the classical quantities for a law you choose:
+      <Tex src={String.raw`\mathbb{E}[T]`} />, <Tex src={String.raw`F(\tau)`} />,
+      <Tex src={String.raw`m(\tau)`} />, <Tex src={String.raw`\mathbb{E}[T_{\tau,c}]`} />, whether
+      restarting at <Tex src={String.raw`\tau`} /> helps, and the best cutoff
+      <Tex src={String.raw`\tau^*`} />. Drag across the plot or use the sliders. Beside the exact
+      value of <Tex src={String.raw`\mathbb{E}[T_{\tau,c}]`} />, a seeded simulation of the restart
+      process runs to 200,000 replications, and its running mean, with one standard error, converges
+      onto the exact value. At cutoffs so early that one replication would need too many attempts to
+      run live, the widget says so instead.
+    </p>
+    <p class="text">
+      Two cases need care. If runs can hang, <Tex src={String.raw`\mathbb{E}[T]`} /> and
+      <Tex src={String.raw`m(\tau)`} /> are infinite, the identity and the rule do not apply, and any
+      finite cutoff beats never restarting. And where the best attainable gain is below
+      <Tex src="10^{-6}" /> of <Tex src={String.raw`\mathbb{E}[T]`} />, <Tex src={String.raw`\tau^*`} />
+      is numerically ill-defined, so the widget reports that restarting gains nothing measurable
+      instead of printing one.
+    </p>
+  </Container>
+
+  <Container width="extra-large" tone="gray">
+    <AgentRestartWidget id="restart-widget" />
+    <p class="caption">
+      <b>Figure 5.</b> Classical baseline, not project data: a known run-time law and independent
+      restarts. Exact values come from the closed forms above, with <Tex src={String.raw`\Phi`} /> from
+      the site's normal tail; <Tex src={String.raw`\tau^*`} /> comes from bisection on the sign of
+      <Tex src="SF - f(A+c)" />. The simulation is seeded, so the same settings give the same digits.
+      The defaults are the case of Figure 2, <Tex src={String.raw`\sigma = 1.5`} /> and
+      <Tex src="c = 0.5" />, where <Tex src={String.raw`\tau^* = 1.563`} /> and
+      <Tex src={String.raw`\mathbb{E}[T_{\tau^*,c}] = 1.853`} /> against
+      <Tex src={String.raw`\mathbb{E}[T] = 3.080`} />. The two-mode law keeps
+      <Tex src={String.raw`\sigma = 0.5`} /> for both modes with the fast median at 1, so its times
+      are in fast medians; the hanging law keeps finishing runs lognormal with median 1 and
+      <Tex src={String.raw`\sigma = 1`} />.
+    </p>
+  </Container>
+
+  <Container>
+    <h2>Reference values</h2>
+    <p class="text">
+      The lognormal family with median 1, at the cutoffs that minimise expected time. At
+      <Tex src={String.raw`\sigma = 0.5`} /> the best cutoff is ill-conditioned (Checks, below), so
+      the table reports the gain instead.
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead class="center">
+          <tr>
+            <th><Tex src={String.raw`\sigma`} /></th>
+            <th><Tex src={String.raw`\mathbb{E}[T]`} /></th>
+            <th><Tex src="c" /></th>
+            <th><Tex src={String.raw`\tau^*`} /> (medians)</th>
+            <th><Tex src={String.raw`\mathbb{E}[T_{\tau^*,c}]\,/\,\mathbb{E}[T]`} /></th>
+          </tr>
+        </thead>
+        <tbody class="center">
+          {ROWS.map((r) => (
+            <tr><td>{r.s}</td><td>{r.et}</td><td>{r.c}</td><td>{r.star}</td><td>{r.ratio}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">
+      Classical baseline (known lognormal run-time law, independent restarts); not project data.
+      Every row was also reproduced by an independent implementation.
+    </p>
+
+    <h2>Checks</h2>
+    <p class="text">
+      These are checks of this page's classical arithmetic only, not of the project. The closed
+      forms were checked numerically before publication, against pass criteria recorded in a
+      configuration file as fixed before the first run. Of the 69 registered checks, 68 passed and
+      one failed.
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Check</th><th>Cases</th><th>Worst observed</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Closed form against numerical quadrature</td><td>9 laws × 6 cutoffs</td><td>4.5 × 10⁻¹⁵ relative</td><td>pass</td></tr>
+          <tr><td>The identity <Tex src={String.raw`\mathbb{E}[T] = F\,\mathbb{E}[T_{\tau,c}] + S\,(m - c)`} /></td><td>6 finite-mean laws × 3 values of <Tex src="c" />, 8001-point grid</td><td>5.9 × 10⁻¹⁶ relative</td><td>pass</td></tr>
+          <tr><td>The sign rule <Tex src={String.raw`\mathbb{E}[T_{\tau,c}] < \mathbb{E}[T] \iff m(\tau) > \mathbb{E}[T] + c`} /></td><td>18 cases</td><td>0 sign mismatches</td><td>pass</td></tr>
+          <tr><td>First-order condition at <Tex src={String.raw`\tau^*`} /></td><td>20 cases</td><td>1.06 × 10⁻⁴ against a 10⁻⁵ criterion (<Tex src={String.raw`\sigma = 0.5`} />, <Tex src="c = 0.5" />)</td><td>19 pass, 1 fail</td></tr>
+          <tr><td>Seeded simulation of the restart process, 200,000 replications per case</td><td>5 cases</td><td>|z| = 2.76 against a criterion of 4</td><td>pass</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text">
+      The failure is one of solver conditioning, not a counterexample. At
+      <Tex src={String.raw`\sigma = 0.5`} /> the objective is flat to machine precision, so
+      golden-section search cannot locate <Tex src={String.raw`\tau^*`} />; bisection on the numerator
+      <Tex src="SF - f(A+c)" /> satisfies the condition to 7.8 × 10⁻¹⁶, and an independent bisection
+      agrees, with <Tex src={String.raw`\tau^* = 20.13`} /> and a gain of 8.0 × 10⁻¹¹. That diagnosis
+      was made after the fact and is not a registered check; the registered failure stands as
+      recorded. The <Tex src={String.raw`\sigma = 0.5`} />, <Tex src="c = 0" /> check passes only
+      narrowly (5.8 × 10⁻⁶ against 10⁻⁵), for the same reason. Also after the fact, 10 further seeds
+      for the simulation case with the largest <Tex src="|z|" /> gave a mean <Tex src="z" /> of
+      −0.031. Every reference value on this page was reproduced independently in Python, with
+      <code>math.erfc</code> and bisection.
+    </p>
+  </Container>
+
+  <!-- 6. Rare failures -->
+  <Container>
+    <h1>Failures too rare to see</h1>
+    <p class="text">
+      The second question: how do you estimate the probability of a failure too rare for direct
+      simulation to reach? Picture an agent run as a loop of model and tool calls that, rarely, ends
+      in failure. With per-run failure probability <Tex src="p" /> and <Tex src="N" /> independent
+      runs, the number of failures is <Tex src={String.raw`K \sim \mathrm{Bin}(N, p)`} />, and the
+      classical arithmetic is short. The chance of seeing no failure at all is
+    </p>
+    <Tex block src={String.raw`\Pr(K = 0) = (1-p)^N \approx e^{-Np},`} />
+    <p class="text">the relative standard error of the estimate <Tex src={String.raw`\hat p = K/N`} /> is</p>
+    <Tex block src={String.raw`\frac{\mathrm{sd}(\hat p)}{p} = \sqrt{\frac{1-p}{Np}},`} />
+    <p class="text">and when <Tex src="K = 0" /> the one-sided upper bound is</p>
+    <Tex block src={String.raw`p_{\mathrm{U}} = 1 - \alpha^{1/N} \approx \frac{-\ln \alpha}{N} \approx \frac{3}{N} \quad\text{at } \alpha = 0.05.`} />
+    <p class="text">
+      So when failures are much rarer than one in the number of runs you can afford, direct
+      simulation usually sees none, and zero failures in <Tex src="N" /> runs supports only
+      <Tex src="p" /> below about <Tex src="3/N" />: for <Tex src="N = 1000" />,
+      <Tex src="p < 0.00299" /> at 95%. Crude Monte Carlo then stops being an estimator: it returns
+      zero occurrences and no information about the magnitude.
+    </p>
+  </Container>
+
+  <Container width="large" tone="gray">
+    <div class="ar-svg" set:html={rareSvg} />
+    <p class="caption">
+      <b>Figure 6.</b> Question 2. When failures are much rarer than one in the number of runs you
+      can afford, direct simulation usually sees none, and zero failures in <Tex src="N" /> runs
+      supports only <Tex src="p" /> below about <Tex src="3/N" />. Drawing a failure as reachable
+      from every call is illustrative. This is the problem only; this project's approach is held
+      back.
+    </p>
+  </Container>
+
+  <Container>
+    <p class="text">
+      Figure 7 does that arithmetic for <Tex src="p" /> from <Tex src="10^{-12}" /> to 0.1 and
+      <Tex src="N" /> from 10 to <Tex src="10^7" />, with a seeded direct
+      simulation beside the exact value: whole experiments of <Tex src="N" /> runs, counting how many
+      saw no failure. Push <Tex src="p" /> well below <Tex src="1/N" /> and nearly every experiment
+      comes back empty.
+    </p>
+  </Container>
+
+  <Container width="extra-large" tone="gray">
+    <AgentRareCount id="rare-widget" />
+    <p class="caption">
+      <b>Figure 7.</b> Classical arithmetic, not project data. The curve is the exact chance of no
+      failure in <Tex src="N" /> runs, <Tex src="(1-p)^N" />, evaluated as
+      <Tex src={String.raw`\exp(N\,\mathrm{log1p}(-p))`} />; the hollow dot is the fraction of seeded
+      simulated experiments that saw none, with one binomial standard error at the exact value. The bound after zero failures is
+      evaluated as <Tex src={String.raw`-\mathrm{expm1}(\ln(0.05)/N)`} />. At the defaults,
+      <Tex src="p = 0.001" /> and <Tex src="N = 1000" />, the exact chance of seeing nothing is 0.3677.
+    </p>
+  </Container>
+
+  <!-- 7. What we are doing -->
+  <Container>
+    <h1>What we are doing</h1>
+    <p class="text">
+      This is a research project in Advanced Topics in Artificial Intelligence (COMS 6720),
+      Department of Computer Science, Iowa State University, advised by Prof. Yang Li. We are asking
+      the two questions above of real tool-using LLM agents: when an agent stalls, when is restarting
+      it worth more than waiting, and how can the probability of a failure too rare for direct
+      simulation be estimated?
+    </p>
+    <p class="text">
+      Two pre-registered pilots on real agents are planned, one on restart policies and one on rare
+      failures, each with its kill criteria registered before any data. The direction is still being
+      chosen between them.
+    </p>
+  </Container>
+
+  <Container tone="gray">
+    <svg class="diagram" viewBox="0 0 680 300" role="img"
+      aria-label="Diagram. Two questions about long-running agents lead to two planned pilots, one on restart policies and one on rare failures. Each pilot carries the tag: kill criteria registered before any data. Both lead to a dashed box: direction still being chosen.">
+      <defs>
+        <marker id="ar-d3-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path class="ar-head" d="M0 0L10 5L0 10z"></path>
+        </marker>
+      </defs>
+      <rect class="box soft" x="150" y="14" width="380" height="46" rx="6"></rect>
+      <text x="340" y="43" font-size="14.5" text-anchor="middle">Two questions about long-running agents</text>
+
+      <path class="line" d="M300 60 C 300 82, 175 74, 175 94" marker-end="url(#ar-d3-arrow)"></path>
+      <path class="line" d="M380 60 C 380 82, 505 74, 505 94" marker-end="url(#ar-d3-arrow)"></path>
+
+      <rect class="box" x="40" y="98" width="270" height="56" rx="6"></rect>
+      <text class="muted-t" x="175" y="119" font-size="13" text-anchor="middle">Pilot A, planned</text>
+      <text class="ar-strong" x="175" y="142" font-size="15" text-anchor="middle">restart policies</text>
+      <rect class="box" x="370" y="98" width="270" height="56" rx="6"></rect>
+      <text class="muted-t" x="505" y="119" font-size="13" text-anchor="middle">Pilot B, planned</text>
+      <text class="ar-strong" x="505" y="142" font-size="15" text-anchor="middle">rare failures</text>
+
+      <rect class="box soft" x="40" y="164" width="270" height="48" rx="6"></rect>
+      <text x="175" y="184" font-size="13" text-anchor="middle">kill criteria registered</text>
+      <text x="175" y="202" font-size="13" text-anchor="middle">before any data</text>
+      <rect class="box soft" x="370" y="164" width="270" height="48" rx="6"></rect>
+      <text x="505" y="184" font-size="13" text-anchor="middle">kill criteria registered</text>
+      <text x="505" y="202" font-size="13" text-anchor="middle">before any data</text>
+
+      <path class="line" d="M175 212 C 175 236, 300 230, 318 244" marker-end="url(#ar-d3-arrow)"></path>
+      <path class="line" d="M505 212 C 505 236, 380 230, 362 244" marker-end="url(#ar-d3-arrow)"></path>
+
+      <rect class="box dash" x="200" y="246" width="280" height="44" rx="6"></rect>
+      <text x="340" y="273" font-size="14.5" text-anchor="middle">direction still being chosen</text>
+    </svg>
+    <p class="caption">
+      <b>Figure 8.</b> The plan, as the public sources state it. The pilot designs and the content of
+      the kill criteria are not public, and the figure implies no preference between the two pilots.
+    </p>
+  </Container>
+
+  <!-- 8. Status -->
+  <Container>
+    <h1>Status</h1>
+    <p class="text">
+      Ongoing, Aug. 2026 – present. The approach and any results are held back pending the choice of
+      direction and, after it, submission. That includes the methods, models, agents, tools,
+      environments, benchmarks and estimators, which restart policies a pilot would test, the pilot
+      designs and the content of their kill criteria, and which direction is chosen. No number on
+      this page is a project result: every one is classical arithmetic computed for this page. No
+      paper, preprint or repository for this project is public.
+    </p>
+  </Container>
+</ProjectLayout>
+
+<style>
+  /* Inlined static charts (their own <style> carries the colours and dark mode). */
+  .ar-svg { line-height: 0; }
+  .ar-svg :global(svg) { display: block; width: 100%; height: auto; }
+  /* Comparison slots must be opaque, or the lower chart shows through the upper one. */
+  .ar-cmp { padding-bottom: 2.2em; background: var(--panel); }
+
+  /* Hand-drawn diagram internals; tokens only. */
+  .ar-curve { fill: none; stroke: var(--seq-lo); stroke-width: 2; }
+  .ar-tail { fill: var(--seq-mid); fill-opacity: 0.3; stroke: none; }
+  .ar-now { stroke: var(--ink); stroke-width: 1.4; stroke-dasharray: 5 4; }
+  .ar-head { fill: var(--ink-2); }
+  .ar-strong { font-weight: 600; }
+  .diagram .ar-on-dark { fill: var(--ground); }
+  @media (prefers-color-scheme: dark) {
+    .ar-curve { stroke: var(--seq-hi); }
+  }
+</style>

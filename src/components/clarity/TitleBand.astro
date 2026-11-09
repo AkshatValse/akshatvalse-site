@@ -40,8 +40,10 @@ const hasCover = !!cover || hasCustomCover;
     )}
     {hasCustomCover && (
       <div class="blog-cover">
-        <div class="cover-tile"><slot name="cover" /></div>
-        <div class="cover-glow" aria-hidden="true"></div>
+        <div class="cover-wrap">
+          <div class="cover-tile"><slot name="cover" /></div>
+          <div class="cover-glow" aria-hidden="true"></div>
+        </div>
       </div>
     )}
   </div>
