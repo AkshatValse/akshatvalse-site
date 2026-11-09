@@ -14,7 +14,6 @@ import Container from '../../components/clarity/Container.astro';
 import NoteRow from '../../components/clarity/NoteRow.astro';
 import Slides from '../../components/clarity/Slides.astro';
 import CodeBlock from '../../components/clarity/CodeBlock.astro';
-import TexTile from '../../components/clarity/TexTile.astro';
 import Icon from '../../components/clarity/Icon.astro';
 import Tex from '../../components/Tex.astro';
 import HeroSim from '../../components/HeroSim.astro';
@@ -26,16 +25,12 @@ const REPO = 'https://github.com/AkshatValse/langevin-samplers';
 const FIG = '/research/langevin';
 
 const ABSTRACT =
-  'A Langevin sampler discretizes a diffusion whose invariant law is the target, and dropping the ' +
-  'Metropolis step (ULA) leaves a discretization bias. On a Gaussian target that bias has a closed ' +
-  'form, so the simulations here are graded against the exact answer rather than against a longer ' +
-  'run of themselves: in all 30 cases, ULA’s measured variance lies within three standard errors of ' +
-  'the exact law, whose excess over the target is first order in the step size. Keeping the ' +
-  'Metropolis step (MALA) returns the target variances at the price of rejected proposals, but on a ' +
-  'separated two-well mixture its crossing rate still falls roughly exponentially with the barrier, ' +
-  'as ULA’s does. Live figures check the dynamics too, against the classical Lifson–Jackson effective ' +
-  'diffusivity. The project is advised by Dr. David Herzog. A manuscript with him on transport-coefficient ' +
-  'estimation for molecular systems is drafted and in his review, and its results are held back pending submission.';
+  'We study what a Langevin sampler loses when it drops the Metropolis step (ULA), and what keeping ' +
+  'the step (MALA) does not fix. On a Gaussian target, ULA’s invariant law is known exactly, with an ' +
+  'excess variance first order in the step size, and the measured variance lies within three standard ' +
+  'errors of it in all 30 cases. MALA removes the bias, but on a two-well mixture its crossing rate ' +
+  'still falls roughly exponentially with the barrier. Live figures check the dynamics too, against ' +
+  'the Lifson–Jackson effective diffusivity.';
 
 /** Near the stability limit, h = 0.4 (LS/results/gaussian_bias.json:466-469, 481-484, 956-959). */
 const T1 = [
@@ -126,75 +121,65 @@ const wellR = MX(xMin);
 <ProjectLayout
   slug="langevin"
   description="Langevin samplers ULA and MALA: discretization bias checked against an exact Gaussian law, slow mixing in a two-well mixture, and effective diffusivity."
-  authors="Akshat Valse"
-  affiliation="Department of Mathematics, Iowa State University · Advisor: Dr. David Herzog"
+  authors="by Akshat Valse"
+  affiliation="Advised by Dr. David Herzog, Department of Mathematics, Iowa State University"
   abstract={ABSTRACT}
   buttons={[
     { label: 'Code', href: REPO, icon: 'github' },
-    { label: 'Try it', href: '#baseline', icon: 'play' },
+    { label: 'Demo', href: '#baseline', icon: 'play' },
   ]}
-  info="Draft in advisor review · May 2026 – present · code MIT-licensed"
+  info="Draft in Advisor Review"
 >
-  <Fragment slot="cover">
-    <TexTile
-      big
-      tex={String.raw`\begin{aligned} X' &= \Big(1-\frac{h}{s^2}\Big)X+\sqrt{2h}\,\xi \\[4pt] v(h) &= \frac{s^2}{1-h/2s^2} = s^2+\frac{h}{2}+O(h^2) \end{aligned}`}
-      label="ULA on a Gaussian target is an AR(1) recursion whose exact stationary variance is v(h) = s^2 / (1 - h / 2 s^2), which exceeds the target variance s^2 by h/2 to first order."
-    />
-  </Fragment>
-
-  <!-- Overview -->
-  <Container first id="overview">
-    <h1>Overview</h1>
+  <!-- Introduction -->
+  <Container first id="introduction">
+    <h1>Introduction</h1>
     <p class="text">
-      This project is carried out with Dr. David Herzog, Department of Mathematics, Iowa State
-      University, who advises it. It has a public part and an unpublished one. The public part, the
-      <a href={REPO}>langevin-samplers</a> repository and this site’s live figures, is reported here
-      with its results. The unpublished part is a manuscript with Dr. Herzog on transport-coefficient
-      estimation for molecular systems, now drafted and in his review; <a href="#molecular-systems">its
-      section</a> says what it is about, and its results are held back pending submission.
-    </p>
-    <p class="text">
+      A Langevin sampler discretizes a diffusion whose invariant law is the target.
       Stochastic-gradient Langevin dynamics, the inner loop of annealed Langevin sampling and the
       corrector step of a predictor–corrector diffusion sampler all run the same Euler–Maruyama
       update, and none of them performs the accept/reject test that would make it exact in
-      stationarity. That mapping is this site’s framing; the repository behind this page tests only
+      stationarity. That mapping is this site’s framing: the repository behind this page tests only
       the two textbook samplers, the unadjusted Langevin algorithm (ULA) and its Metropolis-adjusted
-      version (MALA). It asks what skipping the test costs, in a setting where the cost has a closed
-      form.
+      version (MALA). Skipping the test, or keeping it, raises two separate questions:
+    </p>
+    <ol>
+      <li>
+        <p class="text">
+          <b>Discretization bias (what skipping the test costs)</b>: ULA’s invariant law differs
+          from the target. On a Gaussian target that law is known exactly, so we grade the
+          simulation against the answer rather than against a longer run of itself, and a failure
+          would convict the sampler rather than the theory.
+        </p>
+      </li>
+      <li>
+        <p class="text">
+          <b>Slow mixing (what keeping the test does not fix)</b>: MALA is unbiased, but only in
+          stationarity. On a separated two-well target, does it get there any faster than ULA?
+        </p>
+      </li>
+    </ol>
+    <p class="text">
+      We answer both with the repository’s saved runs, then turn from the invariant law to the
+      dynamics, which this site’s live figures check against the classical Lifson–Jackson effective
+      diffusivity.
     </p>
     <p class="text">
-      On a Gaussian target the unadjusted chain’s invariant law is known exactly, so the simulation
-      is graded against the answer rather than against a longer run of itself, and a failure would
-      convict the sampler rather than the theory. The same study then shows the limit of the fix. On
-      a separated two-well target, the Metropolis-corrected sampler’s crossing rate falls with the
-      barrier much as the uncorrected one’s does: correcting discretization bias does not by itself
-      ensure rapid mixing.
-    </p>
-    <div class="table-wrapper">
-      <table>
-        <thead><tr><th>Question</th><th>What the saved runs and checks show</th></tr></thead>
-        <tbody>
-          <tr><td>Does ULA’s measured variance agree with the exact law <Tex src={String.raw`v(h)`} />?</td><td>In all <b>30</b> coordinate–step-size cases, within three estimated standard errors (relative SEs 0.11% to 0.85%)</td></tr>
-          <tr><td>How large is the bias near the stability limit, <Tex src={String.raw`h = 0.4`} /> with <Tex src={String.raw`h^* = 0.5`} />?</td><td>Measured [1.2479, 1.2488, 4.2085] against exact [1.25, 1.25, 4.2105], for targets [0.25, 1, 4]</td></tr>
-          <tr><td>What does the Metropolis step buy, and at what price?</td><td>MALA returns [0.2494, 1.0003, 4.0075]; its acceptance falls from 0.999 to 0.595 over the sweep</td></tr>
-          <tr><td>Does it fix slow mixing between modes?</td><td>Not here. Log crossing rate against the barrier: slope <b>−0.948</b> (ULA, fitted on <Tex src={String.raw`\mu \le 4.5`} />) and <b>−1.032</b> (MALA, fitted on <Tex src={String.raw`\mu \le 4.0`} />), near the leading exponential’s −1</td></tr>
-          <tr><td>Are the dynamics right, not only the invariant law?</td><td>The site’s check script (not the repository) measures <Tex src={String.raw`\hat D(2000) = 0.6218`} /> (s.e. 0.0098) against the Lifson–Jackson value 0.62386</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="text">
-      The sections below set up the update, derive the exact reference and run it live, show what
-      the correction costs and what it does not fix, and then turn from the invariant law to the
-      dynamics, before describing the molecular-systems manuscript.
+      The project began in May 2026 and is advised by Dr. David Herzog, Department of Mathematics,
+      Iowa State University. It has a public part and an unpublished one. The public part, the
+      <a href={REPO}>langevin-samplers</a> repository and this site’s live figures, is reported here
+      with its results. The unpublished part is a manuscript with Dr. Herzog on transport-coefficient
+      estimation for molecular systems, now drafted and in his review;
+      <a href="#molecular-systems">its section</a> says what it is about, and its results are held
+      back pending submission.
     </p>
   </Container>
 
-  <!-- The update -->
+  <!-- Samplers and the exact reference -->
   <Container id="update">
-    <h1>One update, many names</h1>
+    <h1>Two Samplers and an Exact Reference</h1>
     <p class="text">
-      Let <Tex src={String.raw`\pi`} /> be a target density on <Tex src={String.raw`\mathbb{R}^d`} />
+      Both samplers make the same move; MALA may then reject it. Let
+      <Tex src={String.raw`\pi`} /> be a target density on <Tex src={String.raw`\mathbb{R}^d`} />
       with score <Tex src={String.raw`\nabla\log\pi`} />. The overdamped Langevin diffusion
     </p>
     <Tex block src={String.raw`dX_t = \nabla \log \pi(X_t)\,dt + \sqrt{2}\,dW_t`} />
@@ -306,7 +291,7 @@ const wellR = MX(xMin);
 
   <!-- Exact reference -->
   <Container id="exact">
-    <h1>An exact reference for the bias</h1>
+    <h2>An Exact Reference for the Bias</h2>
     <p class="text">
       Take <Tex src={String.raw`\pi = \mathcal N(0, \operatorname{diag}(s^2))`} />, with coordinate
       scales <Tex src={String.raw`s_i`} />. ULA then acts coordinatewise as an AR(1) recursion,
@@ -341,95 +326,15 @@ const wellR = MX(xMin);
     </Fragment>
   </NoteRow>
 
-  <Container>
-    <p class="text">
-      The Gaussian experiment runs both samplers on scales <Tex src={String.raw`s = (0.5, 1, 2)`} />,
-      a 4:1 scale ratio and 16:1 covariance conditioning, at 10 log-spaced step sizes from 0.005 to
-      0.4, below the stability limit <Tex src={String.raw`h^* = 2\min_i s_i^2 = 0.5`} />. Each
-      configuration runs 128 chains for 200,000 steps from an overdispersed start (a standard normal
-      times 2), keeping every 20th draw after a 20% burn-in. Variance standard errors come from
-      independent-chain averages of <Tex src={String.raw`(X - \bar X)^2`} />, and the source is
-      explicit about what they cover: “It measures sampling error, not common initialization bias or
-      a failure to reach stationarity.”
-    </p>
-  </Container>
-
-  <Container width="extra-large" tone="gray" id="fig-variance">
-    <img class="fig rounded" src={`${FIG}/fig1_variance_vs_h.svg`} width="551" height="233" loading="lazy" decoding="async"
-      alt="Three panels, one per scale s = 0.5, 1 and 2, of stationary variance against step size h on a log axis. ULA's measured variances (filled circles) follow the exact curve v(h) = s^2/(1 - h/2s^2), rising above the dashed target line s^2 as h grows; MALA's (open squares) stay near the target line. A dotted vertical line marks the stability limit h* = 0.5." />
-    <p class="caption">
-      <b>Figure 2.</b> Gaussian stationary variance against the exact ULA law and target variance
-      (the repository’s Figure 1). One panel per scale, <Tex src={String.raw`s = 0.5, 1, 2`} />: the
-      measured stationary variance against <Tex src={String.raw`h`} /> for ULA (filled circles) and
-      MALA (open squares), the exact <Tex src={String.raw`v(h) = s^2/(1-h/2s^2)`} />, the target
-      <Tex src={String.raw`s^2`} /> (dashed) and the stability limit
-      <Tex src={String.raw`h^* = 0.5`} /> (dotted). Anisotropic Gaussian, 128 chains × 200,000 steps
-      per configuration. All 30 ULA cases lie within three estimated standard errors of
-      <Tex src={String.raw`v(h)`} />.
-    </p>
-  </Container>
-
-  <Container>
-    <p class="text">
-      In the saved run, all 30 coordinate–step-size cases lie within three estimated variance
-      standard errors of <Tex src={String.raw`v(h)`} />, with relative standard errors from 0.11% to
-      0.85%. Near the limit the bias is large, and it is still exactly where the formula puts it:
-    </p>
-    <div class="table-wrapper">
-      <table>
-        <thead class="center">
-          <tr><th>scale <Tex src={String.raw`s`} /></th><th>target <Tex src={String.raw`s^2`} /></th><th>ULA exact <Tex src={String.raw`v(h)`} /></th><th>ULA measured</th><th>MALA measured</th></tr>
-        </thead>
-        <tbody class="center">
-          {T1.map((t) => <tr><td>{t.s}</td><td>{t.s2}</td><td>{t.exact}</td><td>{t.ula}</td><td>{t.mala}</td></tr>)}
-        </tbody>
-      </table>
-    </div>
-    <p class="text">
-      All at <Tex src={String.raw`h = 0.4`} />, where MALA’s acceptance rate is 0.595.
-    </p>
-    <h2>Run it</h2>
-    <p class="text">
-      The widget below runs one coordinate of that experiment in your browser. ULA acts
-      coordinatewise, so a single coordinate is exactly one coordinate of the repository’s run. It
-      moves 4,096 independent chains from a fixed seed, draws their histogram against
-      <Tex src={String.raw`\mathcal N(0, s^2)`} /> (dashed) and
-      <Tex src={String.raw`\mathcal N(0, v(h))`} /> (solid), and traces the ensemble variance against
-      the step <Tex src={String.raw`k`} />. For ULA the reference is exact at every step, not only in
-      the limit. Iterating <Tex src={String.raw`v_{k+1} = a^2 v_k + 2h`} /> from
-      <Tex src={String.raw`\operatorname{Var}(X_0)`} /> and subtracting the fixed point gives
-    </p>
-    <Tex block src={String.raw`\operatorname{Var}(X_k) = v(h) + a^{2k}\big(\operatorname{Var}(X_0) - v(h)\big), \qquad a = 1 - h/s^2,`} />
-    <p class="text">
-      an AR(1) identity derived from the update (it is not in the repository). Push
-      <Tex src={String.raw`h`} /> past <Tex src={String.raw`2s^2`} /> and the formula has no
-      stationary law to offer; the widget says so from the formula rather than waiting for the
-      chains to overflow.
-    </p>
-  </Container>
-
-  <Container width="extra-large" tone="gray" id="baseline">
-    <LangevinGaussianBaseline />
-    <p class="caption">
-      <b>Figure 3.</b> Classical baseline, run live: ULA and MALA on a one-dimensional Gaussian
-      <Tex src={String.raw`\mathcal N(0, s^2)`} />, with the repository’s update, closed form and
-      acceptance rule, from a fixed seed. The readout compares the ensemble variance with the exact
-      <Tex src={String.raw`\operatorname{Var}(X_k)`} /> (ULA) or with <Tex src={String.raw`s^2`} />
-      (MALA, valid in stationarity), in units of its independent-chain standard error. MALA’s
-      acceptance rate here has no closed-form reference, and it need not match the repository’s
-      0.595 at <Tex src={String.raw`h = 0.4`} />: that figure is for the three-coordinate target,
-      where MALA accepts or rejects all coordinates jointly.
-    </p>
-  </Container>
-
   <!-- Conditioning -->
   <Container id="conditioning">
-    <h1>The narrow direction sets the ceiling</h1>
+    <h2>The Narrow Direction Sets the Ceiling</h2>
     <p class="text">
-      Within one target, the coordinates disagree about the step size. The step-size ceiling comes
-      from the narrowest direction, <Tex src={String.raw`h < 2\min_i s_i^2`} />, while the time to
+      Within one target, the coordinates disagree about the step size. The ceiling comes from the
+      narrowest direction, <Tex src={String.raw`h < 2\min_i s_i^2`} />, while the time to
       decorrelate comes from the widest, which is why ill-conditioned targets are hard for Langevin
-      methods. On the repository’s target this shows up directly in the AR(1) coefficients.
+      methods. On the repository’s target this shows up directly in the AR(1) coefficients
+      (Figure 2).
     </p>
   </Container>
 
@@ -479,7 +384,7 @@ const wellR = MX(xMin);
       <text x="740" y="302" text-anchor="middle" font-size="14" class="muted-t">stationary iff |a| &lt; 1, that is 0 &lt; h &lt; 2s²</text>
     </svg>
     <p class="caption">
-      <b>Figure 4.</b> The narrow direction sets the ceiling; the wide one sets the clock. A
+      <b>Figure 2.</b> The narrow direction sets the ceiling; the wide one sets the clock. A
       two-dimensional slice of <Tex src={String.raw`\mathcal N(0, \operatorname{diag}(0.5^2, 2^2))`} />,
       the narrowest and widest coordinates of the experiment (the wide one drawn horizontally), with
       its one- and two-standard-deviation contours. At <Tex src={String.raw`h = 0.4`} /> the narrow coordinate’s coefficient is
@@ -490,9 +395,99 @@ const wellR = MX(xMin);
     </p>
   </Container>
 
+  <!-- Experiments -->
+  <Container id="experiments">
+    <h1>Experiments</h1>
+    <p class="text">
+      The repository runs two experiments, each isolating one failure. The first measures
+      discretization bias on an anisotropic Gaussian, where it has a closed form. The second
+      isolates the opposite failure, slow mixing between the two modes of a mixture, where there is
+      no closed form to grade against.
+    </p>
+    <h2>Results on a Gaussian Target</h2>
+    <p class="text">
+      We run both samplers on scales <Tex src={String.raw`s = (0.5, 1, 2)`} />, a 4:1 scale ratio
+      and 16:1 covariance conditioning, at 10 log-spaced step sizes from 0.005 to 0.4, below the
+      stability limit <Tex src={String.raw`h^* = 2\min_i s_i^2 = 0.5`} />. Each configuration runs
+      128 chains for 200,000 steps from an overdispersed start (a standard normal times 2), keeping
+      every 20th draw after a 20% burn-in. Variance standard errors come from independent-chain
+      averages of <Tex src={String.raw`(X - \bar X)^2`} />, and the source is explicit about what
+      they cover: “It measures sampling error, not common initialization bias or a failure to reach
+      stationarity.”
+    </p>
+  </Container>
+
+  <Container width="extra-large" tone="gray" id="fig-variance">
+    <img class="fig rounded" src={`${FIG}/fig1_variance_vs_h.svg`} width="551" height="233" loading="lazy" decoding="async"
+      alt="Three panels, one per scale s = 0.5, 1 and 2, of stationary variance against step size h on a log axis. ULA's measured variances (filled circles) follow the exact curve v(h) = s^2/(1 - h/2s^2), rising above the dashed target line s^2 as h grows; MALA's (open squares) stay near the target line. A dotted vertical line marks the stability limit h* = 0.5." />
+    <p class="caption">
+      <b>Figure 3.</b> Gaussian stationary variance against the exact ULA law and target variance
+      (the repository’s Figure 1). One panel per scale, <Tex src={String.raw`s = 0.5, 1, 2`} />: the
+      measured stationary variance against <Tex src={String.raw`h`} /> for ULA (filled circles) and
+      MALA (open squares), the exact <Tex src={String.raw`v(h) = s^2/(1-h/2s^2)`} />, the target
+      <Tex src={String.raw`s^2`} /> (dashed) and the stability limit
+      <Tex src={String.raw`h^* = 0.5`} /> (dotted). Anisotropic Gaussian, 128 chains × 200,000 steps
+      per configuration. All 30 ULA cases lie within three estimated standard errors of
+      <Tex src={String.raw`v(h)`} />.
+    </p>
+  </Container>
+
+  <Container>
+    <p class="text">
+      In the saved run, all 30 coordinate–step-size cases lie within three estimated variance
+      standard errors of <Tex src={String.raw`v(h)`} />, with relative standard errors from 0.11% to
+      0.85%. Near the limit the bias is large, and it is still where the formula puts it:
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead class="center">
+          <tr><th>scale <Tex src={String.raw`s`} /></th><th>target <Tex src={String.raw`s^2`} /></th><th>ULA exact <Tex src={String.raw`v(h)`} /></th><th>ULA measured</th><th>MALA measured</th></tr>
+        </thead>
+        <tbody class="center">
+          {T1.map((t) => <tr><td>{t.s}</td><td>{t.s2}</td><td>{t.exact}</td><td>{t.ula}</td><td>{t.mala}</td></tr>)}
+        </tbody>
+      </table>
+    </div>
+    <p class="text">
+      All at <Tex src={String.raw`h = 0.4`} />, where MALA’s acceptance rate is 0.595.
+    </p>
+    <h2>Run It in the Browser</h2>
+    <p class="text">
+      The widget below (Figure 4) runs one coordinate of that experiment in your browser. ULA acts
+      coordinatewise, so a single coordinate is exactly one coordinate of the repository’s run. It
+      moves 4,096 independent chains from a fixed seed, draws their histogram against
+      <Tex src={String.raw`\mathcal N(0, s^2)`} /> (dashed) and
+      <Tex src={String.raw`\mathcal N(0, v(h))`} /> (solid), and traces the ensemble variance against
+      the step <Tex src={String.raw`k`} />. For ULA the reference is exact at every step, not only in
+      the limit. Iterating <Tex src={String.raw`v_{k+1} = a^2 v_k + 2h`} /> from
+      <Tex src={String.raw`\operatorname{Var}(X_0)`} /> and subtracting the fixed point gives
+    </p>
+    <Tex block src={String.raw`\operatorname{Var}(X_k) = v(h) + a^{2k}\big(\operatorname{Var}(X_0) - v(h)\big), \qquad a = 1 - h/s^2,`} />
+    <p class="text">
+      an AR(1) identity derived from the update (it is not in the repository). Push
+      <Tex src={String.raw`h`} /> past <Tex src={String.raw`2s^2`} /> and the formula has no
+      stationary law to offer; the widget says so from the formula rather than waiting for the
+      chains to overflow.
+    </p>
+  </Container>
+
+  <Container width="extra-large" tone="gray" id="baseline">
+    <LangevinGaussianBaseline />
+    <p class="caption">
+      <b>Figure 4.</b> Classical baseline, run live: ULA and MALA on a one-dimensional Gaussian
+      <Tex src={String.raw`\mathcal N(0, s^2)`} />, with the repository’s update, closed form and
+      acceptance rule, from a fixed seed. The readout compares the ensemble variance with the exact
+      <Tex src={String.raw`\operatorname{Var}(X_k)`} /> (ULA) or with <Tex src={String.raw`s^2`} />
+      (MALA, valid in stationarity), in units of its independent-chain standard error. MALA’s
+      acceptance rate here has no closed-form reference, and it need not match the repository’s
+      0.595 at <Tex src={String.raw`h = 0.4`} />: that figure is for the three-coordinate target,
+      where MALA accepts or rejects all coordinates jointly.
+    </p>
+  </Container>
+
   <!-- Price -->
   <Container id="price">
-    <h1>The price of the correction</h1>
+    <h2>The Price of the Correction</h2>
     <p class="text">
       Removing the bias is not free. Figure 5 shows the bias rate: the measured
       <Tex src={String.raw`W_2`} /> proxy for ULA follows the exact first-order curve, while MALA sits at
@@ -536,15 +531,19 @@ const wellR = MX(xMin);
   <Container>
     <p class="text">
       At <Tex src={String.raw`h = 0.4`} />, ULA’s slowest-coordinate ESS per gradient is 0.0308 and
-      MALA’s is 0.0225. Read next to Figure 2, ULA’s edge is in effective draws from
+      MALA’s is 0.0225. Read next to Figure 3, ULA’s edge is in effective draws from
       <Tex src={String.raw`\pi_h`} />, not from <Tex src={String.raw`\pi`} />. In the repository’s
       words, “ULA’s error is a bias you cannot average away; MALA’s is a cost paid in rejected
       proposals.” The cost, across the sweep:
     </p>
     <div class="table-wrapper">
       <table>
-        <thead class="center"><tr><th><Tex src={String.raw`h`} /></th>{T2.map(([hv]) => <th>{hv}</th>)}</tr></thead>
-        <tbody class="center"><tr><td>MALA acceptance</td>{T2.map(([, acc]) => <td>{acc}</td>)}</tr></tbody>
+        <thead class="center"><tr><th><Tex src={String.raw`h`} /></th>{T2.slice(0, 5).map(([hv]) => <th>{hv}</th>)}</tr></thead>
+        <tbody class="center">
+          <tr><td>MALA acceptance</td>{T2.slice(0, 5).map(([, acc]) => <td>{acc}</td>)}</tr>
+          <tr><th><Tex src={String.raw`h`} /></th>{T2.slice(5).map(([hv]) => <th>{hv}</th>)}</tr>
+          <tr><td>MALA acceptance</td>{T2.slice(5).map(([, acc]) => <td>{acc}</td>)}</tr>
+        </tbody>
       </table>
     </div>
     <p class="text">
@@ -555,10 +554,10 @@ const wellR = MX(xMin);
 
   <!-- Metastability -->
   <Container id="mixing">
-    <h1>What the correction does not fix</h1>
+    <h2>Results on a Two-Well Mixture</h2>
     <p class="text">
-      The second experiment isolates the opposite failure. The target is an equal mixture of two
-      Gaussians separated along the first coordinate <Tex src={String.raw`e_0`} />,
+      The second experiment asks what the correction does not fix. The target is an equal mixture
+      of two Gaussians separated along the first coordinate <Tex src={String.raw`e_0`} />,
     </p>
     <Tex block src={String.raw`\pi = \tfrac12\,\mathcal N(-\mu e_0, s^2 I) + \tfrac12\,\mathcal N(+\mu e_0, s^2 I), \qquad \Delta(\mu) = \frac{\mu^2}{2s^2} - \log 2 ,`} />
     <p class="text">
@@ -654,8 +653,8 @@ const wellR = MX(xMin);
 
   <Container>
     <p class="text">
-      The measurements, in the repository’s own figure: the time each sampler spends in the right
-      well, and how often it crosses, as the approximate barrier grows.
+      Figure 8 shows the measurements in the repository’s own figure: the time each sampler spends
+      in the right well, and how often it crosses, as the approximate barrier grows.
     </p>
   </Container>
 
@@ -719,23 +718,21 @@ const wellR = MX(xMin);
 
   <!-- Dynamics -->
   <Container id="dynamics">
-    <h1>Dynamics, not only the invariant law</h1>
+    <h1>Dynamics, Not Only the Invariant Law</h1>
     <p class="text">
       A sampler can get the invariant measure right and still get the dynamics wrong. For a
       one-dimensional periodic potential the long-time diffusivity has an exact value, given by the
       classical Lifson–Jackson formula (a textbook benchmark, not a result of this project) with
-      free diffusivity <Tex src={String.raw`D_0 = \beta^{-1}`} /> and
-      averages over one period:
+      free diffusivity <Tex src={String.raw`D_0 = \beta^{-1}`} /> and averages over one period:
     </p>
     <Tex block src={String.raw`D_{\mathrm{eff}} = \frac{D_0}{\langle e^{\beta V}\rangle\,\langle e^{-\beta V}\rangle}, \qquad V(x) = \cos x,\ \beta = 1:\quad D_{\mathrm{eff}} = I_0(1)^{-2} = 0.6238603604\ldots`} />
     <p class="text">
       Any Langevin integrator has to reproduce it as the step size shrinks. As this site puts it,
       “One that gets the invariant measure right and the diffusivity wrong has a bug in its time
-      discretization.” Figure 9 runs
-      the textbook mean-squared-displacement estimator live, with 1024 replicas at
-      <Tex src={String.raw`\beta = 1`} /> and <Tex src={String.raw`h = 0.01`} />. The site’s check
-      script, run at longer time, measures <Tex src={String.raw`\hat D(2000) = 0.6218`} /> with a
-      standard error of 0.0098.
+      discretization.” Figure 9 runs the textbook mean-squared-displacement estimator live, with
+      1024 replicas at <Tex src={String.raw`\beta = 1`} /> and <Tex src={String.raw`h = 0.01`} />.
+      The site’s check script, run at longer time, measures
+      <Tex src={String.raw`\hat D(2000) = 0.6218`} /> with a standard error of 0.0098.
     </p>
   </Container>
 
@@ -771,11 +768,11 @@ const wellR = MX(xMin);
 
   <Container>
     <p class="text">
-      The third live figure is a related sampler from generative modeling. It runs a diffusion model’s
-      reverse-time sampler with the exact score of a Gaussian mixture, so it can be graded on mode
-      coverage rather than on how plausible its samples look; its caption gives the setup and the
-      grade. It is the reverse-time update, not the Langevin corrector of Figure 1, and like Figures 9
-      and 10 it lives in this site’s code, not in langevin-samplers.
+      The third live figure (Figure 11) is a related sampler from generative modeling. It runs a
+      diffusion model’s reverse-time sampler with the exact score of a Gaussian mixture, so it can be
+      graded on mode coverage rather than on how plausible its samples look; its caption gives the
+      setup and the grade. It is the reverse-time update, not the Langevin corrector of Figure 1, and
+      like Figures 9 and 10 it lives in this site’s code, not in langevin-samplers.
     </p>
   </Container>
 
@@ -785,7 +782,7 @@ const wellR = MX(xMin);
 
   <!-- Molecular systems -->
   <Container id="molecular-systems">
-    <h1>What we are doing: molecular systems</h1>
+    <h1>Ongoing Work: Molecular Systems</h1>
     <p class="text">
       With Dr. David Herzog, Department of Mathematics, Iowa State University, we have drafted a
       manuscript, <em>Langevin Dynamics and Transport-Coefficient Estimation for Molecular
@@ -796,16 +793,42 @@ const wellR = MX(xMin);
       equilibrium.
     </p>
     <p class="text">
-      Why it matters is the point of the dynamics section above. A sampler can reproduce the
-      invariant law and still get the dynamics wrong, and a transport coefficient is a property of
-      the dynamics, so an equilibrium check alone does not test it. The sections above draw only on the
-      public repository, this site’s live figures and textbook results; this page shows none of the
+      This is why the previous section matters. A sampler can reproduce the invariant law and still
+      get the dynamics wrong, and a transport coefficient is a property of the dynamics, so an
+      equilibrium check alone does not test it. Everything else on this page draws only on the
+      public repository, this site’s live figures and textbook results; it shows none of the
       manuscript’s methods or results.
     </p>
     <h2>Status</h2>
     <p class="text">
-      The draft is in advisor review with Dr. Herzog. The manuscript’s methods and results are held
-      back pending submission.
+      The draft is in advisor review with Dr. Herzog. Its methods and results are held back pending
+      submission.
+    </p>
+  </Container>
+
+  <!-- Conclusion -->
+  <Container id="conclusion">
+    <h1>Conclusion</h1>
+    <p class="text">
+      Dropping the Metropolis step costs a bias, first order in the step size, that sits where the
+      closed form puts it. Keeping the step removes the bias at a price in rejected proposals, but
+      it does not by itself ensure rapid mixing. The answers, in brief:
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Question</th><th>What the saved runs and checks show</th></tr></thead>
+        <tbody>
+          <tr><td>Does ULA’s measured variance agree with the exact law <Tex src={String.raw`v(h)`} />?</td><td>In all <b>30</b> coordinate–step-size cases, within three estimated standard errors (relative SEs 0.11% to 0.85%)</td></tr>
+          <tr><td>How large is the bias near the stability limit, <Tex src={String.raw`h = 0.4`} /> with <Tex src={String.raw`h^* = 0.5`} />?</td><td>Measured [1.2479, 1.2488, 4.2085] against exact [1.25, 1.25, 4.2105], for targets [0.25, 1, 4]</td></tr>
+          <tr><td>What does the Metropolis step buy, and at what price?</td><td>MALA returns [0.2494, 1.0003, 4.0075]; its acceptance falls from 0.999 to 0.595 over the sweep</td></tr>
+          <tr><td>Does it fix slow mixing between modes?</td><td>Not here. Log crossing rate against the barrier: slope <b>−0.948</b> (ULA, fitted on <Tex src={String.raw`\mu \le 4.5`} />) and <b>−1.032</b> (MALA, fitted on <Tex src={String.raw`\mu \le 4.0`} />), near the leading exponential’s −1</td></tr>
+          <tr><td>Are the dynamics right, not only the invariant law?</td><td>The site’s check script (not the repository) measures <Tex src={String.raw`\hat D(2000) = 0.6218`} /> (s.e. 0.0098) against the Lifson–Jackson value 0.62386</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text">
+      These results cover ULA and MALA with exact scores only. The machine-learning samplers in the
+      dashed boxes of Figure 1 are this site’s framing, and nothing here tests them.
     </p>
   </Container>
 
@@ -813,7 +836,7 @@ const wellR = MX(xMin);
   <Container id="reproduce">
     <h1>Reproduce</h1>
     <p class="text">
-      The repository figures and the saved results behind every table on this page come from
+      The repository figures and the saved results behind the experiment tables come from
       <a href={REPO}>langevin-samplers</a> (MIT). Its README gives these commands:
     </p>
     <CodeBlock lang="bash" code={REPRODUCE} />
@@ -851,8 +874,8 @@ const wellR = MX(xMin);
     <h2>Layout</h2>
     <CodeBlock code={LAYOUT} />
     <p class="text">
-      <a href={REPO} class="button icon">Repository <Icon name="github" /></a> &nbsp;&nbsp;
-      <a href="#baseline" class="button icon">Back to the widget <Icon name="play" /></a>
+      <a href={REPO} class="button icon">Code <Icon name="github" /></a> &nbsp;&nbsp;
+      <a href="#baseline" class="button icon">Back to the demo <Icon name="play" /></a>
     </p>
   </Container>
 
@@ -870,7 +893,7 @@ const wellR = MX(xMin);
 </ProjectLayout>
 
 <style>
-  /* Diagram internals only (Figures 1, 4 and 7). Colours come from the site's tokens. */
+  /* Diagram internals only (Figures 1, 2 and 7). Colours come from the site's tokens. */
   .diagram .lv-b { font-weight: 600; }
   .diagram .lv-i { font-style: italic; }
   .diagram .lv-on-dark { fill: var(--ground); }
@@ -883,16 +906,4 @@ const wellR = MX(xMin);
   .diagram .lv-dot { fill: var(--seq-lo); }
   .diagram .lv-ell-outer { fill: var(--ground); stroke: var(--ink-2); stroke-width: 1.4; }
   .diagram .lv-ell-inner { fill: none; stroke: var(--ink); stroke-width: 1.6; }
-  @media (prefers-color-scheme: dark) {
-    .diagram .lv-acc { stroke: var(--seq-hi); }
-    /* Figure 7's pi_h wash: a yellow tint on the dark band reads as an olive
-       smear, so keep it neutral (as agent-reliability does) under the yellow line. */
-    .diagram .lv-acc-fill { fill: var(--seq-mid); opacity: 0.2; }
-    .diagram .lv-dot { fill: var(--seq-hi); }
-    /* Figure 1's ULA step: `box dark` fills with --ink, a near-white slab in
-       dark mode. Use the dark title-band blue with light text, as the
-       neural-pde-stability and agent-reliability diagrams do. */
-    .diagram .box.dark { fill: var(--band); stroke: var(--band); }
-    .diagram .lv-on-dark { fill: var(--ink); }
-  }
 </style>

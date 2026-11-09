@@ -8,13 +8,17 @@
  * measure is built, and the precise event are held back pending submission
  * (the brief's DO_NOT_PUBLISH). Figures 2-4 are classical baselines with
  * exact references, not project results.
+ *
+ * Sections follow shikun.io's project pages: Introduction (the problem and
+ * its two challenges), Background (classical), the approach, Exact against
+ * asymptotic, Current status. No Citation section: there is no paper yet.
+ * The banner is the theme artwork that ProjectLayout renders.
  */
 import ProjectLayout from '../../layouts/ProjectLayout.astro';
 import Container from '../../components/clarity/Container.astro';
 import NoteRow from '../../components/clarity/NoteRow.astro';
 import Slides from '../../components/clarity/Slides.astro';
 import CodeBlock from '../../components/clarity/CodeBlock.astro';
-import TexTile from '../../components/clarity/TexTile.astro';
 import Tex from '../../components/Tex.astro';
 import RareEventFigure from '../../components/RareEventFigure.astro';
 import LdPowerOfChoices from '../../components/widgets/LdPowerOfChoices.astro';
@@ -35,28 +39,19 @@ npm run verify                      # all of the site's verification scripts`;
 
 <ProjectLayout
   slug="large-deviations"
-  pageTitle="Large deviations and rare events in mean-field queueing · Akshat Valse"
   description="Rare events in mean-field JSQ(d) load balancing: large deviations choose the importance-sampling tilt, and exact computation is the benchmark where feasible."
-  authors="Akshat Valse, with Ruoyu Wu"
+  authors="by Akshat Valse & Ruoyu Wu"
   affiliation="Department of Mathematics, Iowa State University"
-  abstract="Sending each job to the shortest of d randomly sampled queues is the standard model for randomized load balancing, and its typical behaviour has a clean mean-field description. A capacity guarantee is written against something else: the probability that some queue climbs to a high level inside a time window, which is small enough to defeat direct simulation. This project uses large-deviation theory to choose the tilt for importance sampling, and commits to checking the estimator against probabilities computed exactly, with no sampling error, at system sizes where that is still feasible. Results are held back pending submission."
+  abstract="We study a rare event in JSQ(d) load balancing, where each arriving job joins the shortest of d randomly sampled queues. The event is some queue climbing to a high level within a time window, and its probability is too small for direct simulation. We use large-deviation theory to choose the change of measure for importance sampling, and commit to checking the estimators against probabilities computed exactly wherever the system is small enough. Results are held back pending submission."
   buttons={[
-    { label: 'Write-up', href: WRITEUP, icon: 'github' },
-    { label: 'Live figure', href: '#mechanism', icon: 'chart' },
+    { label: 'Write-up', href: WRITEUP, icon: 'book' },
+    { label: 'Live Figure', href: '#mechanism', icon: 'play' },
   ]}
-  info="Paused during the advisor's sabbatical · Since November 2024 · Dean's High Impact Undergraduate Research Award, 2026"
+  info="Paused During Advisor's Sabbatical"
 >
-  <Fragment slot="cover">
-    <TexTile
-      big
-      tex={String.raw`p \;=\; \mathbb{E}_P\big[\mathbf 1_A\big] \;=\; \mathbb{E}_Q\!\Big[\mathbf 1_A\,\frac{dP}{dQ}\Big]`}
-      label="The importance-sampling identity: simulate under a tilted law Q, then reweight by the likelihood ratio dP/dQ."
-    />
-  </Fragment>
-
-  <!-- 1. Setting -->
+  <!-- 1. Introduction -->
   <Container first>
-    <h1>The setting</h1>
+    <h1>Introduction</h1>
     <p class="text">
       Join-the-shortest-queue-of-<Tex src="d" />, or JSQ(<Tex src="d" />), is the standard model for
       randomized load balancing. An arriving job samples <Tex src="d" /> of <Tex src="n" /> servers and
@@ -65,20 +60,19 @@ npm run verify                      # all of the site's verification scripts`;
       limit that describes typical behaviour cleanly.
     </p>
     <p class="text">
-      Write <Tex src="Q_i(t)" /> for the number of jobs at server <Tex src="i" /> and
+      We write <Tex src="Q_i(t)" /> for the number of jobs at server <Tex src="i" /> and
       <Tex src={String.raw`s_k(t) = \tfrac1n\,\#\{i : Q_i(t) \ge k\}`} /> for the occupancy, the fraction
       of servers holding at least <Tex src="k" />. The occupancy is the empirical measure
       <Tex src={String.raw`\mu^n_t = \tfrac1n \sum_{i=1}^n \delta_{Q_i(t)}`} /> read on the sets
-      <Tex src={String.raw`[k,\infty)`} />, and it is the object whose large-deviation asymptotics guide
-      the project's change of measure.
+      <Tex src={String.raw`[k,\infty)`} />, and its large-deviation asymptotics guide our change of
+      measure.
     </p>
     <p class="text">
-      Typical behaviour is not what you provision against. What matters is the rare event: the
-      probability that some queue climbs to a high level inside a time window. That is the quantity a
-      capacity guarantee is written against, and the mean-field limit says nothing about it, since the
-      limit describes where the system usually sits and the event of interest is a departure from
-      exactly that. This page states the event in words only; its precise definition is held back with
-      the manuscript.
+      Typical behaviour is not what a capacity guarantee is written against. What matters is the rare
+      event: the probability that some queue climbs to a high level inside a time window. The mean-field
+      limit says nothing about it, since the limit describes where the system usually sits and the
+      event is a departure from exactly that. We state the event in words only; its precise definition
+      is held back with the manuscript.
     </p>
   </Container>
 
@@ -154,7 +148,46 @@ npm run verify                      # all of the site's verification scripts`;
   </Container>
 
   <Container>
-    <h2>Two choices against one</h2>
+    <p class="text">Estimating this probability runs into two problems:</p>
+    <ol>
+      <li><p class="text">
+        <b>Seeing the event at all.</b> Crude Monte Carlo runs independent copies of
+        the system and counts how often the event occurs. These probabilities are small enough to defeat
+        it, and it gets worse as <Tex src="n" /> grows, which is the regime we want the answer in. Crude
+        Monte Carlo does not just get slow here. It stops being an estimator at all, returning zero
+        occurrences and no information about the magnitude.
+      </p></li>
+      <li><p class="text">
+        <b>Choosing the tilt.</b> Importance sampling simulates under a modified law
+        that makes the event common, then reweights each run by the likelihood ratio, which keeps the
+        estimate unbiased. A badly chosen change of measure can produce an estimator with
+        <em>infinite</em> variance, which is worse than the naive one it replaced and more dangerous,
+        because the failure does not always show up in the output.
+      </p></li>
+    </ol>
+    <p class="text">
+      The change of measure needs a principle, and large-deviation theory supplies one. We are
+      developing importance-sampling estimators for rare events in mean-field
+      join-the-shortest-queue load-balancing systems, with the change of measure guided by
+      large-deviation asymptotics for the system's empirical measure, and we are studying how the
+      estimators behave as the number of servers grows. Where the system is small enough, we commit to
+      checking them against probabilities computed exactly, with no sampling error.
+    </p>
+  </Container>
+
+  <!-- 2. Background: classical material only -->
+  <Container>
+    <h1>Background</h1>
+    <p class="text">
+      Everything in this section is classical. Figures 2 to 4 are baselines with exact references, and
+      none of them is a project result.
+    </p>
+  </Container>
+
+  <!-- Each h2 opens its own container, so the floating contents (navbar.js lists only h2s that
+       share a container with their h1) shows the five h1 sections consistently. -->
+  <Container>
+    <h2>Two Choices Against One</h2>
     <p class="text">
       How dramatic the improvement is shows up in the mean-field fixed point. Take a textbook model,
       assumed here for illustration and not taken from the project: Poisson arrivals at rate
@@ -174,14 +207,14 @@ npm run verify                      # all of the site's verification scripts`;
   </Container>
 
   <Container width="large" tone="gray">
-    <img-comparison-slider class="slider-container no-adapt">
+    <img-comparison-slider class="slider-container">
       <figure slot="first" class="before">
-        <img class="fig no-adapt" src="/research/large-deviations/occupancy-meanfield-d1.svg" width="640" height="320"
+        <img class="fig" src="/research/large-deviations/occupancy-meanfield-d1.svg" width="640" height="320"
           alt="Mean-field fixed point at load 0.9, one sample per job: the fraction of servers with at least k jobs falls geometrically, 0.9 to the k, from 1 to 0.430 at k = 8, on a log axis from 1 to 1e-12" />
         <figcaption>one sample per job (d = 1)</figcaption>
       </figure>
       <figure slot="second" class="after">
-        <img class="fig no-adapt" src="/research/large-deviations/occupancy-meanfield-d2.svg" width="640" height="320"
+        <img class="fig" src="/research/large-deviations/occupancy-meanfield-d2.svg" width="640" height="320"
           alt="Mean-field fixed point at load 0.9, two samples per job: the fraction of servers with at least k jobs falls doubly exponentially, to about 1.5e-6 at k = 7 and 2.1e-12 at k = 8, on the same log axis" />
         <figcaption>two samples per job (d = 2)</figcaption>
       </figure>
@@ -199,7 +232,7 @@ npm run verify                      # all of the site's verification scripts`;
   </Container>
 
   <Container>
-    <h2>The limit against a finite system</h2>
+    <h2>The Limit Against a Finite System</h2>
     <p class="text">
       The fixed point is a statement about <Tex src={String.raw`n \to \infty`} />. Figure 3 sets it
       against a seeded simulation of <Tex src="n" /> servers under the same textbook model. For
@@ -228,13 +261,12 @@ npm run verify                      # all of the site's verification scripts`;
     </p>
   </Container>
 
-  <!-- 2. Problem -->
   <Container>
-    <h1>Why direct simulation fails</h1>
+    <h2>Crude Monte Carlo and Importance Sampling</h2>
     <p class="text">
-      These probabilities are small enough to defeat direct simulation. Crude Monte Carlo runs
-      <Tex src="M" /> independent copies of the system and counts how often the event <Tex src="A" />
-      occurs. Its relative error is the standard deviation over the mean:
+      In symbols, crude Monte Carlo runs <Tex src="M" /> independent copies of the system and counts
+      how often the event <Tex src="A" /> occurs. Its relative error is the standard deviation over the
+      mean:
     </p>
   </Container>
 
@@ -243,9 +275,7 @@ npm run verify                      # all of the site's verification scripts`;
     <p class="text">
       An event of probability <Tex src={String.raw`10^{-20}`} /> needs something like
       <Tex src={String.raw`10^{22}`} /> independent replications before the estimator has a usable
-      relative error, and it gets worse as <Tex src="n" /> grows, which is the regime you want the answer
-      in. Crude Monte Carlo does not just get slow here. It stops being an estimator at all, returning
-      zero occurrences and no information about the magnitude.
+      relative error.
     </p>
     <Fragment slot="note">
       Reading "usable" as a 10% relative error, the formula gives
@@ -255,21 +285,17 @@ npm run verify                      # all of the site's verification scripts`;
 
   <Container>
     <p class="text">
-      Importance sampling is the standard response: simulate under a modified law <Tex src="Q" /> that
-      makes the event common, then reweight each run by the likelihood ratio, which keeps the estimate
-      unbiased:
+      Importance sampling draws the runs from a modified law <Tex src="Q" /> instead and reweights each
+      one by the likelihood ratio, which keeps the estimate unbiased:
     </p>
     <Tex block src={String.raw`p = \mathbb{E}_P[\mathbf 1_A] = \mathbb{E}_Q\!\Big[\mathbf 1_A \tfrac{dP}{dQ}\Big],\qquad \hat p^{\,\mathrm{IS}}_M = \frac1M \sum_{j=1}^M \mathbf 1_A(X_j)\,\frac{dP}{dQ}(X_j),\quad X_j \sim Q.`} />
     <p class="text">
-      The catch is that <Tex src="Q" /> has to be chosen well. A badly chosen change of measure can
-      produce an estimator with <em>infinite</em> variance, which is worse than the naive one it replaced
-      and more dangerous, because the failure does not always show up in the output. The change of
-      measure needs a principle.
+      Everything then depends on choosing <Tex src="Q" /> well.
     </p>
   </Container>
 
   <Container>
-    <h2>The mechanism, on a target with a known answer</h2>
+    <h2>The Mechanism, on a Target with a Known Answer</h2>
     <p class="text">
       Figure 4 runs both estimators on the Gaussian tail <Tex src={String.raw`\mathbb P(Z > a)`} />,
       <Tex src={String.raw`Z \sim \mathcal N(0,1)`} />, whose exact value <Tex src={String.raw`\Phi(-a)`} />,
@@ -308,10 +334,10 @@ npm run verify                      # all of the site's verification scripts`;
   </NoteRow>
 
   <Container>
-    <h2>How Figure 4 is checked</h2>
+    <h2>How Figure 4 Is Checked</h2>
     <p class="text">
       Figure 4 is one of the site's live simulations that a verification script checks against an exact
-      reference before it ships. For Figure 4:
+      reference before it ships:
     </p>
     <div class="table-wrapper">
       <table>
@@ -331,13 +357,12 @@ npm run verify                      # all of the site's verification scripts`;
 
   <!-- 3. Approach -->
   <Container>
-    <h1>Large deviations supply the tilt</h1>
+    <h1>Large Deviations Supply the Tilt</h1>
     <p class="text">
-      Large-deviation theory supplies the principle. The decay rate of the probability, and the most
-      likely path along which the rare event happens, are described by a rate function built from the
-      Cramér transform of the per-server net input. Knowing how the system gets to the rare state tells
-      you how to tilt the dynamics so that it goes there routinely. Figure 5 shows where that sits among
-      the ways to spend <Tex src="M" /> runs.
+      The decay rate of the probability, and the most likely path along which the rare event happens,
+      are described by a rate function built from the Cramér transform of the per-server net input.
+      Knowing how the system gets to the rare state tells us how to tilt the dynamics so that it goes
+      there routinely. Figure 5 shows where that sits among the ways to spend <Tex src="M" /> runs.
     </p>
   </Container>
 
@@ -483,7 +508,7 @@ npm run verify                      # all of the site's verification scripts`;
   </NoteRow>
 
   <Container>
-    <h2>The optimal tilt is a Doob h-transform</h2>
+    <h2>The Optimal Tilt Is a Doob h-Transform</h2>
     <p class="text">
       The optimal tilting is characterized by a Doob <Tex src="h" />-transform of the underlying chain.
       For a continuous-time chain with rates <Tex src="q(x,y)" />, a target set <Tex src="B" /> with
@@ -497,7 +522,7 @@ npm run verify                      # all of the site's verification scripts`;
     <p class="text">
       Every path that reaches <Tex src="B" /> returns the same weight, so the estimator has zero
       variance. The catch is that <Tex src="h" /> is the unknown itself, which is why in practice it
-      has to be approximated. How this project builds its tilt is held back pending submission.
+      has to be approximated. How we build our tilt is held back pending submission.
     </p>
     <Fragment slot="note">
       Key step, time-homogeneous case (<Tex src={String.raw`T = \infty`} />): <Tex src="h" /> is harmonic
@@ -507,7 +532,7 @@ npm run verify                      # all of the site's verification scripts`;
   </NoteRow>
 
   <Container>
-    <h2>What efficient means</h2>
+    <h2>What Efficient Means</h2>
     <p class="text">
       A standard yardstick for a rare-event estimator is logarithmic efficiency: on the exponential scale, its
       second moment decays twice as fast as the probability itself,
@@ -515,8 +540,7 @@ npm run verify                      # all of the site's verification scripts`;
     <Tex block src={String.raw`\liminf_{n\to\infty} \frac{\log \mathbb{E}_Q\big[(\hat p_n)^2\big]}{\log p_n} \;\ge\; 2,`} />
     <p class="text">
       which is the best possible, since by Jensen's inequality the ratio is at most 2. Whether an estimator
-      built this way is genuinely efficient, or only assumed to be, is one of the questions the project
-      asks.
+      built this way is genuinely efficient, or only assumed to be, is one of the questions we ask.
     </p>
     <p class="text">
       Large-deviation tools reach past queueing: Sanov's theorem and the Donsker–Varadhan variational
@@ -527,10 +551,12 @@ npm run verify                      # all of the site's verification scripts`;
 
   <!-- 4. Exact against asymptotic -->
   <Container>
-    <h1>Exact against asymptotic</h1>
+    <h1>Exact Against Asymptotic</h1>
     <p class="text">
-      What the project commits to methodologically is not taking any of that on faith. For system sizes
-      where it is still feasible, the probability can be computed <em>exactly</em> rather than estimated:
+      Methodologically, we commit to not taking any of that on faith. The estimators run on a
+      reproducible Python simulation framework with deterministic seeding, and they are checked against
+      crude Monte Carlo wherever crude Monte Carlo is reliable. For system sizes where it is still
+      feasible, the probability can be computed <em>exactly</em> rather than estimated:
       uniformizing the killed chain reduces the question to linear algebra on the occupancy state space,
       which gives ground truth with no sampling error. With <Tex src="B" /> made absorbing,
       <Tex src="G_B" /> the resulting generator, a rate <Tex src={String.raw`\nu \ge \max_x |G_B(x,x)|`} />
@@ -599,7 +625,7 @@ npm run verify                      # all of the site's verification scripts`;
 
   <Container>
     <p class="text">
-      Against that ground truth you can ask the questions that otherwise get waved through. Has the
+      Against that ground truth we can ask the questions that otherwise get waved through. Has the
       asymptotic rate actually taken hold at the system sizes anyone simulates? Is the estimator genuinely
       efficient, or only assumed to be? Do the approximations made in deriving the tilting cost anything
       that shows up in practice? Of the three, exact against asymptotic is the comparison I find most
@@ -607,32 +633,16 @@ npm run verify                      # all of the site's verification scripts`;
     </p>
   </Container>
 
-  <!-- 5. What we are doing -->
+  <!-- 5. Status -->
   <Container>
-    <h1>What we are doing</h1>
+    <h1>Current Status</h1>
     <p class="text">
-      With Ruoyu Wu in the Department of Mathematics at Iowa State, I am developing importance-sampling
-      estimators for rare events in mean-field join-the-shortest-queue load-balancing systems. The
-      change of measure is guided by large-deviation asymptotics for the system's empirical measure, and
-      we are studying how the estimators behave as the number of servers grows.
-    </p>
-    <p class="text">
-      The estimators run on a reproducible Python simulation framework with deterministic seeding, and
-      they are checked against crude Monte Carlo wherever crude Monte Carlo is reliable. Where the system
-      is small enough, the project's commitment is to check them against probabilities computed exactly,
-      as described above.
-    </p>
-  </Container>
-
-  <!-- 6. Status -->
-  <Container>
-    <h1>Status</h1>
-    <p class="text">
-      Paused while Ruoyu Wu is on sabbatical. The project has run since November 2024, as an
+      The project is paused while Ruoyu Wu is on sabbatical. It has run since November 2024, as an
       Undergraduate Research Fellowship in the Department of Mathematics at Iowa State, with a Dean's
-      High Impact Undergraduate Research Award (2026). Its manuscript with Ruoyu Wu,
+      High Impact Undergraduate Research Award (2026). Our manuscript,
       <em>Large-Deviation-Guided Importance Sampling for Rare Events in the Mean-Field
-      Join-the-Shortest-Queue Model</em>, is on hold until the project resumes.
+      Join-the-Shortest-Queue Model</em>, is on hold until the project resumes. The table below sets
+      what this page shows against what is held back pending submission.
     </p>
     <div class="table-wrapper">
       <table>
@@ -658,14 +668,13 @@ npm run verify                      # all of the site's verification scripts`;
       </table>
     </div>
     <p class="text">
-      The code is in a private repository, and results are held back pending submission.
+      The code is in a private repository.
     </p>
   </Container>
 </ProjectLayout>
 
 <style>
   .ld-dgm { --ld-acc: var(--seq-lo); }
-  @media (prefers-color-scheme: dark) { .ld-dgm { --ld-acc: var(--seq-hi); } }
   .ld-dgm .t13 { font-size: 13px; }
   .ld-dgm .t14 { font-size: 14px; }
   .ld-dgm .t15 { font-size: 15px; }
@@ -680,13 +689,4 @@ npm run verify                      # all of the site's verification scripts`;
   .ld-dgm .warn { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
   /* Text on the filled (box dark) tile of Figure 5. */
   .ld-dgm .inv-t { fill: var(--ground); }
-  /* Dark mode: the filled tile would invert to a near-white slab (--ink), the
-     brightest thing on the page; keep it a raised mid-dark surface instead.
-     The 16% accent band would turn olive (yellow over grey); use a neutral tint,
-     as the light-mode band reads. */
-  @media (prefers-color-scheme: dark) {
-    .ld-dgm .box.dark { fill: var(--rule-strong); stroke: var(--rule-strong); }
-    .ld-dgm .inv-t { fill: var(--ink); }
-    .ld-dgm .acc-band { fill: var(--ink); fill-opacity: 0.09; }
-  }
 </style>

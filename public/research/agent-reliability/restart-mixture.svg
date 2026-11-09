@@ -19,7 +19,6 @@
 .sh{fill:#888578;fill-opacity:0.16;stroke:none}
 .mk{stroke:var(--ground,#ffffff);stroke-width:1.25}
 .s0{stroke:#00224e;fill:none;stroke-width:1.75}.p0{fill:#00224e}.s1{stroke:#243d6e;fill:none;stroke-width:1.75}.p1{fill:#243d6e}.s2{stroke:#50586d;fill:none;stroke-width:1.75}.p2{fill:#50586d}.s3{stroke:#727274;fill:none;stroke-width:1.75}.p3{fill:#727274}.s4{stroke:#948e78;fill:none;stroke-width:1.75}.p4{fill:#948e78}
-@media (prefers-color-scheme: dark){.s0{stroke:#676971}.p0{fill:#676971}.s1{stroke:#888578}.p1{fill:#888578}.s2{stroke:#aea272}.p2{fill:#aea272}.s3{stroke:#d6c25e}.p3{fill:#d6c25e}.s4{stroke:#fee838}.p4{fill:#fee838}.sh{fill:#bbad6d;fill-opacity:0.18}}
 </style>
 <defs><clipPath id="mix-clip"><rect x="58" y="18" width="564" height="276"/></clipPath></defs>
 <g class="g"><line x1="58" y1="294" x2="622" y2="294"/><line x1="58" y1="254.6" x2="622" y2="254.6"/><line x1="58" y1="215.1" x2="622" y2="215.1"/><line x1="58" y1="175.7" x2="622" y2="175.7"/><line x1="58" y1="136.3" x2="622" y2="136.3"/><line x1="58" y1="96.9" x2="622" y2="96.9"/><line x1="58" y1="57.4" x2="622" y2="57.4"/><line x1="58" y1="18" x2="622" y2="18"/><line x1="58" y1="18" x2="58" y2="294"/><line x1="199" y1="18" x2="199" y2="294"/><line x1="340" y1="18" x2="340" y2="294"/><line x1="481" y1="18" x2="481" y2="294"/><line x1="622" y1="18" x2="622" y2="294"/></g>

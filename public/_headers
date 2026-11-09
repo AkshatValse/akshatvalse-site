@@ -16,7 +16,7 @@
 /clarity/*
   Cache-Control: public, max-age=604800
 
-/research/*
+/research/:slug/*
   Cache-Control: public, max-age=604800
 
 /img/*

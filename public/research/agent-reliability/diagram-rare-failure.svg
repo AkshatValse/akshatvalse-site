@@ -19,7 +19,6 @@
 .sh{fill:#888578;fill-opacity:0.16;stroke:none}
 .mk{stroke:var(--ground,#ffffff);stroke-width:1.25}
 .s0{stroke:#00224e;fill:none;stroke-width:1.75}.p0{fill:#00224e}.s1{stroke:#243d6e;fill:none;stroke-width:1.75}.p1{fill:#243d6e}.s2{stroke:#50586d;fill:none;stroke-width:1.75}.p2{fill:#50586d}.s3{stroke:#727274;fill:none;stroke-width:1.75}.p3{fill:#727274}.s4{stroke:#948e78;fill:none;stroke-width:1.75}.p4{fill:#948e78}
-@media (prefers-color-scheme: dark){.s0{stroke:#676971}.p0{fill:#676971}.s1{stroke:#888578}.p1{fill:#888578}.s2{stroke:#aea272}.p2{fill:#aea272}.s3{stroke:#d6c25e}.p3{fill:#d6c25e}.s4{stroke:#fee838}.p4{fill:#fee838}.sh{fill:#bbad6d;fill-opacity:0.18}}
 </style>
 <defs><marker id="rarr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
 <text class="tb" x="30" y="34">1. One agent run: a loop of model and tool calls that can, rarely, end in failure</text>

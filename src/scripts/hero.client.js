@@ -8,8 +8,8 @@
  *   - visibilitychange stops it when the tab is hidden
  *   - the physics timestep is fixed and decoupled from the frame rate, so a
  *     30Hz display runs the same dynamics as a 120Hz one
- *   - colors are read from the stylesheet, so CSS stays the single source
- *     of truth and an OS scheme change rebuilds the layers
+ *   - colors are read from the stylesheet's light tokens, so CSS stays the
+ *     single source of truth
  */
 
 import { HeroSim, HERO_DEFAULTS, tilesForAspect } from '../sim/hero.js';
@@ -78,7 +78,6 @@ export function mountHero(root) {
     const cs = getComputedStyle(root);
     return {
       contour: parseRGB(cs.getPropertyValue('--sim-contour') || '#7d878c'),
-      reverse: (cs.getPropertyValue('--sim-reverse') || '0').trim() === '1',
     };
   };
 
@@ -128,13 +127,12 @@ export function mountHero(root) {
   function build() {
     if (!layout()) return false;
     buildToken++;
-    const { reverse } = styles();
     const { tilesX, tilesY } = tilesForAspect(width / height);
 
     sim = new HeroSim({ ...HERO_DEFAULTS, tilesX, tilesY });
     sim.advance(Math.round(START_TIME / sim.dt));
 
-    ramp = rampTable(RAMP_STEPS, reverse).map(
+    ramp = rampTable(RAMP_STEPS, false).map(
       ([r, g, b]) => `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`
     );
 
@@ -238,12 +236,7 @@ export function mountHero(root) {
   io.observe(root);
   document.addEventListener('visibilitychange', sync);
 
-  // Rebuild on a scheme change: the ramp direction and the contour color both
-  // depend on it. Rebuild on resize too, since the cell tiling follows aspect.
-  const dark = window.matchMedia('(prefers-color-scheme: dark)');
-  const onScheme = () => { stop(); built = false; build(); };
-  dark.addEventListener('change', onScheme);
-
+  // Rebuild on resize, since the cell tiling follows aspect.
   let resizeTimer = 0;
   const ro = new ResizeObserver(() => {
     clearTimeout(resizeTimer);

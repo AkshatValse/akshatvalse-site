@@ -110,10 +110,10 @@ export function contourFieldRGBA(w, h, box, fieldGrad, rgb, opts = {}) {
 /**
  * Colormap position for a particle at potential v.
  *
- * `reverse` flips the ramp for dark backgrounds. The mapping stays monotone
- * in V either way — only its direction changes, so that the *populated* end
- * of the distribution (the wells, where V = -2) always lands on the end of
- * cividis that has contrast against the page. The legend states the direction.
+ * The site is light only, so callers pass `reverse` = false: the wells
+ * (V = -2) land on the navy end of cividis, which has contrast against the
+ * white page. `reverse` flips the direction of the (still monotone) mapping;
+ * it stays in the signature for scripts/gen-posters.mjs.
  */
 export function heroRamp(v, reverse) {
   const t = (v + 2) / 4;

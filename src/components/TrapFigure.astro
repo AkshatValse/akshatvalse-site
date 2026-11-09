@@ -29,7 +29,7 @@ const markers = [
 const ticks = [0, 2000, 4000, 6000];
 
 const label =
-  `Live simulation, Figure 1. Two copies of a prefix-cached LLM serving engine, the paper's simulator calibrated to ` +
+  `Live simulation. Two copies of a prefix-cached LLM serving engine, the paper's simulator calibrated to ` +
   `SGLang on an A100 GPU, receive the same agent traffic: a Poisson stream of sessions at ${f.mult} times the measured ` +
   `all-miss rate, plus a burst of ${f.burstN} sessions at ${fmt(f.tB)} seconds. Each lane plots the sessions in the system over ` +
   `${fmt(f.H)} simulated seconds, colored by the fraction of follow-up turns served from the prefix cache. In both ` +
@@ -55,15 +55,13 @@ const label =
       <div class="trap-plot" data-plot>
         <svg class="trap-poster" viewBox={`0 0 ${nBins} 100`} preserveAspectRatio="none" focusable="false">
           <defs>
-            {(['light', 'dark'] as const).map((scheme) => (
-              <linearGradient id={`trap-g${j}-${scheme}`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={nBins} y2="0">
-                {l[scheme].map((s) => s.c === null
-                  ? <stop offset={s.o.toFixed(5)} style="stop-color: var(--sim-contour)" />
-                  : <stop offset={s.o.toFixed(5)} stop-color={s.c} />)}
-              </linearGradient>
-            ))}
+            <linearGradient id={`trap-g${j}`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={nBins} y2="0">
+              {l.stops.map((s) => s.c === null
+                ? <stop offset={s.o.toFixed(5)} style="stop-color: var(--sim-contour)" />
+                : <stop offset={s.o.toFixed(5)} stop-color={s.c} />)}
+            </linearGradient>
           </defs>
-          <path class={`trap-area trap-area-${j}`} d={l.area} />
+          <path class={`trap-area trap-area-${j}`} d={l.area} fill={`url(#trap-g${j})`} />
           <path class="trap-line" d={l.line} vector-effect="non-scaling-stroke" />
         </svg>
         <canvas hidden></canvas>
@@ -113,12 +111,6 @@ const label =
   .trap-poster { transition: opacity 0.6s; }
   [data-live] .trap-poster { opacity: 0.22; }
 
-  .trap-area-0 { fill: url(#trap-g0-light); }
-  .trap-area-1 { fill: url(#trap-g1-light); }
-  @media (prefers-color-scheme: dark) {
-    .trap-area-0 { fill: url(#trap-g0-dark); }
-    .trap-area-1 { fill: url(#trap-g1-dark); }
-  }
   .trap-line { fill: none; stroke: var(--ink-2); stroke-width: 1; }
 
   .trap-mark {

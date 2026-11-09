@@ -1,7 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <style>
     :root { --i: #101619; --g: #f0f2f2; }
-    @media (prefers-color-scheme: dark) { :root { --i: #ede8e2; --g: #1a1f22; } }
     rect { fill: var(--g); }
     path { fill: none; stroke: var(--i); stroke-width: 1.15; }
   </style>

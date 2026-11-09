@@ -1,0 +1,62 @@
+---
+/**
+ * The publication list at the foot of the Research page, as on shikun.io: a
+ * ruled list with the venue on the left and, on the right, the title with
+ * superscript links and the author list (own name bold). The preprint comes
+ * first, then the manuscripts from src/data/home.ts with their stage.
+ * Layout comes from `.paper-list` in src/styles/global.css.
+ */
+import { ARXIV_TRAP, REPO_TRAP } from '../data/site';
+import { MANUSCRIPTS } from '../data/home';
+
+const TRAP_PDF = 'https://arxiv.org/pdf/2611.08902';
+
+/** "With D. Herzog, O. Smith and D. Wu" -> the coauthors, joined after the owner's name. */
+const coauthors = (authors: string) => {
+  const rest = authors.replace(/^With\s+/, '');
+  return (rest.includes(' and ') ? ', ' : ' and ') + rest;
+};
+---
+
+<div class="paper-list">
+  <hr />
+  <div class="paper-row">
+    <div class="venue"><p>arXiv 2026</p></div>
+    <div class="paper">
+      <p>
+        Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving
+        <a href={ARXIV_TRAP}><sup>[Paper]</sup></a>
+        <a href={TRAP_PDF}><sup>[PDF]</sup></a>
+        <a href={REPO_TRAP}><sup>[Code]</sup></a>
+        <a href="/research/inside-the-trap"><sup>[Project]</sup></a>
+        <br />
+        <b>Akshat Valse</b> and Ali Jannesari
+      </p>
+    </div>
+  </div>
+  {MANUSCRIPTS.map((m) => (
+    <div class="paper-row">
+      <div class="venue"><p>Manuscript</p></div>
+      <div class="paper">
+        <p>
+          {m.href ? <a href={m.href}>{m.title}</a> : m.title}
+          <br />
+          <b>Akshat Valse</b>{coauthors(m.authors)} <span class="status"><span class="sep" aria-hidden="true">· </span>{m.status}</span>
+        </p>
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  /* shikun.io sets venues as written ("NeurIPS 2019"), so "arXiv" keeps its case. */
+  .venue p { text-transform: none; }
+  /* Clarity sets every link to 18px; a title link here stays at the row's size. */
+  .paper a { font-size: inherit; }
+  /* The stage follows the authors after a dot; on narrower screens it takes its own line instead. */
+  .status { white-space: nowrap; }
+  @media screen and (max-width: 991px) {
+    .status { display: block; white-space: normal; }
+    .status .sep { display: none; }
+  }
+</style>

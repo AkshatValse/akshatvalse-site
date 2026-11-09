@@ -19,9 +19,9 @@ export default defineConfig({
 
   markdown: {
     remarkPlugins: [remarkMath],
-    // `output: 'html'` — no MathML duplicate. KaTeX's HTML output is what the
-    // CSS styles, and shipping both doubles the DOM for screen readers.
-    rehypePlugins: [[rehypeKatex, { output: 'html', strict: 'ignore' }]],
+    // KaTeX's default 'htmlAndMathml': the HTML copy is aria-hidden and the
+    // MathML copy (visually clipped by katex.css) is what screen readers read.
+    rehypePlugins: [[rehypeKatex, { output: 'htmlAndMathml', strict: 'ignore' }]],
     shikiConfig: { theme: 'github-light', wrap: true },
   },
 

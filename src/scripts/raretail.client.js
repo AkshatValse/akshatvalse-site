@@ -51,7 +51,6 @@ export function mountRareTail(root) {
       ink: cs.color,
       muted: cs.getPropertyValue('--ink-2').trim() || '#59636a',
       rule: cs.getPropertyValue('--rule').trim() || '#cfd6d7',
-      reverse: (cs.getPropertyValue('--sim-reverse') || '0').trim() === '1',
       mono: `${(cs.getPropertyValue('--font-mono') || '').trim()}, monospace`,
     };
   };
@@ -80,11 +79,11 @@ export function mountRareTail(root) {
   };
 
   /** cividis position for a relative standard error. */
-  function rseColor(rse, reverse) {
+  function rseColor(rse) {
     const u = (Math.log10(Math.max(rse, 1e-9)) - Math.log10(RSE_MIN)) /
       (Math.log10(RSE_MAX) - Math.log10(RSE_MIN));
     const t = u < 0 ? 0 : u > 1 ? 1 : u;
-    const [r, g, b] = cividis(reverse ? 1 - t : t);
+    const [r, g, b] = cividis(t);
     return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
   }
 
@@ -147,10 +146,10 @@ export function mountRareTail(root) {
   }
 
   /** One estimate: a vertical +/- 1 s.e. bar and a marker. */
-  function drawPoint(x, est, filled, c) {
+  function drawPoint(x, est, filled) {
     const lo = Math.max(P_MIN, est.p - est.se);
     const hi = Math.min(P_MAX, est.p + est.se);
-    const color = rseColor(est.se / est.p, c.reverse);
+    const color = rseColor(est.se / est.p);
 
     ctx.strokeStyle = color;
     ctx.lineWidth = Math.max(1, dpr);
@@ -181,9 +180,9 @@ export function mountRareTail(root) {
       const x = xOf(e.a);
       const crude = e.crude();
       // Crude first so importance sampling sits on top where they overlap.
-      if (crude) drawPoint(x - 2.2 * dpr, crude, false, c);
+      if (crude) drawPoint(x - 2.2 * dpr, crude, false);
       const is = e.is();
-      if (is) drawPoint(x + 2.2 * dpr, is, true, c);
+      if (is) drawPoint(x + 2.2 * dpr, is, true);
     }
   }
 
@@ -239,10 +238,6 @@ export function mountRareTail(root) {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { if (layout() && started) render(); }, 180);
   }).observe(root);
-
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (started) render();
-  });
 }
 
 for (const el of document.querySelectorAll('[data-sim="raretail"]')) {

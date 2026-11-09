@@ -17,7 +17,7 @@ const { src, block = false } = Astro.props;
 
 const html = katex.renderToString(src, {
   displayMode: block,
-  output: 'html',
+  output: 'htmlAndMathml',
   throwOnError: true,
   strict: 'ignore',
 });

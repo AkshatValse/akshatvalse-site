@@ -6,7 +6,7 @@
 import katex from 'katex';
 interface Props { tex: string; big?: boolean; label?: string }
 const { tex, big = false, label } = Astro.props;
-const html = katex.renderToString(tex, { displayMode: true, output: 'html', throwOnError: true, strict: 'ignore' });
+const html = katex.renderToString(tex, { displayMode: true, output: 'htmlAndMathml', throwOnError: true, strict: 'ignore' });
 ---
 
 <div class:list={['tex-tile', { big }]} role="img" aria-label={label ?? tex}>

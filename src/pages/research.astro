@@ -1,54 +1,57 @@
 ---
+/**
+ * Research, laid out as shikun.io's Projects page: a plain title page, a grid
+ * of tall covers in each project's signature colour, then the publications.
+ */
 import Base from '../layouts/Base.astro';
-import TitleBand from '../components/clarity/TitleBand.astro';
-import Container from '../components/clarity/Container.astro';
-import ProjectCard from '../components/ProjectCard.astro';
+import ProjectTile from '../components/ProjectTile.astro';
+import PaperList from '../components/PaperList.astro';
 import { PROJECTS } from '../data/projects';
 ---
 
 <Base
+  pageType="CollectionPage"
   title="Research · Akshat Valse"
   breadcrumbs={[{ name: 'Research', path: '/research' }]}
   description="Akshat Valse's research: LLM serving and prefix caching, Langevin sampling, rare events in queues, neural PDE solvers, forecast calibration, LLM agents."
 >
-  <TitleBand>
-    <h1 class="title">Research</h1>
-    <p class="author">Six projects with faculty in Computer Science and Mathematics at Iowa State</p>
-    <p class="abstract">
-      My research uses probability and numerical analysis to study how machine learning systems
-      behave. The first project to reach a preprint is <a href="/research/inside-the-trap"><em>Inside
-      the Trap</em></a>, written with Ali Jannesari. It explains why an LLM serving engine can stay
-      stuck after a burst of agent traffic, even at a load it handled before, and how a session cap
-      gets it out. The other five look at Langevin samplers, rare events in load-balancing queues,
-      the stability of neural PDE solvers, forecast calibration and the reliability of LLM agents.
-      Each has its own page with the problem, the approach and where the work stands.
-    </p>
-    <Fragment slot="info">1 preprint · 2 manuscripts · 2 projects in development · 1 paused</Fragment>
-  </TitleBand>
-
-  <Container width="extra-large" tone="gray" first>
-    <div class="columns-3">
-      {PROJECTS.map((p) => <ProjectCard project={p} />)}
+  <div class="container page" id="first-content">
+    <div class="page-title">
+      <h1 class="title">Research</h1>
+      <p>
+        My research uses probability and numerical analysis to study how machine learning systems
+        behave. These are six projects with faculty in Computer Science and Mathematics at Iowa
+        State. The first to reach a preprint is <a href="/research/inside-the-trap"><em>Inside the
+        Trap</em></a>, written with Ali Jannesari. It explains why an LLM serving engine can stay
+        stuck after a burst of agent traffic, even at a load it handled before, and how a session
+        cap gets it out. The other five look at Langevin samplers, rare events in load-balancing
+        queues, the stability of neural PDE solvers, forecast calibration and the reliability of
+        LLM agents.
+      </p>
+      <p>
+        The preprint and the three manuscripts are listed at the
+        <a href="#publications">bottom of this page</a>.
+      </p>
     </div>
-  </Container>
+  </div>
 
-  <Container>
-    <h1>At a glance</h1>
-    <div class="table-wrapper">
-      <table>
-        <thead><tr><th>Project</th><th>Advisor</th><th>Department</th><th>Since</th><th>Status</th></tr></thead>
-        <tbody>
-          {PROJECTS.map((p) => (
-            <tr>
-              <td><a href={`/research/${p.slug}`}>{p.short}</a></td>
-              <td>{p.advisor}</td>
-              <td>{p.dept}</td>
-              <td>{p.dates.replace(' – present', '')}</td>
-              <td>{p.status === 'Preprint' ? <b>Preprint</b> : p.status}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+  <div class="container listing">
+    <div class="project-grid">
+      {PROJECTS.map((p) => <ProjectTile project={p} />)}
     </div>
-  </Container>
+  </div>
+
+  <div class="container listing" id="publications">
+    <div class="section-title">
+      <h2>Publications</h2>
+    </div>
+    <PaperList />
+  </div>
 </Base>
+
+<style>
+  /* On phones the bar is fixed, so keep the section title clear of it when jumped to. */
+  @media screen and (max-width: 769px) {
+    #publications { scroll-margin-top: 60px; }
+  }
+</style>

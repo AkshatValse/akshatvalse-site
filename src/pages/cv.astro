@@ -2,12 +2,12 @@
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Base from '../layouts/Base.astro';
-import TitleBand from '../components/clarity/TitleBand.astro';
-import Container from '../components/clarity/Container.astro';
 import Icon from '../components/clarity/Icon.astro';
+import { PROFILE } from '../data/site';
 
 /**
- * HTML CV.
+ * HTML CV, laid out like shikun.io's About page: a plain title page, then
+ * numbered labels on the left and the CV on the right.
  *
  * The PDF remains the artifact a committee files; this page is what a crawler
  * reads and what opens without a download on a phone. The two are generated
@@ -15,12 +15,11 @@ import Icon from '../components/clarity/Icon.astro';
  * of record for the PDF, this file for the page.
  *
  * The PDF carries a dated filename so a browser or proxy never serves a stale
- * copy after an update. Bump PDF_FILE here and the /cv.pdf redirect in
- * public/_redirects together.
+ * copy after an update. Bump PROFILE.cvPdf in src/data/site.ts and the /cv.pdf
+ * redirect in public/_redirects together.
  */
-const PDF_FILE = 'akshat-valse-cv-2026-11.pdf';
-const pdf = `/${PDF_FILE}`;
-const hasPdf = existsSync(fileURLToPath(new URL(`../../public/${PDF_FILE}`, import.meta.url)));
+const pdf = PROFILE.cvPdf;
+const hasPdf = existsSync(fileURLToPath(new URL(`../../public${pdf}`, import.meta.url)));
 
 const interests =
   'Applied probability for the systems that run machine learning: a renewal law for ' +
@@ -194,88 +193,133 @@ const projectSlugs = ['inside-the-trap', 'langevin', 'large-deviations', 'neural
   title="CV · Akshat Sachin Valse"
   breadcrumbs={[{ name: 'CV', path: '/cv' }]}
   description="Curriculum vitae of Akshat Sachin Valse, undergraduate researcher at Iowa State University in applied probability for the systems that run machine learning."
-  toc
 >
-  <TitleBand>
-    <h1 class="title">Akshat Sachin Valse</h1>
-    <p class="author">Curriculum vitae · updated November 2026</p>
-    <p class="abstract">{interests}</p>
-    <div class="info">
-      <div>
-        {hasPdf && <><a href={pdf} class="button icon" style="background-color: rgba(255, 255, 255, 0.2)">Download PDF <Icon name="pdf" /></a> &nbsp;&nbsp;</>}
-        <a href="mailto:avalse@iastate.edu" class="button icon" style="background-color: rgba(255, 255, 255, 0.2)">Email <Icon name="mail" /></a> &nbsp;&nbsp;
-        <a href="https://github.com/AkshatValse" rel="me" class="button icon" style="background-color: rgba(255, 255, 255, 0.2)">GitHub <Icon name="github" /></a>
+  <div class="container page" id="first-content">
+    <div class="page-title">
+      <h1 class="title">Curriculum Vitae</h1>
+      <p>Akshat Sachin Valse · Iowa State University, Honors · B.S. expected May 2028 · updated November 2026</p>
+      <p><em>{interests}</em></p>
+      <p class="cv-links">
+        {hasPdf && <a href={pdf} class="button icon">Download PDF <Icon name="pdf" /></a>}
+        <a href="mailto:avalse@iastate.edu" class="button icon">Email <Icon name="mail" /></a>
+        <a href="https://github.com/AkshatValse" rel="me" class="button icon">GitHub <Icon name="github" /></a>
+      </p>
+    </div>
+
+    <div class="about-grid">
+      <div class="about-label" id="education"><p role="heading" aria-level="2">01&nbsp;/&nbsp;Education</p></div>
+      <div class="about-body">
+        <div class="entry">
+          <div class="entry-head"><b>Iowa State University, Honors Program</b><span class="when">Aug. 2024 – May 2028 (expected)</span></div>
+          <p class="meta">B.S. Statistics · B.S. Mathematics · B.A. Computer Science · B.S. Data Science<br />Cumulative GPA 3.86 / 4.00</p>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>In progress, Fall 2026 (all four at the PhD level, 6000-series)</th><th>Course</th></tr></thead>
+            <tbody>{inProgress.map(([name, code]) => <tr><td>{name}</td><td>{code}</td></tr>)}</tbody>
+          </table>
+        </div>
+        <p><b>Planned, Spring 2027:</b> {planned.map(([name]) => name).join(' · ')}.</p>
+        {completed.map((g) => (
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Completed · {g.group}</th><th>Course</th></tr></thead>
+              <tbody>{g.courses.map(([name, code]) => <tr><td>{name}</td><td>{code}</td></tr>)}</tbody>
+            </table>
+          </div>
+        ))}
+      </div>
+
+      <div class="about-label" id="preprints"><p role="heading" aria-level="2">02&nbsp;/&nbsp;Preprints</p></div>
+      <div class="about-body">
+        {preprints.map((p) => (
+          <div class="entry">
+            <div class="entry-head"><b>{p.title}</b></div>
+            <p class="meta">{p.meta}</p>
+            <p class="cv-links">
+              <a href={p.href} class="button icon">Paper <Icon name="paper" /></a>
+              <a href={p.code} class="button icon">Code, data, registrations <Icon name="code" /></a>
+              <a href="/research/inside-the-trap" class="button icon">Project page <Icon name="arrow" /></a>
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div class="about-label" id="research"><p role="heading" aria-level="2">03&nbsp;/&nbsp;Research experience</p></div>
+      <div class="about-body">
+        {research.map((r, i) => (
+          <div class="entry">
+            <div class="entry-head"><b><a href={`/research/${projectSlugs[i]}`}>{r.title}</a></b><span class="when">{r.dates}</span></div>
+            <p class="meta">{r.role}</p>
+            <ul>{r.bullets.map((b) => <li>{b}</li>)}</ul>
+          </div>
+        ))}
+      </div>
+
+      <div class="about-label" id="manuscripts"><p role="heading" aria-level="2">04&nbsp;/&nbsp;Manuscripts</p></div>
+      <div class="about-body">
+        {manuscripts.map((m) => (
+          <div class="entry">
+            <div class="entry-head"><b>{m.title}</b></div>
+            <p class="meta">{m.meta}</p>
+          </div>
+        ))}
+      </div>
+
+      <div class="about-label" id="awards"><p role="heading" aria-level="2">05&nbsp;/&nbsp;Awards and honors</p></div>
+      <div class="about-body">
+        <ul>{awards.map((a) => <li>{a}</li>)}</ul>
+      </div>
+
+      <div class="about-label" id="service"><p role="heading" aria-level="2">06&nbsp;/&nbsp;Leadership and service</p></div>
+      <div class="about-body">
+        <ul>{service.map((s) => <li>{s}</li>)}</ul>
+      </div>
+
+      <div class="about-label" id="skills"><p role="heading" aria-level="2">07&nbsp;/&nbsp;Technical skills</p></div>
+      <div class="about-body">
+        {skills.map((s) => (
+          <div class="entry">
+            <div class="entry-head"><b>{s.label}</b></div>
+            <p>{s.text}</p>
+          </div>
+        ))}
       </div>
     </div>
-    <Fragment slot="info">Iowa State University, Honors · B.S. expected May 2028</Fragment>
-  </TitleBand>
-
-  <Container first id="education">
-    <h1>Education</h1>
-    <h2>Iowa State University, Honors Program</h2>
-    <p class="text">
-      Aug. 2024 – May 2028 (expected) · Cumulative GPA 3.86 / 4.00<br />
-      B.S. Statistics · B.S. Mathematics · B.A. Computer Science · B.S. Data Science
-    </p>
-    <div class="table-wrapper">
-      <table>
-        <thead><tr><th>In progress, Fall 2026 (all four at the PhD level, 6000-series)</th><th>Course</th></tr></thead>
-        <tbody>{inProgress.map(([name, code]) => <tr><td>{name}</td><td>{code}</td></tr>)}</tbody>
-      </table>
-    </div>
-    <p class="text"><b>Planned, Spring 2027:</b> {planned.map(([name]) => name).join(' · ')}.</p>
-    {completed.map((g) => (
-      <div class="table-wrapper">
-        <table>
-          <thead><tr><th>Completed · {g.group}</th><th>Course</th></tr></thead>
-          <tbody>{g.courses.map(([name, code]) => <tr><td>{name}</td><td>{code}</td></tr>)}</tbody>
-        </table>
-      </div>
-    ))}
-  </Container>
-
-  <Container id="preprints">
-    <h1>Preprints</h1>
-    {preprints.map((p) => (
-      <>
-        <p class="text"><b>{p.title}.</b><br />{p.meta}</p>
-        <p class="text">
-          <a href={p.href} class="button icon">Paper <Icon name="paper" /></a> &nbsp;&nbsp;
-          <a href={p.code} class="button icon">Code, data, registrations <Icon name="code" /></a> &nbsp;&nbsp;
-          <a href="/research/inside-the-trap" class="button icon">Project page <Icon name="arrow" /></a>
-        </p>
-      </>
-    ))}
-  </Container>
-
-  <Container id="research">
-    <h1>Research experience</h1>
-    {research.map((r, i) => (
-      <>
-        <h2><a href={`/research/${projectSlugs[i]}`}>{r.title}</a></h2>
-        <p class="text"><b>{r.dates}.</b> {r.role}</p>
-        <ul>{r.bullets.map((b) => <li><p class="text">{b}</p></li>)}</ul>
-      </>
-    ))}
-  </Container>
-
-  <Container id="manuscripts">
-    <h1>Manuscripts</h1>
-    <ul>{manuscripts.map((m) => <li><p class="text"><b>{m.title}.</b> {m.meta}</p></li>)}</ul>
-  </Container>
-
-  <Container id="awards">
-    <h1>Awards and honors</h1>
-    <ul>{awards.map((a) => <li><p class="text">{a}</p></li>)}</ul>
-  </Container>
-
-  <Container id="service">
-    <h1>Leadership and service</h1>
-    <ul>{service.map((s) => <li><p class="text">{s}</p></li>)}</ul>
-  </Container>
-
-  <Container id="skills">
-    <h1>Technical skills</h1>
-    {skills.map((s) => (<><h2>{s.label}</h2><p class="text">{s.text}</p></>))}
-  </Container>
+  </div>
 </Base>
+
+<style>
+  /* Buttons in a row that wraps on phones, spaced like Clarity's &nbsp;&nbsp; pairs. */
+  .cv-links { display: flex; flex-wrap: wrap; gap: 0 1em; }
+  .cv-links .button { margin-bottom: 0.6em; }
+  .about-body .cv-links { padding-top: 0.4em; }
+  /* Air between the title page and the numbered grid, as on shikun.io's About page. */
+  .page-title .cv-links { padding-bottom: 2.5em; }
+
+  /* The entry head is a div, and Clarity gives only p, a, li… its type, so give
+     it the body face and size here (global.css candidate). */
+  .about-body .entry-head { font-family: 'Poppins', sans-serif; font-size: 18px; line-height: 1.6; color: #353535; padding-bottom: 0.2em; }
+  .about-body .entry-head b, .about-body .entry-head a { font-size: inherit; line-height: inherit; color: inherit; }
+  .about-body .entry-head .when { font-weight: 300; }
+
+  /* As in cv.tex: a long title wraps in its own column instead of pushing the
+     dates onto the next line. */
+  @media screen and (min-width: 770px) {
+    .about-body .entry-head { flex-wrap: nowrap; }
+    .about-body .entry-head b { flex: 1 1 auto; min-width: 0; }
+    .about-body .entry-head .when { flex: none; text-align: right; }
+  }
+
+  /* Course tables at the size of the text beside them. */
+  .about-body .table-wrapper { font-size: 18px; padding: 0.6em 0 1.2em; }
+  .about-body table td:last-child, .about-body table th:last-child { white-space: nowrap; width: 1%; }
+  .about-body .entry + .table-wrapper { padding-top: 1.2em; }
+
+  /* Anchors land below the fixed phone menu bar. */
+  .about-label { scroll-margin-top: 80px; }
+
+  @media screen and (max-width: 769px) {
+    .about-body .entry-head, .about-body .table-wrapper { font-size: 15px; }
+  }
+</style>

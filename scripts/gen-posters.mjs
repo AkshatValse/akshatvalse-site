@@ -7,11 +7,10 @@
  * for reduced motion and never starts a loop, and the one with JavaScript
  * disabled entirely.
  *
- * The hero is a raster (WebP, one per color scheme) because it is a dense
- * field. The diffusivity figure is emitted as SVG instead: it is a line chart,
- * so SVG is smaller, stays sharp, keeps its tick labels as real selectable
- * text, and picks up the page's own color tokens, which means one file covers
- * both schemes.
+ * The hero is a raster (WebP) because it is a dense field. The diffusivity
+ * figure is emitted as SVG instead: it is a line chart, so SVG is smaller,
+ * stays sharp, keeps its tick labels as real selectable text, and picks up the
+ * page's own color tokens. The site is light only, like shikun.io.
  *
  * Color tokens are parsed out of src/styles/global.css rather than restated
  * here, so the poster and the live canvas cannot drift apart.
@@ -45,10 +44,9 @@ mkdirSync(GENERATED, { recursive: true });
 const CSS = readFileSync(path.join(ROOT, 'src', 'styles', 'global.css'), 'utf8');
 
 function tokens(scheme) {
-  // The dark values live inside the prefers-color-scheme block; take the last
-  // occurrence for dark and the first for light.
-  const darkBlock = CSS.slice(CSS.indexOf('@media (prefers-color-scheme: dark)'));
-  const src = scheme === 'dark' ? darkBlock : CSS.slice(0, CSS.indexOf('@media'));
+  // The site is light only: the tokens are the :root declarations.
+  if (scheme !== 'light') throw new Error(`only the light scheme exists, not ${scheme}`);
+  const src = CSS.slice(0, CSS.indexOf('@media'));
   const get = (name) => {
     const m = src.match(new RegExp(`--${name}:\\s*([^;]+);`));
     if (!m) throw new Error(`token --${name} not found for scheme ${scheme}`);
@@ -317,8 +315,6 @@ function rareTailPoster() {
     exact += `${i ? 'L' : 'M'}${n2(rtX(a))} ${n2(rtY(normalTail(a)))}`;
   }
 
-  // The two color schemes differ only in the ramp direction, so the markers
-  // are emitted twice and CSS shows one set.
   const markers = (reverse) => {
     let s = '';
     for (const e of sim.est) {
@@ -358,15 +354,12 @@ function rareTailPoster() {
 .a{stroke:var(--ink-2,#59636a);stroke-width:1;fill:none}
 .l{fill:var(--ink-2,#59636a);font:11px var(--font-mono,monospace)}
 .rf{stroke:var(--ink,#101619);stroke-width:1;stroke-dasharray:6 4;fill:none}
-.dark{display:none}
-@media (prefers-color-scheme: dark){.light{display:none}.dark{display:inline}}
 </style>
 <g class="g">${grid}</g>
 <g class="a">${ticks}<line x1="${RT_PAD.l}" y1="${SVG_H - RT_PAD.b}" x2="${SVG_W - RT_PAD.r}" y2="${SVG_H - RT_PAD.b}"/></g>
 <g class="l">${yLab}${xLab}<text x="${n2((RT_PAD.l + SVG_W - RT_PAD.r) / 2)}" y="${SVG_H - RT_PAD.b + 24}" text-anchor="middle" dominant-baseline="hanging">threshold a</text><text x="13" y="${n2((SVG_H - RT_PAD.b + RT_PAD.t) / 2)}" text-anchor="middle" transform="rotate(-90 13 ${n2((SVG_H - RT_PAD.b + RT_PAD.t) / 2)})">P(Z &gt; a)</text></g>
 <path class="rf" d="${exact}"/>
-<g class="light">${markers(false)}</g>
-<g class="dark">${markers(true)}</g>
+<g>${markers(false)}</g>
 </svg>`;
 
   const out = path.join(GENERATED, 'raretail-poster.svg');
@@ -378,21 +371,18 @@ function rareTailPoster() {
 
 const t0 = Date.now();
 const light = await heroPoster('light');
-const dark = await heroPoster('dark');
 const dsLight = await diffusionPoster('light');
-const dsDark = await diffusionPoster('dark');
 const diff = diffusivityPoster();
 const rt = rareTailPoster();
 
 console.log('poster frames');
-for (const [name, r] of [['hero-light', light], ['hero-dark', dark]]) {
+for (const [name, r] of [['hero-light', light]]) {
   for (const w of [720, 1080, HERO_W]) {
     console.log(`  ${name}-${w}   ${(r.sizes[w].avif / 1024).toFixed(1)} KB avif / ${(r.sizes[w].webp / 1024).toFixed(1)} KB webp`);
   }
 }
 console.log(`  hero poster rendered at t = ${light.t.toFixed(2)}`);
 console.log(`  diffusion-light  ${(dsLight.avif / 1024).toFixed(1)} KB avif / ${(dsLight.webp / 1024).toFixed(1)} KB webp   (${DIF_W}x${DIF_H})`);
-console.log(`  diffusion-dark   ${(dsDark.avif / 1024).toFixed(1)} KB avif / ${(dsDark.webp / 1024).toFixed(1)} KB webp`);
 console.log(`  mode coverage    max |w_hat - w| = ${dsLight.coverage.maxDev.toFixed(4)}`);
 console.log(`  diffusivity-poster.svg   ${(diff.bytes / 1024).toFixed(1)} KB   (${SAMPLES} samples to t = ${T_MAX})`);
 console.log(`  final D_hat              ${diff.last.d.toFixed(5)} ± ${diff.last.se.toFixed(5)}   vs exact ${D_EFF_EXACT.toFixed(5)}`);

@@ -282,10 +282,6 @@ export function mountDiffusivity(root) {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => { if (layout() && started) render(); }, 180);
   }).observe(root);
-
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (started) render();
-  });
 }
 
 for (const el of document.querySelectorAll('[data-sim="diffusivity"]')) {

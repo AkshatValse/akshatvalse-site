@@ -1,0 +1,161 @@
+---
+/**
+ * About, as on shikun.io: "About Me", then numbered labels on the left and the
+ * text on the right. In the research text every project is a pill in its
+ * signature colour, generated from PROJECTS so the colours stay in sync with the
+ * covers and the project pages.
+ *
+ * Facts come from src/data/*.ts, src/pages/cv.astro, the project pages and the
+ * About table of the previous home page. Unpublished projects are described by
+ * the problem and where the work stands, never by results.
+ */
+import Base from '../layouts/Base.astro';
+import { PROJECTS, bySlug } from '../data/projects';
+import { PROFILE, ARXIV_TRAP } from '../data/site';
+import { NEWS, AWARDS } from '../data/home';
+
+const title = 'About · Akshat Valse';
+const description =
+  'Akshat Valse, Iowa State Honors undergraduate and private pilot: background, six research projects on probability for ML systems, flying, news and awards.';
+
+/** "B.S. Statistics" etc.; a no-break space keeps each degree's letters with its subject. */
+const degrees = PROFILE.degrees.split(' · ').map((d) => d.replace(/^(B\.[AS]\.) /, '$1 '));
+const degreeList = `${degrees.slice(0, -1).join(', ')} and ${degrees[degrees.length - 1]}`;
+
+const LANGEVIN_REPO = 'https://github.com/AkshatValse/langevin-samplers';
+
+/**
+ * The six projects in three groups. Each sentence starts with the project's pill;
+ * `html` is the rest of it. Statuses are the owner's (Nov. 2026), as in PROJECTS.
+ */
+const THEMES: { name: string; items: { slug: string; html: string }[] }[] = [
+  {
+    name: 'LLM serving and agents',
+    items: [
+      {
+        slug: 'inside-the-trap',
+        html: `, my preprint with Ali Jannesari of the SwAPP Lab (<a href="${ARXIV_TRAP}">arXiv:2611.08902</a>), explains why a burst of agent traffic can leave an LLM serving engine stuck at a load it handled before, and how a session cap gets it out.`,
+      },
+      {
+        slug: 'agent-reliability',
+        html: ', advised by Yang Li, asks when restarting a stalled agent is worth more than waiting, and how to estimate the probability of a failure too rare for direct simulation to reach. It is in experimentation and development.',
+      },
+    ],
+  },
+  {
+    name: 'Sampling and numerical analysis',
+    items: [
+      {
+        slug: 'langevin',
+        html: `, with Dr. David Herzog, checks Langevin samplers against answers known in closed form; that part of the project and its <a href="${LANGEVIN_REPO}">code</a> are public. A manuscript with him on transport-coefficient estimation for molecular systems is drafted and in his review.`,
+      },
+      {
+        slug: 'neural-pde-stability',
+        html: ', with Jue Yan and Mengyuan Yang, asks whether you can tell from a trained cell-average neural network solver alone, before running a long simulation, whether its rollout will stay stable. We are adapting von Neumann stability analysis to these solvers, and the manuscript is in preparation.',
+      },
+    ],
+  },
+  {
+    name: 'Rare events and uncertainty',
+    items: [
+      {
+        slug: 'large-deviations',
+        html: ', with Ruoyu Wu, uses large-deviation theory to guide importance sampling for rare events in randomized load balancing (the mean-field join-the-shortest-queue model), such as a queue climbing to a high level within a time window. It is paused during my advisor’s sabbatical.',
+      },
+      {
+        slug: 'online-calibration',
+        html: ', advised by Hongyang Gao, is about volatility forecasts. A forecast of a cumulative quantity is scored when its horizon ends, yet a miss can become certain before then; I am developing a calibration method that uses this early, one-sided feedback. The project is in its experimentation and development phase.',
+      },
+    ],
+  },
+];
+
+/** Every project appears exactly once, so a new project cannot silently miss this page. */
+const listed = THEMES.flatMap((t) => t.items.map((i) => i.slug));
+if (listed.length !== PROJECTS.length || new Set(listed).size !== PROJECTS.length) {
+  throw new Error('about.astro: THEMES must list each project in PROJECTS exactly once');
+}
+const themes = THEMES.map((t) => ({ ...t, items: t.items.map((i) => ({ p: bySlug(i.slug), html: i.html })) }));
+
+---
+
+<Base title={title} description={description} breadcrumbs={[{ name: 'About', path: '/about' }]} pageType="AboutPage"
+  footer>
+  <div class="container page" id="first-content">
+    <div class="page-title">
+      <h1 class="title">About Me</h1>
+    </div>
+    <div class="about-grid">
+      <div class="about-label"><p>01&nbsp;/&nbsp;Background</p></div>
+      <div class="about-body">
+        <p>
+          I am Akshat Valse, an undergraduate in the Honors Program at Iowa State University, where I
+          am working toward four degrees: {degreeList}. I started in August 2024 and expect to graduate
+          in May 2028. I am applying to PhD programs in machine learning and applied probability for
+          Fall 2028 admission.
+        </p>
+        <p>
+          In Fall 2026 I am taking four PhD-level courses: measure-theoretic probability, and advanced
+          topics in machine learning, artificial intelligence and high-performance computing. I run
+          jobs with SLURM on Iowa State's Nova cluster, and serve models with SGLang and vLLM on NVIDIA
+          A100 and H200 GPUs. The details are in my <a href="/cv">CV</a>, also available as a
+          <a href={PROFILE.cvPdf}>PDF</a>.
+        </p>
+      </div>
+
+      <div class="about-label"><p>02&nbsp;/&nbsp;Research</p></div>
+      <div class="about-body">
+        <p>
+          My research uses probability and numerical analysis to study how machine learning systems
+          behave. I work on six projects with six advisors in Computer Science and Mathematics at Iowa
+          State, and they fall into three groups.
+        </p>
+        <ul>
+          {themes.map((t) => (
+            <li>
+              <b>{t.name}</b>:{t.items.map(({ p, html }) => (
+                <>{' '}<a class:list={['pill', { white: p.ink === 'light' }]} style={p.pill} href={`/research/${p.slug}`}>{p.short}</a><Fragment set:html={html} /></>
+              ))}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="about-label"><p>03&nbsp;/&nbsp;Flying</p></div>
+      <div class="about-body">
+        <p>
+          When I am not running experiments, I fly. I hold an FAA private pilot certificate with a
+          high-performance endorsement, and I volunteer with
+          <a href="https://www.pilotsnpaws.org/">Pilots N Paws</a> on its animal-rescue flights, as a
+          pilot and as a recruitment advisor.
+        </p>
+      </div>
+
+      <div class="about-label"><p>04&nbsp;/&nbsp;News</p></div>
+      <div class="about-body">
+        <ul>
+          {NEWS.filter((n) => n.date !== 'Fall 2026' && n.date !== '2026').map((n) => (
+            <li><b>{n.date}.</b> <Fragment set:html={n.html} /></li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="about-label"><p>05&nbsp;/&nbsp;Awards</p></div>
+      <div class="about-body">
+        <ul>
+          {AWARDS.map((a) => <li>{a}</li>)}
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</Base>
+
+<style>
+  /* Phones: shikun.io's About keeps "About Me" close to the first label (about 33px);
+     the shared listing spacing would leave about 77px here. */
+  @media screen and (max-width: 769px) {
+    .page-title { padding-bottom: 0; }
+    .about-grid > .about-label:first-child { padding-top: 0; }
+  }
+</style>

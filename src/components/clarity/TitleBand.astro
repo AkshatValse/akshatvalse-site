@@ -10,16 +10,20 @@
  */
 interface Props {
   background?: string;
+  /** Full inline style for the band (overrides background), e.g. a project's theme band from src/data/themes.ts. */
+  bandStyle?: string;
+  /** White title text on a dark band (Clarity's blog-title.white), as shikun.io's dark project pages. */
+  white?: boolean;
   /** Image cover: the foreground over its own 24px-blurred copy, as in Clarity. */
   cover?: { src: string; srcSmall?: string; alt: string; width?: number; height?: number; portrait?: boolean };
 }
-const { background = '#E0E4E6', cover } = Astro.props;
+const { background = '#E0E4E6', bandStyle, white = false, cover } = Astro.props;
 const hasCustomCover = Astro.slots.has('cover');
 const hasCover = !!cover || hasCustomCover;
 ---
 
-<div class="container blog" id="first-content" style={`background-color: ${background};`}>
-  <div class:list={['blog-title', { 'no-cover': !hasCover }]}>
+<div class="container blog" id="first-content" style={bandStyle ?? `background-color: ${background};`}>
+  <div class:list={['blog-title', { 'no-cover': !hasCover, white }]}>
     <div class="blog-intro">
       <div>
         <slot />

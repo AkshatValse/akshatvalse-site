@@ -147,7 +147,6 @@
     };
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const dark = window.matchMedia('(prefers-color-scheme: dark)');
 
     // ---- state -------------------------------------------------------------
     let s = 0.5;
@@ -327,24 +326,21 @@
     }
 
     // ---- drawing -----------------------------------------------------------
-    let colors = readColors();
+    const colors = readColors();
     function readColors() {
       const cs = getComputedStyle(document.documentElement);
       const get = (name: string, fallback: string): string => cs.getPropertyValue(name).trim() || fallback;
-      const isDark = dark.matches;
-      const accent = isDark ? get('--seq-hi', '#fee838') : get('--seq-lo', '#00224e');
+      const accent = get('--seq-lo', '#00224e');
       return {
         ink: get('--ink', '#353535'),
         ink2: get('--ink-2', '#666667'),
         ink3: get('--ink-3', '#9f9fa0'),
         rule: get('--rule-strong', '#c6c6c6'),
         accent,
-        // Histogram bars. Light: a navy tint that reads as a quiet cool gray.
-        // Dark: a translucent yellow on the dark plot turns olive, so use the
-        // neutral midpoint of the colormap instead; the legend swatch matches.
-        bar: isDark ? get('--seq-mid', '#767678') : accent,
-        barAlpha: isDark ? 0.5 : 0.28,
-        swatchAlpha: isDark ? 0.5 : 0.45,
+        // Histogram bars: a navy tint that reads as a quiet cool gray.
+        bar: accent,
+        barAlpha: 0.28,
+        swatchAlpha: 0.45,
       };
     }
 
@@ -585,10 +581,6 @@
       kick();
     });
 
-    dark.addEventListener('change', () => {
-      colors = readColors();
-      draw();
-    });
     reduced.addEventListener('change', () => {
       reset();
       kick();

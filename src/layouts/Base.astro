@@ -2,7 +2,8 @@
 /**
  * Every page is a Clarity page. The template's files are linked unmodified
  * from public/clarity/ exactly as clarity.html links them; src/styles/global.css
- * adds only the site layer (nav, simulations, rounded covers, dark mode).
+ * adds only the site layer (nav, page layouts as on shikun.io, simulations,
+ * rounded covers). Light only, like shikun.io.
  */
 import 'katex/dist/katex.min.css';
 import 'img-comparison-slider/dist/styles.css';
@@ -33,9 +34,15 @@ interface Props {
   };
   /** Keep a page out of search results (404). */
   noindex?: boolean;
+  /** The first content is a dark title band: draw the nav in white over it (laptop widths). */
+  navOnDark?: boolean;
+  /** Show the footer (the sign-off and the Clarity credit). The owner wants it on one page only: About. */
+  footer?: boolean;
+  /** schema.org type of this page (default ProfilePage on /, WebPage elsewhere). */
+  pageType?: string;
 }
 
-const { title, description, ogType = 'website', ogImage, ogImageAlt, jsonLd, toc = false, breadcrumbs, citation, noindex = false } = Astro.props;
+const { title, description, ogType = 'website', ogImage, ogImageAlt, jsonLd, toc = false, breadcrumbs, citation, noindex = false, navOnDark = false, footer = false, pageType } = Astro.props;
 
 /** Under build.format 'file' Astro reports /research.html; strip it once. */
 const path = Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '').replace(/\/$/, '') || '/';
@@ -86,7 +93,7 @@ const graph: Record<string, unknown>[] = [
     inLanguage: 'en',
   },
   {
-    '@type': path === '/' ? 'ProfilePage' : 'WebPage',
+    '@type': pageType ?? (path === '/' ? 'ProfilePage' : 'WebPage'),
     '@id': canonical.href,
     url: canonical.href,
     name: title,
@@ -117,20 +124,19 @@ const ld = { '@context': 'https://schema.org', '@graph': graph };
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#E0E4E6" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#304463" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light only" />
+    <meta name="theme-color" content="#ffffff" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta name="robots" content={noindex ? "noindex, follow" : "index, follow, max-image-preview:large, max-snippet:-1"} />
-    <link rel="canonical" href={canonical.href} />
+    {!noindex && <link rel="canonical" href={canonical.href} />}
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content={PROFILE.name} />
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical.href} />
+    {!noindex && <meta property="og:url" content={canonical.href} />}
     <meta property="og:image" content={ogImg} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -167,7 +173,7 @@ const ld = { '@context': 'https://schema.org', '@graph': graph };
     <!-- The Clarity template, unmodified -->
     <link rel="stylesheet" type="text/css" media="all" href="/clarity/assets/stylesheets/main_free.css" />
     <link rel="stylesheet" type="text/css" media="all" href="/clarity/clarity/clarity.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/foundation.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/foundation.min.css" integrity="sha512-6wXxZrYQz15y9/7Een4KL2jaVIgDue52ESMiNNa5nk2OGBp0e4JhsFiyNXdMI4Oe269AaoqkA3wGI9kL4gBRKQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="/clarity/assets/fontawesome-free-7.2.0-web/css/all.min.css" />
     {toc && <script is:inline src="/clarity/assets/scripts/navbar.js"></script>}
 
@@ -178,45 +184,53 @@ const ld = { '@context': 'https://schema.org', '@graph': graph };
   <body>
     <a class="skip-link" href="#first-content">Skip to content</a>
 
-    <!-- Navigation, as on shikun.io (the site that hosts Clarity) -->
-    <div class="site-nav">
+    <!-- Navigation: menu, social icons, and a small plane that flies to the link you point at; a full-screen menu on phones -->
+    <div class:list={['site-nav', { 'on-dark': navOnDark }]} id="site-nav">
       <div class="container">
         <div class="site-nav-inner">
-          <nav class="menu" aria-label="Primary">
-            {NAV.map((item) => (
-              <a href={item.href} aria-current={section === item.href ? 'page' : undefined}>{item.label}</a>
-            ))}
-          </nav>
-          <div class="social">
-            <a href={PROFILE.github} rel="me" aria-label="GitHub"><Icon name="github" /></a>
-            <a href={PROFILE.linkedin} rel="me" aria-label="LinkedIn"><Icon name="linkedin" /></a>
-            <a href={`mailto:${PROFILE.email}`} aria-label="Email"><Icon name="mail" /></a>
-            <a href={PROFILE.cvPdf} aria-label="CV (PDF)"><Icon name="cv" /></a>
+          <button class="menu-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav-panel">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><line class="l1" x1="4" y1="7" x2="20" y2="7" /><line class="l2" x1="4" y1="12" x2="20" y2="12" /><line class="l3" x1="4" y1="17" x2="20" y2="17" /></svg>
+          </button>
+          <div class="nav-panel" id="nav-panel">
+            <nav class="menu" aria-label="Primary">
+              {NAV.map((item) => (
+                <a href={item.href} aria-current={section === item.href ? 'page' : undefined}>{item.label}</a>
+              ))}
+              <span class="menu-plane" aria-hidden="true"><i class="fa-solid fa-plane"></i></span>
+            </nav>
+            <div class="social">
+              <a href={PROFILE.github} rel="me" aria-label="GitHub"><Icon name="github" /></a>
+              <a href={PROFILE.linkedin} rel="me" aria-label="LinkedIn"><Icon name="linkedin" /></a>
+              <a href={`mailto:${PROFILE.email}`} aria-label="Email"><Icon name="mail" /></a>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <slot />
+    <main id="main">
+      <slot />
+    </main>
 
-    <!-- Footer Page -->
-    <footer>
-      <div class="container">
-        <p>
-          {PROFILE.fullName} · {PROFILE.tagline} · Iowa State University ·
-          <a href={`mailto:${PROFILE.email}`}>{PROFILE.email}</a>
-        </p>
-        <p>
-          This website is built on the <a href="https://shikun.io/projects/clarity">Clarity Template</a>,
-          designed by <a href="https://shikun.io/">Shikun Liu</a>. Every figure is a live simulation
-          checked against an exact reference (<a href="https://github.com/AkshatValse/akshatvalse-site">source and checks</a>).
-        </p>
-      </div>
-    </footer>
+    {footer && (
+      <footer>
+        <div class="container">
+          <p class="signoff"><i class="fa-solid fa-plane-departure" aria-hidden="true"></i>&nbsp; Blue skies, Akshat</p>
+          <p class="credit">
+            This site is built on the <a href="https://shikun.io/projects/clarity">Clarity template</a> by
+            <a href="https://shikun.io/">Shikun Liu</a>, whose own site shaped its layout. Source and
+            checks: <a href="https://github.com/AkshatValse/akshatvalse-site">github.com/AkshatValse/akshatvalse-site</a>.
+          </p>
+        </div>
+      </footer>
+    )}
 
-    <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js"></script>
+    <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js" integrity="sha512-1LdB3V708w6G4QRl7NsVdTr7MDibyRXr9stQZ+EGjEE0ZPMZkA//ir7kCWmFyxdAJNIRXdR/ZeJmCV0boyiCXw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script is:inline src="/clarity/hljs-init.js"></script>
     <script is:inline src="/clarity/assets/scripts/main.js"></script>
+    <script>
+      import '../scripts/site-nav.js';
+    </script>
     <script>
       import 'img-comparison-slider';
     </script>

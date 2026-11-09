@@ -420,7 +420,6 @@ const ids = {
     for (const el of [lamIn, mIn, nIn]) el.addEventListener('input', reset);
 
     new ResizeObserver(() => draw()).observe(canvas);
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => draw());
 
     reset();
     requestAnimationFrame(frame);

@@ -23,22 +23,6 @@
 .now{stroke:var(--ink,#2f3133);stroke-width:1.25;fill:none}
 .bg{fill:var(--ground,#ffffff)}
 .xm{stroke:var(--ground,#ffffff);stroke-width:2;fill:none}
-@media (prefers-color-scheme: dark){
-.ax,.pc{stroke:var(--ink-2,#a1a7ab)}
-.gr{stroke:var(--rule,#2a3135)}
-.bd,.pm,.pm2,.now{stroke:var(--ink,#ebe8e3)}
-.acc{fill:#fee838}.accs{stroke:#fee838}
-.accband{fill:#ffffff;opacity:.07}
-.dot{fill:#304463;stroke:var(--ink-2,#a1a7ab)}
-.t,.ti{fill:var(--ink,#ebe8e3)}
-.ts,.tsi{fill:var(--ink-2,#a1a7ab)}
-.hit{stroke:var(--ink-3,#6f777c)}
-.miss{fill:var(--ink,#ebe8e3)}
-.pend{stroke:var(--ink-2,#a1a7ab)}
-.fut{fill:var(--field,#1f2427)}
-.xm{stroke:var(--ground,#141719)}
-.bg{fill:var(--ground,#141719)}
-}
 </style>
 <rect class="accband" x="415.1" y="28" width="184.9" height="262"/>
 <line class="ax" x1="58" y1="290" x2="600" y2="290"/>

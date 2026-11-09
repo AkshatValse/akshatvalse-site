@@ -23,19 +23,7 @@ const label =
 ---
 
 <div class="hero" data-sim="hero" role="img" aria-label={label}>
-  <picture data-poster>
-    <source
-      media="(prefers-color-scheme: dark)"
-      type="image/avif"
-      sizes="100vw"
-      srcset="/poster/hero-dark-720.avif 720w, /poster/hero-dark-1080.avif 1080w, /poster/hero-dark-1440.avif 1440w"
-    />
-    <source
-      media="(prefers-color-scheme: dark)"
-      type="image/webp"
-      sizes="100vw"
-      srcset="/poster/hero-dark-720.webp 720w, /poster/hero-dark-1080.webp 1080w, /poster/hero-dark-1440.webp 1440w"
-    />
+  <picture data-poster aria-hidden="true">
     <source
       type="image/avif"
       sizes="100vw"

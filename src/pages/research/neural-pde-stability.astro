@@ -11,10 +11,11 @@
  * theorem statements, no form of the stability condition or certificate, no
  * stencil, architecture, activation, PDE or experiment details. Facts are from
  * the verified brief gh/briefs/neural-pde-stability.md and src/pages/cv.astro.
+ * Laid out as shikun.io's project pages: Introduction, the setting,
+ * conservation, what we are doing (with the textbook test), Conclusion.
  */
 import ProjectLayout from '../../layouts/ProjectLayout.astro';
 import Container from '../../components/clarity/Container.astro';
-import NoteRow from '../../components/clarity/NoteRow.astro';
 import Icon from '../../components/clarity/Icon.astro';
 import Tex from '../../components/Tex.astro';
 import PdeConservation from '../../components/widgets/PdeConservation.astro';
@@ -25,8 +26,8 @@ const WRITEUP = 'https://github.com/AkshatValse/research/blob/main/cann-stabilit
  * Figure 2 (brief diagrams D1 and D3): three cells and the flux at the two
  * faces of cell j, learned beside a textbook designed flux. Drawn inline rather
  * than loading public/research/neural-pde-stability/stencil*.svg through <img>,
- * so it follows the page tokens in dark mode (the files' monospace footer also
- * overflows their viewBox when rendered as images). No stencil width for
+ * so it follows the page tokens (the files' monospace footer also overflows
+ * their viewBox when rendered as images). No stencil width for
  * V_{j+1/2} is drawn: it is not public.
  */
 const F2 = {
@@ -79,30 +80,58 @@ const F3 = (() => {
 <ProjectLayout
   slug="neural-pde-stability"
   description="Adapting von Neumann stability analysis to cell-average neural network PDE solvers, which conserve mass for any weights but are not stable by construction."
-  authors="Akshat Valse, with Jue Yan and Mengyuan Yang"
+  authors="by Akshat Valse, Mengyuan Yang, & Jue Yan"
   affiliation="Department of Mathematics, Iowa State University"
-  abstract="A cell-average neural network solver advances a PDE solution one step at a time with a learned flux, and because the same network is evaluated at both faces of a cell, it conserves mass exactly, whatever its weights. Stability is not guaranteed by construction: networks trained identically up to the random seed, with training losses you cannot tell apart, can behave completely differently under long rollouts. The project asks whether you can tell, from a trained network alone and before committing to an expensive simulation, whether its rollout will hold together. We are adapting von Neumann stability analysis to trained solvers of this kind, toward stability conditions on the trained weights. The results are held back until the paper is submitted."
+  abstract="We study the stability of cell-average neural network solvers for PDEs, which advance a solution one step at a time with a learned flux. The same network is evaluated at both faces of every cell, so these solvers conserve mass exactly for any weights, but nothing in the construction guarantees stability: networks differing only in their random seed, with training losses you cannot tell apart, can behave completely differently over long rollouts. We are adapting von Neumann stability analysis to them, toward stability conditions on the trained weights."
   buttons={[{ label: 'Write-up', href: WRITEUP, icon: 'github' }]}
-  info="Manuscript in preparation · NSF D4 NRT · May 2026 – present"
+  info="Manuscript in Preparation"
 >
-  <!-- Introduction -->
+  <!-- Introduction: the problem -->
   <Container first>
     <h1>Introduction</h1>
     <p class="text">
       A neural network can be trained to advance a PDE solution one step at a time, and it can be
       built so that it never creates or destroys mass, whatever its weights are. What that
-      construction does not give you is stability.
+      construction does not give you is stability, and telling a stable network from an unstable
+      one is hard for two reasons:
+    </p>
+    <ol>
+      <li>
+        <p class="text">
+          <b>The training objective:</b> Training minimizes a one-step prediction error against a
+          short reference trajectory, and nothing in that objective says what happens when the
+          scheme is iterated for thousands of steps on states the network never saw.
+          Networks trained identically up to the random seed, with training losses you cannot tell
+          apart, can behave completely differently under long rollouts: some track the reference
+          solution, others develop oscillations that grow until the output is worthless
+          (Figure 1).
+        </p>
+      </li>
+      <li>
+        <p class="text">
+          <b>The usual checks:</b> Since the losses are indistinguishable, the loss cannot tell
+          you which network you have. A short validation rollout is not much
+          better, because the instability may take far longer to show itself than anyone is
+          willing to simulate.
+        </p>
+      </li>
+    </ol>
+    <p class="text">
+      So you are left choosing among minima with no principled basis for the choice. It is the
+      autoregressive-surrogate failure mode, in the simplest setting where the questions of
+      classical numerical analysis can be put to it. The question we ask is:
     </p>
     <p class="text">
-      Networks trained identically up to the random seed, with training losses you cannot tell
-      apart, can behave completely differently over long rollouts: some track the reference
-      solution, others develop oscillations that grow until the output is worthless (Figure 1).
-      The project asks whether you can tell which one you have before paying for the simulation.
+      <b>Can you tell, from a trained network alone and before committing to an expensive
+      simulation, whether its rollout will hold together?</b>
     </p>
     <p class="text">
-      We are adapting von Neumann stability analysis, the classical Fourier-mode test for
-      finite-difference schemes, to these trained solvers, toward stability conditions on the
-      trained weights.
+      Neural PDE solvers are usually assessed by running them: train, roll out, measure the error.
+      That is expensive, and it only certifies the trajectories you actually ran. Anything you can
+      check on the weights themselves is cheap by comparison and does not depend on having picked
+      the right test case. We are adapting von Neumann stability analysis, the
+      classical Fourier-mode test for finite-difference schemes, to these trained solvers, toward
+      stability conditions on the trained weights.
     </p>
     <p class="text">
       <em>This page sets out the problem and what we are doing about it. The results are held
@@ -159,14 +188,13 @@ const F3 = (() => {
     <p class="caption">
       <b>Figure 1.</b> The problem, as a schematic rather than data. Networks trained identically up
       to the random seed reach training losses you cannot tell apart, yet can behave completely
-      differently under long rollouts. The question at the bottom paraphrases the one the project
-      asks.
+      differently under long rollouts. The question at the bottom paraphrases the one we ask.
     </p>
   </Container>
 
   <!-- The setting -->
   <Container>
-    <h1>The setting</h1>
+    <h1>Cell-Average Neural Network Solvers</h1>
     <p class="text">
       A conservative finite-volume scheme advances cell averages by differencing a numerical flux
       across cell interfaces. In a cell-average-based neural network solver that flux is learned
@@ -185,10 +213,10 @@ const F3 = (() => {
       input unspecified, and the toy network in Figure 4 uses a placeholder input.
     </p>
     <p class="text">
-      Figure 2 puts the learned flux in the slot that a designed flux would fill. The designed
-      flux on the right is one textbook example, first-order upwind for linear advection, shown
-      only for comparison: it does not stand for the project's equation or reference scheme,
-      neither of which is public.
+      Figure 2 puts the learned flux in the slot that a designed flux would fill. The designed flux
+      on the right is one textbook example, first-order upwind for linear advection, shown only for
+      comparison: it does not stand for the project's equation or reference scheme, neither of
+      which is public.
     </p>
   </Container>
 
@@ -254,7 +282,7 @@ const F3 = (() => {
 
   <!-- Conservation -->
   <Container>
-    <h1>Conservation, whatever the weights</h1>
+    <h1>Conservation, Whatever the Weights</h1>
     <p class="text">
       Sum (1) over the cells <Tex src={String.raw`j = 1, \dots, M`} /> of the grid:
     </p>
@@ -265,8 +293,8 @@ const F3 = (() => {
       <Tex src="j+1" /> (Figure 3). On a periodic grid
       <Tex src={String.raw`V_{M+1/2} = V_{1/2}`} />, so the bracket vanishes for every
       <Tex src={String.raw`\Theta`} />: the update telescopes, and mass is conserved exactly,
-      whatever the weights turn out to be. The periodic grid is an assumption made on this page
-      for the illustration; the write-up does not say which boundary conditions the project uses.
+      whatever the weights turn out to be. We assume a periodic grid here only for the
+      illustration; the write-up does not say which boundary conditions the project uses.
     </p>
   </Container>
 
@@ -324,9 +352,9 @@ const F3 = (() => {
 
   <Container>
     <p class="text">
-      The argument never uses the values of the weights, so it holds for a network with random,
-      untrained weights just as well. Figure 4 checks this live, in floating point, where the
-      identity can only hold up to rounding: it computes the drift from an exact sum of the cell
+      The argument never uses the values of the weights, so it holds just as well for a network
+      with random, untrained weights. Figure 4 checks this live. In floating point the identity
+      can only hold up to rounding, so the check computes the drift from an exact sum of the cell
       averages, rounded once at the end, and compares it with a rigorous bound on the rounding
       committed by the updates so far.
     </p>
@@ -349,24 +377,8 @@ const F3 = (() => {
     </p>
   </Container>
 
-  <!-- The problem -->
-  <NoteRow>
-    <h1>The problem</h1>
+  <Container>
     <p class="text"><b>Conservation is guaranteed by construction. Stability is not.</b></p>
-    <p class="text">
-      Training minimizes a one-step prediction error against a short reference trajectory. Nothing
-      in that objective says anything about what happens when the scheme is iterated for thousands
-      of steps on states the network never saw during training. In practice, networks trained
-      identically up to the random seed, reaching training losses you cannot tell apart, can behave
-      completely differently under long rollouts. Some track the reference solution. Others
-      develop oscillations that grow until the output is worthless.
-    </p>
-    <p class="text">
-      Since the losses are indistinguishable, the loss cannot tell you which network you have. A
-      short validation rollout is not much better, because the instability may take far longer to
-      show itself than anyone is willing to simulate. So you are left choosing among minima with no
-      principled basis for the choice.
-    </p>
     <div class="table-wrapper">
       <table>
         <thead>
@@ -380,19 +392,11 @@ const F3 = (() => {
         </tbody>
       </table>
     </div>
-    <Fragment slot="note">
-      It is the autoregressive-surrogate failure mode, in the simplest setting where the
-      questions of classical numerical analysis can be put to it.
-    </Fragment>
-  </NoteRow>
+  </Container>
 
-  <!-- The question -->
+  <!-- What we are doing (CV level of detail, no further) -->
   <Container>
-    <h1>The question</h1>
-    <p class="text">
-      <b>Can you tell, from a trained network alone and before committing to an expensive
-      simulation, whether its rollout will hold together?</b>
-    </p>
+    <h1>Adapting von Neumann Analysis</h1>
     <p class="text">
       A trained solver is still a numerical scheme. Its weights are frozen once training ends, so
       what you have in front of you is a fixed, deterministic update rule that happens to have been
@@ -400,33 +404,15 @@ const F3 = (() => {
       question about update rules of that kind. Whether that history carries over to a learned
       flux, and what it says when it does, is what the project is about.
     </p>
-    <h2>Why it matters</h2>
-    <p class="text">
-      Neural PDE solvers are usually assessed by running them: train, roll out, measure the error.
-      That is expensive, and it only certifies the trajectories you actually ran. Anything you can
-      check on the weights themselves is cheap by comparison and does not depend on having picked
-      the right test case.
-    </p>
-    <p class="text">
-      <b>Bears on:</b> learned operators · neural surrogates · rollout stability.
-    </p>
-  </Container>
-
-  <!-- What we are doing (CV level of detail, no further) -->
-  <Container>
-    <h1>What we are doing</h1>
     <p class="text">
       We are adapting von Neumann stability analysis to cell-average neural network solvers of
       the form (1): deriving the linearized amplification factor of the learned time-stepping
       scheme and characterizing how perturbations propagate through it, toward stability
       conditions on the trained weights analogous to those of classical finite-difference
-      methods.
+      methods. I reimplemented the group's solver in Python to enable systematic stability
+      experiments across schemes and step sizes.
     </p>
-    <p class="text">
-      I reimplemented the group's solver in Python to enable systematic stability experiments
-      across schemes and step sizes.
-    </p>
-    <h2>The classical test, for reference</h2>
+    <h2>The Textbook Case, for Reference</h2>
     <p class="text">
       In its textbook form, von Neumann analysis applies to a linear scheme with constant
       coefficients on a periodic grid. One step carries a single Fourier mode
@@ -448,12 +434,23 @@ const F3 = (() => {
     </p>
   </Container>
 
-  <!-- Status -->
+  <!-- Conclusion and status -->
   <Container>
-    <h1>Status</h1>
+    <h1>Conclusion</h1>
     <p class="text">
-      Results are held back pending submission. The code and the results are in a private
-      repository; the problem statement on this page is also on GitHub.
+      We are asking whether you can tell, from a trained cell-average neural
+      network solver alone and before an expensive simulation, whether its rollout will hold
+      together. Conservation comes with the construction, for any weights; stability does not,
+      and neither the training loss nor a short validation rollout settles it. We are adapting von
+      Neumann stability analysis to the question.
+    </p>
+    <p class="text">
+      <b>Bears on:</b> learned operators · neural surrogates · rollout stability.
+    </p>
+    <h2>Status</h2>
+    <p class="text">
+      The code and the results are in a private repository, pending submission; the problem
+      statement on this page is also on GitHub.
     </p>
     <div class="table-wrapper">
       <table>
@@ -486,13 +483,4 @@ const F3 = (() => {
   .diagram .npde-cell { fill: var(--field); stroke: none; }
   .diagram .npde-bar { stroke: var(--ink); stroke-width: 2.5; fill: none; }
   .diagram .npde-m { font-family: 'Charter', serif; font-style: italic; }
-
-  /* Dark mode: `box dark` fills with --ink, which is near-white there, so
-     Figure 1's question became a glaring light slab on the dark band. Fill it
-     with the dark title-band blue and set its text in --ink instead, keeping
-     the emphasis without the glare. Light mode is untouched. */
-  @media (prefers-color-scheme: dark) {
-    .diagram .box.dark { fill: var(--band); stroke: var(--band); }
-    .diagram text.npde-on-dark { fill: var(--ink); }
-  }
 </style>

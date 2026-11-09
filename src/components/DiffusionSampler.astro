@@ -22,9 +22,7 @@ const { n = 2 } = Astro.props;
 
 <figure class="figure">
   <div class="figure-frame sampler" data-sim="diffusion" role="img" aria-label={label}>
-    <picture data-poster>
-      <source srcset="/poster/diffusion-dark.avif" type="image/avif" media="(prefers-color-scheme: dark)" />
-      <source srcset="/poster/diffusion-dark.webp" type="image/webp" media="(prefers-color-scheme: dark)" />
+    <picture data-poster aria-hidden="true">
       <source srcset="/poster/diffusion-light.avif" type="image/avif" />
       <img src="/poster/diffusion-light.webp" width="1200" height="600" alt="" decoding="async" loading="lazy" />
     </picture>

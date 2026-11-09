@@ -15,7 +15,6 @@
 
 import { TrapScene, displayPlan, hitFraction, BIN, PROTOCOL } from '../sim/trap.js';
 import { cividis } from '../sim/cividis.js';
-import { trapRampT } from '../sim/trap-poster.js';
 
 const SIM_SPEED = 180;          // simulated seconds per wall second: the run takes about 48 s
 const HOLD_MS = 4000;           // rest on the finished run before replaying
@@ -63,12 +62,10 @@ export function mountTrap(root) {
 
   function readPalette() {
     const cs = getComputedStyle(root);
-    // --sim-reverse marks the dark scheme; the trap figure keeps its light
-    // orientation there and lifts the low end instead (see trap-poster.js).
-    const dark = cs.getPropertyValue('--sim-reverse').trim() === '1';
+    // No hits = navy, all hits = yellow, the same ramp as the poster.
     const fills = [];
     for (let i = 0; i <= LEVELS; i++) {
-      const [r, g, b] = cividis(trapRampT(i / LEVELS, dark));
+      const [r, g, b] = cividis(i / LEVELS);
       fills.push(`rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`);
     }
     palette = {
@@ -206,10 +203,6 @@ export function mountTrap(root) {
   });
   ro.observe(root);
   for (const p of plots) ro.observe(p);
-
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (started && !disposed) { readPalette(); redraw(); }
-  });
 
   // Reduced motion switched on mid-visit: stop, and leave the finished poster.
   reduced.addEventListener('change', () => { if (reduced.matches) dispose(); });

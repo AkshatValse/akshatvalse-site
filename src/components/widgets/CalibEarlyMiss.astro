@@ -86,13 +86,6 @@ const { id = 'calib-early-miss' } = Astro.props;
   .calib-w :global(.cw-hollow) { fill: var(--ground); stroke: var(--ink-2); stroke-width: 2; }
   .calib-w :global(.cw-bar) { fill: var(--ink-3); }
   .calib-w :global(.cw-exact) { stroke: var(--seq-lo); stroke-width: 1.8; fill: none; stroke-linejoin: round; }
-  @media (prefers-color-scheme: dark) {
-    /* navy band token, not a yellow wash (which reads olive on the dark plot) */
-    .calib-w :global(.cw-band) { fill: var(--band); opacity: 0.5; }
-    .calib-w :global(.cw-acc) { fill: var(--seq-hi); }
-    .calib-w :global(.cw-acc-s) { stroke: var(--seq-hi); }
-    .calib-w :global(.cw-exact) { stroke: var(--seq-hi); }
-  }
 </style>
 
 <script>

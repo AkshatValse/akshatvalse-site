@@ -1,7 +1,8 @@
 ---
 /**
  * One research project per page, as a Clarity blog post:
- *   title page (#first-content: title, authors, affiliation, abstract, link
+ *   title page (#first-content on the project's signature colour, as shikun.io's
+ *   project pages: title, authors, affiliation, abstract, link
  *   buttons, venue line, cover), then the page's own Clarity containers, then
  *   previous / next. Clarity's navbar.js builds the floating table of
  *   contents from the h1/h2 headings inside `container blog main` divs.
@@ -10,7 +11,6 @@ import Base from './Base.astro';
 import TitleBand from '../components/clarity/TitleBand.astro';
 import Container from '../components/clarity/Container.astro';
 import Icon, { type IconName } from '../components/clarity/Icon.astro';
-import ProjectThumb from '../components/ProjectThumb.astro';
 import { bySlug, neighbours } from '../data/projects';
 
 interface LinkButton { label: string; href: string; icon: IconName }
@@ -28,18 +28,15 @@ interface Props {
   buttons?: LinkButton[];
   /** Venue / status line at the foot of the intro, e.g. "arXiv preprint · November 2026". */
   info: string;
-  /** Image cover (rendered as Clarity's foreground + blurred background). */
-  cover?: { src: string; alt: string; width?: number; height?: number };
   ogType?: string;
   jsonLd?: unknown[];
   /** Google Scholar citation tags (paper pages). */
   citation?: { title: string; authors: string[]; date: string; arxivId?: string; pdfUrl?: string; abstractUrl?: string; publisher?: string };
 }
 
-const { slug, pageTitle, description, title, authors, affiliation, abstract, buttons = [], info, cover, ogType = 'article', jsonLd, citation } = Astro.props;
+const { slug, pageTitle, description, title, authors, affiliation, abstract, buttons = [], info, ogType = 'article', jsonLd, citation } = Astro.props;
 const p = bySlug(slug);
 const { prev, next } = neighbours(slug);
-const customCover = Astro.slots.has('cover');
 ---
 
 <Base
@@ -50,8 +47,13 @@ const customCover = Astro.slots.has('cover');
   citation={citation}
   breadcrumbs={[{ name: 'Research', path: '/research' }, { name: p.short, path: `/research/${p.slug}` }]}
   toc
+  navOnDark={p.ink === 'light'}
 >
-  <TitleBand cover={cover}>
+  <TitleBand
+    bandStyle={p.band}
+    white={p.ink === 'light'}
+    cover={{ src: p.art, alt: p.artAlt, width: 1200, height: 1600 }}
+  >
     <h1 class="title">{title ?? p.title}</h1>
     <p class="author">{authors}</p>
     <p class="author" style="padding-top: 0px;">{affiliation}</p>
@@ -60,15 +62,12 @@ const customCover = Astro.slots.has('cover');
       <div class="info">
         <div>
           {buttons.map((b) => (
-            <><a href={b.href} class="button icon" style="background-color: rgba(255, 255, 255, 0.2)">{b.label} <Icon name={b.icon} /></a>&nbsp;&nbsp; </>
+            <><a href={b.href} class="button icon" style={`background-color: ${p.button}`}>{b.label} <Icon name={b.icon} /></a>&nbsp;&nbsp; </>
           ))}
         </div>
       </div>
     )}
     <Fragment slot="info">{info}</Fragment>
-    {customCover
-      ? <Fragment slot="cover"><slot name="cover" /></Fragment>
-      : !cover && <Fragment slot="cover"><ProjectThumb project={p} idSuffix="band" big /></Fragment>}
   </TitleBand>
 
   <slot />

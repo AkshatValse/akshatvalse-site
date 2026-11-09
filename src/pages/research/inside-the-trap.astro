@@ -24,7 +24,7 @@ import { trapFacts } from '../../sim/trap-facts.js';
 import { costs, trapLimits } from '../../sim/modelf.js';
 import { LAMBDA_REF } from '../../sim/trap.js';
 
-/** Numbers about Figure 1 come from the run the live figure replays. */
+/** Numbers about the live figure (Figure 11) come from the run it replays. */
 const f = trapFacts();
 const fmt = (x: number) => Math.round(x).toLocaleString('en-US');
 const allStuck = f.further.stuck === f.further.seeds;
@@ -121,8 +121,8 @@ const d3Stat = nuS.map((v: number, i: number) => `${i ? 'L' : 'M'}${(BX0 + i * b
 
 /*
  * Compare twin: one session's gap against the pool turnover time, on a common
- * log axis (1 s to 1000 s). Drawn with the site's light tokens on white, like
- * the paper's figures; class "fig" inverts it in dark mode the same way.
+ * log axis (1 s to 1000 s). Drawn with the site's tokens on white, like the
+ * paper's figures.
  */
 const lx = (t: number) => 60 + (Math.log10(t) / 3) * 540;
 function twin(kind: 'good' | 'trap'): string {
@@ -166,24 +166,17 @@ const TWIN_TRAP = twin('trap');
 
 <ProjectLayout
   slug="inside-the-trap"
-  title={TITLE}
   description="Why a burst of agent traffic can trap a prefix-cached LLM serving engine at zero cache hits, the renewal law of the trap, and a session cap that rescues it."
-  authors="Akshat Valse and Ali Jannesari"
+  authors="by Akshat Valse & Ali Jannesari"
   affiliation="Department of Computer Science, Iowa State University"
-  abstract="A burst of agent sessions can trap a prefix-cached LLM serving engine so that every turn misses the cache, at a load it served before. In registered tests on two engines, two GPUs and two models, a 200-session burst left the engine at zero hits to the end in all 30 runs; in registered rescue tests, a session cap rescued all 9 established traps it was tried on without shedding a session. For an idealization of the trapped state the paper proves a renewal law whose Perron root fixes the dynamics; for this workload a trapped server completes sessions faster than its all-miss capacity, so in the model a trap's measured throughput overstates the recovery threshold."
+  abstract="We study a failure of prefix-cached LLM serving in which a burst of agent sessions can trap the engine: every turn misses the cache, at a load it served before. We prove a renewal law for an idealization of the trapped state; in that model, for our workload, a trap's measured throughput overstates the recovery threshold. In registered tests, a 200-session burst left the engine at zero hits to the end in all 30 runs, and a session cap rescued all 9 established traps without shedding a session."
   buttons={[
     { label: 'Paper', href: ARXIV, icon: 'paper' },
     { label: 'PDF', href: PDF, icon: 'pdf' },
-    { label: 'Code and data', href: REPO, icon: 'github' },
+    { label: 'Code', href: REPO, icon: 'github' },
     { label: 'BibTeX', href: '#cite', icon: 'quote' },
   ]}
-  info="Preprint · arXiv:2611.08902 [cs.DC] · November 2026"
-  cover={{
-    src: `${A}/fig1-e2-timeseries.webp`,
-    alt: "The paper's Figure 1: in the registered test on SGLang, after a burst of 200 sessions at 1200 s the BURST runs fall to zero prefix-cache hits and stay there with a high, slowly rising backlog, while the NOBURST and CAPPED runs keep hitting.",
-    width: 1400,
-    height: 780,
-  }}
+  info="arXiv 2026 / cs.DC"
   citation={{
     title: TITLE,
     authors: ['Valse, Akshat', 'Jannesari, Ali'],
@@ -211,79 +204,17 @@ const TWIN_TRAP = twin('trap');
     },
   ]}
 >
-  <!-- In brief -->
+
+  <!-- Introduction -->
   <Container first>
-    <h1>In brief</h1>
+    <h1>Introduction</h1>
     <p class="text">
-      An AI agent re-sends its whole, growing conversation every time it calls the model, and serving
-      engines keep that history in GPU memory so the next call is cheap. In the paper's registered
-      tests, a short burst of new agent sessions flipped the engine into a state where that memory
-      stopped paying off: every turn missed the cache for the rest of the run, at a traffic level the
-      same engine had handled before the burst. The paper derives the exact law of that trapped state in
-      an idealized model, shows that in the model trimming traffic to just below what the trapped engine
-      is finishing does not free it, and finds that a session cap rescued all 9 established traps it was
-      tried on without turning sessions away.
-    </p>
-    <div class="table-wrapper">
-      <table>
-        <thead><tr><th>Test</th><th>Result</th><th>Status</th></tr></thead>
-        <tbody>
-          <tr><td>200-session burst, no cap</td><td>engine at zero cache hits to the end in <b>30 of 30</b> runs</td><td>pre-registered (vLLM: registered)</td></tr>
-          <tr><td>Matched runs without the burst</td><td><b>every</b> run stayed good</td><td>same tests</td></tr>
-          <tr><td>Client-side session cap from the start</td><td>trap prevented in <b>30 of 30</b> capped runs</td><td>same tests</td></tr>
-          <tr><td>The registered trap rule</td><td>met at <b>9 of 10</b> rates (the tenth failed on backlog growth); it called 23 of the 30 BURST runs trapped</td><td>same tests</td></tr>
-          <tr><td>Session cap engaged inside an established trap</td><td><b>9 of 9</b> rescued at the same load, no session shed</td><td>pre-registered</td></tr>
-          <tr><td>Model F against every stuck run</td><td>served prompt within 3% in <b>50 of 57</b>; completions above the all-miss capacity in every one</td><td>retrospective, nothing fitted to trap data</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </Container>
-
-  <Container width="extra-extra-large" tone="gray" id="live">
-    <div class="figbar">
-      <span><span class="label">Live.</span> The paper's simulator (SGLang, A100, 300k-token KV pool), running in your browser from a fixed seed.</span>
-      <span class="keys">
-        <span>Color: cache hit fraction <span class="legend-ramp trap"></span></span>
-        <span>Height: sessions, √ scale</span>
-      </span>
-    </div>
-    <TrapFigure />
-    <p class="caption">
-      <b>Figure 1.</b> Both engines get the same agent traffic: {fmt(f.baseSessions)} sessions at
-      {f.mult}× the measured all-miss rate, plus a burst of {f.burstN} at {fmt(f.tB)} s. The top engine
-      is left alone and stays at zero hits to the end. The bottom one gets the paper's rescue cap of
-      {f.cap} sessions at {fmt(f.engage)} s: its hits come back by {fmt(f.hitsBack)} s, drop out again
-      while the gate drains the backlog, and hold from {fmt(f.hitsHold)} s; the cap comes off at
-      {fmt(f.release)} s and the engine stays good. Over the last 3,000 s the trapped engine's turns
-      average {fmt(f.trapped.meanPrompt)} prompt tokens, against {fmt(f.model.Pz)} in model F and
-      {fmt(f.model.Pstat)} in the normal turn mix. The site's checks run the same code against the
-      paper's Python engine and get identical counts.
-    </p>
-  </Container>
-
-  <Container>
-    <p class="text">
-      The run was chosen from {f.selection.candidates} seeds as one in which every burst session
-      finishes before the end, the cap comes off inside the paper's engine range, and the completion
-      rate is closest to model F's. Over {f.further.seeds} further seeds that played no part in the
-      choice, {allStuck ? 'every' : `${f.further.stuck} of ${f.further.seeds}`} engine{allStuck ? '' : 's'} that
-      get{allStuck ? 's' : ''} the burst and no cap {allStuck ? 'is' : 'are'} stuck at zero hits, the
-      trapped engines' served prompts average {f.further.promptOverPz.toFixed(2)} times model F's, and
-      their completion rates average {f.further.completionsOverMiss.toFixed(2)} times the all-miss
-      capacity, from {f.further.completionsMin.toFixed(2)} to {f.further.completionsMax.toFixed(2)}.
-    </p>
-  </Container>
-
-  <!-- The problem -->
-  <Container>
-    <h1>A cache that stops paying off</h1>
-    <p class="text">
-      An LLM agent that calls tools sends sessions of many turns to its serving engine: each prompt is
-      the previous context plus the output of the tool just run. Serving engines such as SGLang and vLLM
+      An LLM agent that calls tools sends sessions of many turns to its serving engine: each prompt is the
+      previous context plus the output of the tool just run. Serving engines such as SGLang and vLLM
       keep the previous turn's KV in a prefix cache, so a follow-up turn whose prefix is still cached
-      prefills only its new tokens. In the paper's workload a hit prefills 551 tokens and a miss about
-      11,100; per session, prefill work with every turn missing is about 16 times that with every
-      follow-up hitting.
+      prefills only its new tokens. In our workload a hit prefills 551 tokens and a miss about 11,100;
+      per session, prefill work with every turn missing is about 16 times that with every follow-up
+      hitting.
     </p>
   </Container>
 
@@ -337,7 +268,7 @@ const TWIN_TRAP = twin('trap');
       <text class="t-sub muted-t" x="20" y="428">Per session, prefill work with every turn missing is about 16 times that with every follow-up hitting.</text>
     </svg>
     <p class="caption">
-      <b>Figure 2.</b> The agent loop and why a hit is cheap. Each turn re-sends the whole context; the
+      <b>Figure 1.</b> The agent loop and why a hit is cheap. Each turn re-sends the whole context; the
       engine keeps the previous turn's KV, so a turn whose prefix is still cached prefills only its new
       tokens. The workload is the paper's: tool times are exponential with mean 5 s, token ids are random
       and sessions share no prefixes.
@@ -347,42 +278,74 @@ const TWIN_TRAP = twin('trap');
   <Container>
     <p class="text">
       The catch is who owns that cache. The cached KV belongs to sessions that sit idle in tool calls,
-      and admitting waiting work evicts it. A burst can tip the engine into a trap: in the paper's words,
-      "every turn misses, the queue grows, the gap between a session's turns grows with it, and the
-      backlog does not drain, at a load the engine served before."
+      and admitting waiting work evicts it. A burst can tip the engine into a trap: every turn misses,
+      the queue grows, the gap between a session's turns grows with it, and the backlog does not drain,
+      at a load the engine served before.
     </p>
     <p class="text">
-      The paper asks what the trapped state <em>is</em>. Quasi-static models read the trap as the
-      falling branch of <Tex src={String.raw`\dot n=\lambda-\mu(n)`} />, with <Tex src={String.raw`\mu(n)`} />
-      the engine's throughput when <Tex src="n" /> sessions are kept running. On the paper's engines,
-      where every trapped turn misses, that reading gets the numbers wrong. Trapped runs complete sessions
-      faster than the all-miss capacity, by up to 2.4 times (one from-empty run at
-      6.5 <Tex src={T.lref} />), and over the 57 stuck runs of the paired-test protocol their backlog
-      grows, on average, at about two thirds of the quasi-static rate.
-      An operator should care: in model F below, for this workload, a cut to just below the throughput
-      measured in an all-miss trap does not clear it.
+      Quasi-static models read the trap as the falling branch of <Tex src={String.raw`\dot n=\lambda-\mu(n)`} />,
+      with <Tex src={String.raw`\mu(n)`} /> the engine's throughput when <Tex src="n" /> sessions are kept
+      running. On our engines, where every trapped turn misses, that reading gets the numbers wrong.
+      Trapped runs complete sessions faster than the all-miss capacity, by up to 2.4 times (one
+      from-empty run at 6.5 <Tex src={T.lref} />), and over the 57 stuck runs of the paired-test protocol
+      their backlog grows, on average, at about two thirds of the quasi-static rate. An operator should
+      care: in model F below, for this workload, a cut to just below the throughput measured in an
+      all-miss trap does not clear it. We therefore ask two questions:
     </p>
+    <ul>
+      <li><p class="text">
+        <b>What is the trapped state?</b> We idealize it as model F, a fluid FIFO server on which every
+        turn misses, and derive its law exactly: along FIFO orbits its cycles obey a linear renewal
+        recursion, and every trapped state converges to a known self-similar regime. In the model, for
+        our workload, a trapped server completes sessions faster than its all-miss capacity: a youth
+        premium.
+      </p></li>
+      <li><p class="text">
+        <b>How does an engine get out?</b> We test two exits on real engines. Refusing arrivals drains
+        the queue by shedding sessions; a session cap restores reuse, and rescued all 9 established traps
+        it was tried on without turning sessions away.
+      </p></li>
+    </ul>
     <p class="text">
-      Lu et al. (<a href="https://arxiv.org/abs/2611.02543">arXiv:2611.02543</a>), who posted first,
-      studied the same collapse concurrently and independently, on prefill–decode disaggregated SGLang.
+      We claim none of the eviction, cold-prefill and queueing mechanisms that agent-serving systems
+      describe; what we add is the law of the state they lead to, and a test of the ways out. Lu et al.
+      (<a href="https://arxiv.org/abs/2611.02543">arXiv:2611.02543</a>), who posted first, studied the
+      same collapse concurrently and independently, on prefill–decode disaggregated SGLang. The table
+      below collects our main results.
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Test</th><th>Result</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>200-session burst, no cap</td><td>engine at zero cache hits to the end in <b>30 of 30</b> runs</td><td>pre-registered (vLLM: registered)</td></tr>
+          <tr><td>Matched runs without the burst</td><td><b>every</b> run stayed good</td><td>same tests</td></tr>
+          <tr><td>Client-side session cap from the start</td><td>trap prevented in <b>30 of 30</b> capped runs</td><td>same tests</td></tr>
+          <tr><td>The registered trap rule</td><td>met at <b>9 of 10</b> rates (the tenth failed on backlog growth); it called 23 of the 30 BURST runs trapped</td><td>same tests</td></tr>
+          <tr><td>Session cap engaged inside an established trap</td><td><b>9 of 9</b> rescued at the same load, no session shed</td><td>pre-registered</td></tr>
+          <tr><td>Model F against every stuck run</td><td>served prompt within 3% in <b>50 of 57</b>; completions above the all-miss capacity in every one</td><td>retrospective, nothing fitted to trap data</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </Container>
+
+  <!-- Model F -->
+  <Container>
+    <h1>Model F: A Renewal Law for the Trapped State</h1>
+    <p class="text">
+      To say what the trapped state is, we idealize it. We first give the intuition for why a trap
+      holds, then the model and what it implies.
     </p>
   </Container>
 
-  <!-- The loop -->
   <Container>
-    <h1>Why the trap holds</h1>
+    <h2>Why the Trap Holds</h2>
     <p class="text">
-      Once the burst has passed, why does the engine not recover? The paper's answer here is a heuristic
+      Once the burst has passed, why does the engine not recover? Our answer here is a heuristic
       consistency argument, not part of the theorem. In a trap the KV pool turns over every
       <Tex src={String.raw`R_M=M/\mathrm{churn}\approx 26`} />–78 s (a turnover scale, not a pathwise
       eviction bound), while the gap between a session's turns keeps growing: in every BURST run of the
       first three registered tests the gap was 4.1–9.7 times <Tex src={T.RM} />, so an idle session's KV
       is overwritten long before it returns. In the good arms the same ratio is 0.010–0.028.
-    </p>
-    <p class="text">
-      The loop itself is not the paper's claim. Of the eviction, cold-prefill and queueing mechanisms
-      that agent-serving systems describe, it says: "We claim none of these mechanisms." What it adds is
-      the law of the state the loop leads to, and a test of the ways out.
     </p>
   </Container>
 
@@ -459,7 +422,7 @@ const TWIN_TRAP = twin('trap');
       <text class="t-sub muted-t" x="775" y="521" text-anchor="middle">CUT-A stayed stuck</text>
     </svg>
     <p class="caption">
-      <b>Figure 3.</b> The trap as a feedback loop, and the ways out. After a burst, admitting waiting
+      <b>Figure 2.</b> The trap as a feedback loop, and the ways out. After a burst, admitting waiting
       work evicts the KV of sessions idling in tool calls; their follow-up turns miss, the
       GPU prefills at the all-miss token rate, and the backlog grows. In model F the gap between a
       session's turns then grows linearly, and on the engine it ran several times the pool turnover
@@ -483,136 +446,21 @@ const TWIN_TRAP = twin('trap');
     <Compare before={TWIN_GOOD} after={TWIN_TRAP} beforeLabel="Good arms: turns hit" afterLabel="BURST arms: zero hits"
       alt="The gap between a session's turns against the pool turnover time, on one log time axis" width={640} height={480} />
     <p class="caption">
-      <b>Figure 4.</b> Good state against trapped state, on one log time axis. Top bar: the gap between a
+      <b>Figure 3.</b> Good state against trapped state, on one log time axis. Top bar: the gap between a
       session's consecutive turns; bottom bar: the pool turnover time <Tex src={T.RM} />. Each bar spans
       the range over arms. Good arms (NOBURST
       and CAPPED): gap 4.9–5.9 s against <Tex src={T.RM} /> 188–505 s. BURST arms: gap 166–516 s against
-      26–78 s. The labels give what each arm measured. They are not a consequence of the ratio: the
-      paper notes that these time scales "do not make an idle time exceeding <Tex src={T.RM} /> a
-      sufficient miss condition here." Ranges over SGLang 300k, SGLang native and vLLM 300k.
-    </p>
-  </Container>
-
-  <!-- The registered tests -->
-  <Container>
-    <h1>Registered tests on real engines</h1>
-    <p class="text">
-      The registered tests drive real engines on Iowa State's Nova cluster, via Slurm, with one NVIDIA
-      A100 80GB PCIe or H200 NVL per engine, under a synthetic agent workload. A session has
-      <Tex src="T" /> turns, and turn <Tex src="k" /> sends a prompt of <Tex src="L_k" /> tokens:
-    </p>
-    <Tex block src={String.raw`T=\min(\mathrm{Geometric}(1/15),60),\qquad L_k=2000+650(k-1)\ \text{tokens},`} />
-    <p class="text">
-      so <Tex src={String.raw`E[T]=14.76`} />. The engines are SGLang 0.5.22 and vLLM 0.32.0, serving
-      Qwen2.5-7B-Instruct or Llama-3.1-8B-Instruct, with the KV pool capped at 300k tokens (150k or 600k in
-      the pool sweep; SGLang's native 955,757 tokens in the native cell). Rates are multiples of each
-      cell's reference rate <Tex src={T.lref} />, the all-miss session rate measured with prefix caching
-      disabled.
-    </p>
-    <p class="text">
-      The main protocol, E2, runs three arms per seed on common arrivals: BURST (200 sessions within 60 s
-      at 1200 s), NOBURST, and CAPPED, with a client-side FIFO session cap from the start. Runs last 8700 s
-      and are judged over <Tex src={String.raw`[5700,8700)`} /> s. BURST counts as trapped if its uncached
-      prefill token rate is within ±15% of the all-miss rate and its backlog slope is above
-      <Tex src={String.raw`0.5(\lambda-\lambda_{\mathrm{ref}})`} />. Each test's rule was committed to git
-      before its jobs were submitted; there is no third-party registry. <em>Pre-registered</em> means the
-      rule was also pushed to GitHub before submission; <em>registered</em> means it was committed before
-      and pushed later.
-    </p>
-    <div class="table-wrapper">
-      <table>
-        <thead><tr><th>Test</th><th>Cell and design</th><th>Status</th><th>Outcome</th></tr></thead>
-        <tbody>
-          <tr><td>E2</td><td>SGLang 0.5.22, Qwen2.5-7B, A100, 300k pool; 1.35 and 1.65 <Tex src={T.lref} />; cap 20</td><td>pre-registered</td><td>Pass at both rates: BURST at zero hits 6/6 (trapped by the rule 5/6), NOBURST good 6/6, CAPPED recovered 6/6</td></tr>
-          <tr><td>native E2</td><td>SGLang's own pool (955,757 tokens); 2.5 and 4.0 <Tex src={T.lref} />; cap 64</td><td>pre-registered</td><td>Pass at both rates: 6/6 trapped, 6/6 good, 6/6 recovered</td></tr>
-          <tr><td>vLLM E2</td><td>vLLM 0.32.0, 300k pool; 1.35 and 1.65 <Tex src={T.lref} />; cap 20</td><td>registered</td><td>Pass at both rates (zero hits 6/6, trapped 4/6); the BURST arm repeats earlier exploratory seeds; the frozen mechanism-check rule was not met (its detector alarmed in 2 CAPPED runs)</td></tr>
-          <tr><td>H200 E2</td><td>H200 NVL, 600k pool; 1.5 and 2.0 <Tex src={T.lref} />; cap 48</td><td>pre-registered</td><td>Pass at both rates: zero hits 6/6 (trapped 5/6)</td></tr>
-          <tr><td>Llama E2</td><td>Llama-3.1-8B, A100, 300k pool; 1.35 and 1.65 <Tex src={T.lref} />; cap 20</td><td>pre-registered</td><td>Pass at 1.65, <b>fail</b> at 1.35 (slope rule met by 1 of 3); all six BURST runs at zero hits</td></tr>
-          <tr><td>BASIN-1, BASIN-2</td><td>300k, 1.65 <Tex src={T.lref} />; bursts of 25 and 100, then 40, 50 and 60</td><td>pre-registered</td><td>25 and 40 good 3/3; 60 and 100 stuck 3/3; 50 stuck in 1 of 3; boundary between 40 and 60 in every seed</td></tr>
-          <tr><td>TOOLSLOW</td><td>300k, 1.35 <Tex src={T.lref} />, no burst; tool calls 10 or 30 s longer for 900 s</td><td>pre-registered</td><td><b>Rule not met</b>: +10 s good 3/3; +30 s trapped 1/3</td></tr>
-          <tr><td>SHED</td><td>300k, 1.35 <Tex src={T.lref} />; arrivals stopped from 1800 s for 600 or 3600 s</td><td>pre-registered</td><td>Pass: 600 s stop stuck 2/2 (56–59 sessions refused); 3600 s stop good 2/2 (355–378 refused)</td></tr>
-          <tr><td>R1, R4 (rescue)</td><td>cap 20 at 1800 s (300k; 1.35 and 1.65 <Tex src={T.lref} />) and 64 at 2100 s (native; 4.0 <Tex src={T.lref} />), inside an established trap</td><td>pre-registered</td><td>Rescued 9/9, no relapse, no session shed; stayed good after release, matching NOBURST</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="caption">
-      <b>Table 1.</b> The registered tests, condensed from the paper's Table 1. Rates are nominal
-      multiples of each cell's <Tex src={T.lref} />. Seeds 0–2 are shared across tests, so counts across
-      tests are descriptive. Across the five E2 tests, 5 + 6 + 4 + 5 + 3 = 23 BURST runs were trapped by the
-      rule.
-    </p>
-  </Container>
-
-  <Container width="extra-large" tone="gray">
-    <Slides count={2} labels={['300k-token pool (paper Fig. 1)', 'Native pool (paper Fig. 7)']}>
-      <div class="slide-content">
-        <img class="fig" src={`${A}/fig1-e2-timeseries.svg`} width="672" height="374" loading="lazy" decoding="async"
-          alt="Registered test E2 on SGLang with a 300k-token pool at 1.35 and 1.65 times the reference rate: top, the prefix-cache hit fraction; bottom, sessions in system on a log scale. After the burst at 1200 s, the three BURST runs fall to zero hits and stay there to 8700 s while their backlog stays high; NOBURST and CAPPED runs keep hitting." />
-      </div>
-      <div class="slide-content">
-        <img class="fig" src={`${A}/fig7-native-e2-timeseries.svg`} width="672" height="346" loading="lazy" decoding="async"
-          alt="The same registered test with SGLang's native pool at 2.5 and 4.0 times the reference rate: after the burst the BURST runs fall to zero hits and their backlog grows to the end of the run; NOBURST and CAPPED runs keep hitting." />
-      </div>
-    </Slides>
-    <p class="caption">
-      <b>Figure 5.</b> The stampede on SGLang. First panel (paper Fig. 1): the registered paired test E2 at
-      1.35 and 1.65 <Tex src={T.lref} />, with <Tex src={String.raw`\lambda_{\mathrm{ref}}=0.0715`} /> sessions/s,
-      one A100 and a 300k-token pool; a burst of 200 sessions at 1200 s; shaded, the registered evaluation
-      window. After the burst, BURST misses every turn to the end of the run, while NOBURST and CAPPED stay
-      good. Second panel (paper Fig. 7): the same test with SGLang's native pool at 2.5 and 4.0
-      <Tex src={T.lref} />, <Tex src={String.raw`\lambda_{\mathrm{ref}}=0.0718`} /> sessions/s, cap 64. Use
-      the dots to switch.
+      26–78 s. The labels give what each arm measured. They are not a consequence of the ratio: these
+      time scales do not make an idle time exceeding <Tex src={T.RM} /> a sufficient miss condition
+      here. Ranges over SGLang 300k, SGLang native and vLLM 300k.
     </p>
   </Container>
 
   <Container>
+    <h2>A Renewal Recursion along FIFO Orbits</h2>
     <p class="text">
-      Once formed, the trap held. Over 50 trapped runs before the blind tests, about 100 trapped hours, no
-      300 s window after the trap formed reached a follow-up hit fraction of 0.5; the highest was 0.16
-      (a post hoc summary). The registered dose response places the basin boundary between bursts of 40
-      and 60 sessions in every seed, with a burst of 50 trapping 1 of 3. Not every registered rule was
-      met: lengthening every tool call that starts in <Tex src={String.raw`[1200,2100)`} /> s by 30 s
-      trapped 1 of 3 runs, so that rule (traps in 2 of 3) failed, and at the tenth rate, Llama-3.1-8B at
-      the lower rate, the trap rule failed on its backlog-growth condition.
-    </p>
-    <p class="text">
-      The quasi-static baseline rests on the engine's closed-population throughput curve
-      <Tex src={String.raw`\mu(n)`} />, the completion rate with <Tex src="n" /> sessions kept running,
-      which has a cliff. The 300k-token pool limit did not create that cliff; it moved it. On an H200 at
-      the 300k pool the window between the all-miss capacity and the curve's peak narrows: the all-miss
-      capacity rose 2.71-fold and the peak of
-      <Tex src={String.raw`\mu(n)`} /> only 1.63-fold. A first-principles model of the curve put its 0.5-hit
-      crossing off by 1.5 sessions on average (Lu et al.'s curve, read post hoc: 4.1); five of its cells
-      were blind (three in time, two by access only), one of them partly seen.
-    </p>
-  </Container>
-
-  <Container width="large" tone="gray">
-    <Selector label="Throughput curve" trail="against the engine's μ(n)."
-      alt="Closed-population throughput curve μ(n) measured on the real engine, compared with a model"
-      options={[
-        { value: 'sim', label: 'the calibrated simulator', src: `${A}/fig5-thrashing-curve.svg`, width: 672, height: 437 },
-        { value: 'fp', label: 'the first-principles model', src: `${A}/fig8-theory-curves.svg`, width: 672, height: 235 },
-      ]} />
-    <p class="caption">
-      <b>Figure 6.</b> Closed-population throughput curves. Paper Fig. 5: real engine (black filled markers, white in dark mode; one
-      run per <Tex src="n" />) against the simulator (gray, open, dashed), for SGLang with a 300k-token pool,
-      SGLang with its native pool and vLLM with a 300k-token pool, with the registered caps; the middle
-      and right panels also show the simulator's blind predictions; bottom row, the hit fraction. Paper
-      Fig. 8: first-principles predictions of <Tex src={String.raw`\mu(n)`} />
-      (solid: fluid; dashed: with the demand-fluctuation layer H1, labelled F1 in the legend) against
-      measured points for four cells. The first three panels are in sample; the H200 panel is out of
-      sample.
-    </p>
-  </Container>
-
-  <!-- Model F -->
-  <Container>
-    <h1>Model F: the trapped state, exactly</h1>
-    <p class="text">
-      To say what the trapped state is, the paper idealizes it. Model F is a fluid FIFO server on which
-      every turn misses. Turn <Tex src="k" /> costs <Tex src={String.raw`c_k>0`} /> GPU seconds when it
-      misses, and <Tex src={String.raw`G_k=P(T\ge k)`} />. The all-miss capacity and the load are
+      Model F is a fluid FIFO server on which every turn misses. Turn <Tex src="k" /> costs
+      <Tex src={String.raw`c_k>0`} /> GPU seconds when it misses, and <Tex src={String.raw`G_k=P(T\ge k)`} />. The all-miss capacity and the load are
     </p>
     <Tex block src={String.raw`\lambda_{\mathrm{miss}}=\Big(\sum_k c_kG_k\Big)^{-1},\qquad \rho=\lambda/\lambda_{\mathrm{miss}}.`} />
     <p class="text">
@@ -625,7 +473,6 @@ const TWIN_TRAP = twin('trap');
       consecutive turns. A FIFO orbit is <Tex src={String.raw`u_{n+1}=f(u_n)`} />, with cycles
       <Tex src={String.raw`\Delta_n=u_{n+1}-u_n`} />.
     </p>
-    <h2>A renewal recursion along FIFO orbits</h2>
     <p class="text">
       FIFO maps the requests that join during one cycle onto the requests that complete during the next,
       and the turn-<Tex src="k" /> mass joining there is <Tex src={String.raw`\lambda G_k\Delta_{n-k}`} />.
@@ -639,7 +486,7 @@ const TWIN_TRAP = twin('trap');
       <Tex src={String.raw`\rho-1`} /> while the server is busy. Its growth rate is a Perron root:
     </p>
     <Tex block src={String.raw`\lambda\sum_k c_kG_kz^{-k}=1,\qquad z>1\iff\rho>1.`} />
-    <h2>Where every trapped state goes</h2>
+    <h2>Where Every Trapped State Goes</h2>
     <p class="text">
       Theorem 1(a): every trapped state converges to a known self-similar regime, in which
     </p>
@@ -737,27 +584,27 @@ const TWIN_TRAP = twin('trap');
       <text class="t-it muted-t" x="20" y="466">Model F is an idealization: it leaves out concurrency, preemption and the transitions into and out of the trap.</text>
     </svg>
     <p class="caption">
-      <b>Figure 7.</b> Model F as a renewal cycle. Left: along a FIFO orbit, a request joining at
+      <b>Figure 4.</b> Model F as a renewal cycle. Left: along a FIFO orbit, a request joining at
       <Tex src="u_n" /> completes at <Tex src={String.raw`u_{n+1}=f(u_n)`} />; what joins during one cycle
       completes during the next, so the cycle lengths obey a linear recursion. Right: that recursion is a
       Lotka–Leslie renewal equation, with arrivals as births, <Tex src="G_k" /> as survival,
       <Tex src={String.raw`\lambda c_kG_k`} /> as net maternity and the tilted mix as the stable age
-      distribution. The bars are computed for the standard workload at 1.65 <Tex src={T.lref} />, from the
+      distribution. The bars are computed for the standard workload at 1.65 <Tex src={T.lref} />, from this
       site's copy of the paper's cost model for the 300k cell.
     </p>
   </Container>
 
   <Container>
-    <h1>The youth premium</h1>
+    <h2>The Youth Premium</h2>
     <p class="text">
-      In model F, because the turns served are young, and in this workload young turns are cheap, a
-      trapped server completes sessions faster than its all-miss capacity: a youth premium. Theorem 2 splits it into a
-      turn-count factor <Tex src="H" /> and a cost-growth factor <Tex src={String.raw`\Gamma`} />:
+      In model F the turns served are young, and in our workload young turns are cheap, so a trapped
+      server completes sessions faster than its all-miss capacity: a youth premium. Theorem 2 splits it
+      into a turn-count factor <Tex src="H" /> and a cost-growth factor <Tex src={String.raw`\Gamma`} />:
     </p>
     <Tex block src={String.raw`\frac{D}{\lambda_{\mathrm{miss}}}=H(z)\,\Gamma(z),\qquad H(z)=\frac{E[T]\,E[z^{-T}]}{\sum_kG_kz^{-k}},\qquad \Gamma(z)=\frac{E_\nu[c]}{E_{\nu^z}[c]}.`} />
     <p class="text">
       Near threshold, <Tex src={String.raw`D/\lambda_{\mathrm{miss}}-1=(\rho-1)\big(1-E[T]/\bar k_c\big)+O((\rho-1)^2)`} />.
-      For the paper's workload <Tex src={String.raw`E[T]/\bar k_c`} /> lies in 0.60–0.62, and the premium is
+      For our workload <Tex src={String.raw`E[T]/\bar k_c`} /> lies in 0.60–0.62, and the premium is
       positive at every load checked: proved by Theorem 2's monotonicity for
       <Tex src={String.raw`\rho\ge1.04`} />; below that it rests on a floating-point bracket and a
       first-order expansion. The premium is not automatic. With slowly growing costs
@@ -774,7 +621,7 @@ const TWIN_TRAP = twin('trap');
       threshold. Remark 1 adds that <Tex src="z" /> solves <Tex src={String.raw`\rho\sum_k\omega_kz^{-k}=1`} />
       with <Tex src={String.raw`\omega_k=c_kG_k/\sum_jc_jG_j`} />, so the trapped composition and
       <Tex src={String.raw`D/\lambda_{\mathrm{miss}}`} /> are unchanged by a uniform GPU speed-up at equal
-      <Tex src={String.raw`\rho`} />; the paper flags this as not a general hardware claim.
+      <Tex src={String.raw`\rho`} />; this is not a general hardware claim.
     </p>
     <p class="text">
       The costs come from the paper's calibrated prefill model,
@@ -791,7 +638,7 @@ const TWIN_TRAP = twin('trap');
   <Container width="extra-large" tone="gray">
     <TrapPerronCalculator />
     <p class="caption">
-      <b>Figure 8.</b> Model F, computed in your browser. For the chosen workload and load the calculator
+      <b>Figure 5.</b> Model F, computed in your browser. For the chosen workload and load the calculator
       solves the Perron equation by bisection and evaluates Theorem 1(a) and Theorem 2. Left, the turns a
       trapped server serves (bars) against the stationary mix (line); right, <Tex src={String.raw`D/\lambda_{\mathrm{miss}}`} />
       across loads. The paper does not print <Tex src={String.raw`\delta`} />: for the standard workload the
@@ -805,11 +652,138 @@ const TWIN_TRAP = twin('trap');
     </p>
   </Container>
 
-  <!-- Retrospective -->
+  <!-- Experiments -->
   <Container>
-    <h1>The theory against 57 stuck runs</h1>
+    <h1>Experiments</h1>
     <p class="text">
-      The theory was derived after the stuck runs were read, so this comparison is retrospective. No
+      The registered tests on real engines come first, then the theory against every stuck run, a
+      blind test, and the two ways out.
+    </p>
+  </Container>
+
+  <Container>
+    <h2>Setup and Baselines</h2>
+    <p class="text">
+      The registered tests drive real engines on Iowa State's Nova cluster, via Slurm, with one NVIDIA
+      A100 80GB PCIe or H200 NVL per engine, under a synthetic agent workload. A session has
+      <Tex src="T" /> turns, and turn <Tex src="k" /> sends a prompt of <Tex src="L_k" /> tokens:
+    </p>
+    <Tex block src={String.raw`T=\min(\mathrm{Geometric}(1/15),60),\qquad L_k=2000+650(k-1)\ \text{tokens},`} />
+    <p class="text">
+      so <Tex src={String.raw`E[T]=14.76`} />. The engines are SGLang 0.5.22 and vLLM 0.32.0, serving
+      Qwen2.5-7B-Instruct or Llama-3.1-8B-Instruct, with the KV pool capped at 300k tokens (150k or 600k in
+      the pool sweep; SGLang's native 955,757 tokens in the native cell). Rates are multiples of each
+      cell's reference rate <Tex src={T.lref} />, the all-miss session rate measured with prefix caching
+      disabled.
+    </p>
+    <p class="text">
+      The main protocol, E2, runs three arms per seed on common arrivals: BURST (200 sessions within 60 s
+      at 1200 s), NOBURST, and CAPPED, with a client-side FIFO session cap from the start. Runs last 8700 s
+      and are judged over <Tex src={String.raw`[5700,8700)`} /> s. BURST counts as trapped if its uncached
+      prefill token rate is within ±15% of the all-miss rate and its backlog slope is above
+      <Tex src={String.raw`0.5(\lambda-\lambda_{\mathrm{ref}})`} />. Each test's rule was committed to git
+      before its jobs were submitted; there is no third-party registry. <em>Pre-registered</em> means the
+      rule was also pushed to GitHub before submission; <em>registered</em> means it was committed before
+      and pushed later.
+    </p>
+    <p class="text">
+      The quasi-static baseline rests on the engine's closed-population throughput curve
+      <Tex src={String.raw`\mu(n)`} />, the completion rate with <Tex src="n" /> sessions kept running,
+      which has a cliff. The 300k-token pool limit did not create that cliff; it moved it. On an H200 at
+      the 300k pool the window between the all-miss capacity and the curve's peak narrows: the all-miss
+      capacity rose 2.71-fold and the peak of
+      <Tex src={String.raw`\mu(n)`} /> only 1.63-fold. A first-principles model of the curve put its 0.5-hit
+      crossing off by 1.5 sessions on average (Lu et al.'s curve, read post hoc: 4.1); five of its cells
+      were blind (three in time, two by access only), one of them partly seen.
+    </p>
+  </Container>
+
+  <Container width="large" tone="gray">
+    <Selector label="Throughput curve" trail="against the engine's μ(n)."
+      alt="Closed-population throughput curve μ(n) measured on the real engine, compared with a model"
+      options={[
+        { value: 'sim', label: 'the calibrated simulator', src: `${A}/fig5-thrashing-curve.svg`, width: 672, height: 437 },
+        { value: 'fp', label: 'the first-principles model', src: `${A}/fig8-theory-curves.svg`, width: 672, height: 235 },
+      ]} />
+    <p class="caption">
+      <b>Figure 6.</b> Closed-population throughput curves. Paper Fig. 5: real engine (black filled markers; one
+      run per <Tex src="n" />) against the simulator (gray, open, dashed), for SGLang with a 300k-token pool,
+      SGLang with its native pool and vLLM with a 300k-token pool, with the registered caps; the middle
+      and right panels also show the simulator's blind predictions; bottom row, the hit fraction. Paper
+      Fig. 8: first-principles predictions of <Tex src={String.raw`\mu(n)`} />
+      (solid: fluid; dashed: with the demand-fluctuation layer H1, labelled F1 in the legend) against
+      measured points for four cells. The first three panels are in sample; the H200 panel is out of
+      sample.
+    </p>
+  </Container>
+
+  <Container>
+    <h2>Registered Results</h2>
+    <p class="text">
+      Table 1 lists the registered tests and their outcomes, and Figure 7 shows the trap on SGLang.
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Test</th><th>Cell and design</th><th>Status</th><th>Outcome</th></tr></thead>
+        <tbody>
+          <tr><td>E2</td><td>SGLang 0.5.22, Qwen2.5-7B, A100, 300k pool; 1.35 and 1.65 <Tex src={T.lref} />; cap 20</td><td>pre-registered</td><td>Pass at both rates: BURST at zero hits 6/6 (trapped by the rule 5/6), NOBURST good 6/6, CAPPED recovered 6/6</td></tr>
+          <tr><td>native E2</td><td>SGLang's own pool (955,757 tokens); 2.5 and 4.0 <Tex src={T.lref} />; cap 64</td><td>pre-registered</td><td>Pass at both rates: 6/6 trapped, 6/6 good, 6/6 recovered</td></tr>
+          <tr><td>vLLM E2</td><td>vLLM 0.32.0, 300k pool; 1.35 and 1.65 <Tex src={T.lref} />; cap 20</td><td>registered</td><td>Pass at both rates (zero hits 6/6, trapped 4/6); the BURST arm repeats earlier exploratory seeds; the frozen mechanism-check rule was not met (its detector alarmed in 2 CAPPED runs)</td></tr>
+          <tr><td>H200 E2</td><td>H200 NVL, 600k pool; 1.5 and 2.0 <Tex src={T.lref} />; cap 48</td><td>pre-registered</td><td>Pass at both rates: zero hits 6/6 (trapped 5/6)</td></tr>
+          <tr><td>Llama E2</td><td>Llama-3.1-8B, A100, 300k pool; 1.35 and 1.65 <Tex src={T.lref} />; cap 20</td><td>pre-registered</td><td>Pass at 1.65, <b>fail</b> at 1.35 (slope rule met by 1 of 3); all six BURST runs at zero hits</td></tr>
+          <tr><td>BASIN-1, BASIN-2</td><td>300k, 1.65 <Tex src={T.lref} />; bursts of 25 and 100, then 40, 50 and 60</td><td>pre-registered</td><td>25 and 40 good 3/3; 60 and 100 stuck 3/3; 50 stuck in 1 of 3; boundary between 40 and 60 in every seed</td></tr>
+          <tr><td>TOOLSLOW</td><td>300k, 1.35 <Tex src={T.lref} />, no burst; tool calls 10 or 30 s longer for 900 s</td><td>pre-registered</td><td><b>Rule not met</b>: +10 s good 3/3; +30 s trapped 1/3</td></tr>
+          <tr><td>SHED</td><td>300k, 1.35 <Tex src={T.lref} />; arrivals stopped from 1800 s for 600 or 3600 s</td><td>pre-registered</td><td>Pass: 600 s stop stuck 2/2 (56–59 sessions refused); 3600 s stop good 2/2 (355–378 refused)</td></tr>
+          <tr><td>R1, R4 (rescue)</td><td>cap 20 at 1800 s (300k; 1.35 and 1.65 <Tex src={T.lref} />) and 64 at 2100 s (native; 4.0 <Tex src={T.lref} />), inside an established trap</td><td>pre-registered</td><td>Rescued 9/9, no relapse, no session shed; stayed good after release, matching NOBURST</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">
+      <b>Table 1.</b> The registered tests, condensed from the paper's Table 1. Rates are nominal
+      multiples of each cell's <Tex src={T.lref} />. Seeds 0–2 are shared across tests, so counts across
+      tests are descriptive. Across the five E2 tests, 5 + 6 + 4 + 5 + 3 = 23 BURST runs were trapped by the
+      rule.
+    </p>
+  </Container>
+
+  <Container width="extra-large" tone="gray">
+    <Slides count={2} labels={['300k-token pool (paper Fig. 1)', 'Native pool (paper Fig. 7)']}>
+      <div class="slide-content">
+        <img class="fig" src={`${A}/fig1-e2-timeseries.svg`} width="672" height="374" loading="lazy" decoding="async"
+          alt="Registered test E2 on SGLang with a 300k-token pool at 1.35 and 1.65 times the reference rate: top, the prefix-cache hit fraction; bottom, sessions in system on a log scale. After the burst at 1200 s, the three BURST runs fall to zero hits and stay there to 8700 s while their backlog stays high; NOBURST and CAPPED runs keep hitting." />
+      </div>
+      <div class="slide-content">
+        <img class="fig" src={`${A}/fig7-native-e2-timeseries.svg`} width="672" height="346" loading="lazy" decoding="async"
+          alt="The same registered test with SGLang's native pool at 2.5 and 4.0 times the reference rate: after the burst the BURST runs fall to zero hits and their backlog grows to the end of the run; NOBURST and CAPPED runs keep hitting." />
+      </div>
+    </Slides>
+    <p class="caption">
+      <b>Figure 7.</b> The stampede on SGLang. First panel (paper Fig. 1): the registered paired test E2 at
+      1.35 and 1.65 <Tex src={T.lref} />, with <Tex src={String.raw`\lambda_{\mathrm{ref}}=0.0715`} /> sessions/s,
+      one A100 and a 300k-token pool; a burst of 200 sessions at 1200 s; shaded, the registered evaluation
+      window. After the burst, BURST misses every turn to the end of the run, while NOBURST and CAPPED stay
+      good. Second panel (paper Fig. 7): the same test with SGLang's native pool at 2.5 and 4.0
+      <Tex src={T.lref} />, <Tex src={String.raw`\lambda_{\mathrm{ref}}=0.0718`} /> sessions/s, cap 64. Use
+      the dots to switch.
+    </p>
+  </Container>
+
+  <Container>
+    <p class="text">
+      Once formed, the trap held. Over 50 trapped runs before the blind tests, about 100 trapped hours, no
+      300 s window after the trap formed reached a follow-up hit fraction of 0.5; the highest was 0.16
+      (a post hoc summary). The registered dose response places the basin boundary between bursts of 40
+      and 60 sessions in every seed, with a burst of 50 trapping 1 of 3. Not every registered rule was
+      met: lengthening every tool call that starts in <Tex src={String.raw`[1200,2100)`} /> s by 30 s
+      trapped 1 of 3 runs, so that rule (traps in 2 of 3) failed, and at the tenth rate, Llama-3.1-8B at
+      the lower rate, the trap rule failed on its backlog-growth condition.
+    </p>
+  </Container>
+
+  <Container>
+    <h2>The Theory against 57 Stuck Runs</h2>
+    <p class="text">
+      We derived the theory after the stuck runs were read, so this comparison is retrospective. No
       parameter is fitted to any trap measurement, and model F's capacity is within 4% of the all-miss
       capacity measured on the engine with prefix caching disabled and 32 sessions kept running. Across
       the 57 stuck runs:
@@ -859,7 +833,7 @@ const TWIN_TRAP = twin('trap');
       </div>
     </div>
     <p class="caption">
-      <b>Figure 9.</b> Theorem 1 against every stuck run of the workload (paper Fig. 2), against
+      <b>Figure 8.</b> Theorem 1 against every stuck run of the workload (paper Fig. 2), against
       <Tex src={String.raw`\rho=\lambda/\lambda_{\mathrm{miss}}`} />. Blue lines: model F for 8 cells; orange
       dots: 57 stuck E2-protocol runs; hollow green diamonds: 13 from-empty runs; dashed gray: the
       quasi-static reading. No parameter is fitted to any trap measurement. Retrospective: the theory was
@@ -896,11 +870,10 @@ const TWIN_TRAP = twin('trap');
     </p>
   </Container>
 
-  <!-- Blind tests -->
   <Container>
-    <h1>Blind tests</h1>
+    <h2>Blind Tests</h2>
     <p class="text">
-      The theory was then tested blind in outcome: the predictions were frozen before the runs they score
+      We then tested the theory blind in outcome: the predictions were frozen before the runs they score
       existed. Each test carries its status from the paper's evidence ledger, with its caveats.
     </p>
     <ul>
@@ -932,12 +905,12 @@ const TWIN_TRAP = twin('trap');
       0.771 (<Tex src="H=0.699" />, <Tex src={String.raw`\Gamma=1.103`} />), below 1. Outcome: PASS at both
       rates, RENEWAL in 3 of 3 seeds each. In the last part of each run, the MIRROR runs at
       1.65 <Tex src={T.lref} /> completed 0.50–0.61 <Tex src={T.lref} />, below the measured capacity of
-      1.06 <Tex src={T.lref} /> (Figure 10a). That is a transient lull: as the paper notes, MIRROR measures
-      it, not the asymptotic <Tex src="D" /> (0.81 <Tex src={T.lref} /> in model F), and rejects only the
+      1.06 <Tex src={T.lref} /> (Figure 9a). That is a transient lull: MIRROR measures it, not the
+      asymptotic <Tex src="D" /> (0.81 <Tex src={T.lref} /> in model F), and rejects only the
       throughput-curve readings.
     </p>
     <Fragment slot="note">
-      Model F's dashed lines in Figure 10 were frozen under tag <code>r16-mirror-reg</code> before any
+      Model F's dashed lines in Figure 9 were frozen under tag <code>r16-mirror-reg</code> before any
       MIRROR job. Select MIRROR in the calculator above to recompute 0.771 (it gives 0.7705, within the
       rounding of the stated capacity 1.046 <Tex src={T.lref} />).
     </Fragment>
@@ -947,19 +920,17 @@ const TWIN_TRAP = twin('trap');
     <img class="fig" src={`${A}/fig4-mirror.svg`} width="634" height="226" loading="lazy" decoding="async"
       alt="MIRROR at 1.65 times the reference rate: (a) completions per 300 s bin after the burst and (b) sessions in the system, for the standard workload's three traps in gray, model F's frozen prediction for the step-capped workload as blue dashed lines, and the measured MIRROR runs in orange, which follow the frozen prediction." />
     <p class="caption">
-      <b>Figure 10.</b> MIRROR at 1.65 <Tex src={T.lref} /> (paper Fig. 4): the standard workload's three
+      <b>Figure 9.</b> MIRROR at 1.65 <Tex src={T.lref} /> (paper Fig. 4): the standard workload's three
       committed traps (gray), model F's frozen predictions for the step-capped workload (blue, dashed) and
       the MIRROR runs (orange). (a) Completions per 300 s bin; (b) sessions in the system.
     </p>
   </Container>
 
-  <!-- Ways out -->
   <Container>
-    <h1>Two ways out</h1>
+    <h2>Two Ways Out</h2>
     <p class="text">
       In model F, Corollary 3 says a cut in arrivals must land below <Tex src={T.lmiss} /> to drain the
-      queue, and the paper illustrates
-      it in the all-miss fluid for the 300k cell at 1.65 <Tex src={T.lref} />, where
+      queue. We illustrate it in the all-miss fluid for the 300k cell at 1.65 <Tex src={T.lref} />, where
       <Tex src={String.raw`D=1.223\,\lambda_{\mathrm{miss}}`} />, cutting at 5000 s with a backlog of 251.
       This is model output, not engine data.
     </p>
@@ -982,9 +953,9 @@ const TWIN_TRAP = twin('trap');
       period that diverges as the cut approaches <Tex src={T.lmiss} />.
     </p>
     <p class="text">
-      On the engine the paper tested two exits. Refusing arrivals works by shedding: a 600 s stop refused
-      56–59 sessions and left both runs stuck; a 3600 s stop refused 355–378 and left both good. A session
-      cap restores reuse instead. Engaged inside an established trap, it holds the admitted sessions below
+      On the engine we tested two exits. Refusing arrivals works by shedding: a 600 s stop refused 56–59
+      sessions and left both runs stuck; a 3600 s stop refused 355–378 and left both good. A session cap
+      restores reuse instead. Engaged inside an established trap, it holds the admitted sessions below
       the all-miss onset <Tex src={T.nb} />, so their turns hit again, and the excess waits at the client.
     </p>
   </Container>
@@ -1007,7 +978,7 @@ const TWIN_TRAP = twin('trap');
     <img class="fig" src={`${A}/fig3-rescue.svg`} width="672" height="360" loading="lazy" decoding="async"
       alt="Rescue tests R1 and R4, seed 0 of each cell: the rescue run's follow-up hit fraction falls to zero in the trap, recovers after the cap is engaged, and stays at full hits after the cap is removed; the never-capped BURST control stays at zero hits with a growing backlog, and the NOBURST control stays good." />
     <p class="caption">
-      <b>Figure 11.</b> Trap, rescue, release and persistence (paper Fig. 3): the registered rescue tests
+      <b>Figure 10.</b> Trap, rescue, release and persistence (paper Fig. 3): the registered rescue tests
       R1 (300k pool; 1.35 and 1.65 <Tex src={T.lref} />, cap 20 from 1800 s) and R4 (native pool;
       4.0 <Tex src={T.lref} />, cap 64 from 2100 s), seed 0 of each cell. Top, follow-up hit fraction;
       bottom, outstanding work, for the rescue run and the same-seed BURST and NOBURST runs. Green shading:
@@ -1038,9 +1009,65 @@ const TWIN_TRAP = twin('trap');
     </p>
   </Container>
 
-  <!-- Limits -->
+  <!-- Visualisation -->
   <Container>
-    <h1>Limits</h1>
+    <h1>Visualizing the Trap and the Rescue</h1>
+    <p class="text">
+      To see a trap form and a session cap rescue it, we run the paper's simulator on two copies of the
+      same engine, side by side.
+    </p>
+  </Container>
+
+  <Container width="extra-extra-large" tone="gray" id="live">
+    <div class="figbar">
+      <span><span class="label">Live.</span> The paper's simulator (SGLang, A100, 300k-token KV pool), running in your browser from a fixed seed.</span>
+      <span class="keys">
+        <span>Color: cache hit fraction <span class="legend-ramp trap"></span></span>
+        <span>Height: sessions, √ scale</span>
+      </span>
+    </div>
+    <TrapFigure />
+    <p class="caption">
+      <b>Figure 11.</b> Both engines get the same agent traffic: {fmt(f.baseSessions)} sessions at
+      {f.mult}× the measured all-miss rate, plus a burst of {f.burstN} at {fmt(f.tB)} s. The top engine
+      is left alone and stays at zero hits to the end. The bottom one gets the paper's rescue cap of
+      {f.cap} sessions at {fmt(f.engage)} s: its hits come back by {fmt(f.hitsBack)} s, drop out again
+      while the gate drains the backlog, and hold from {fmt(f.hitsHold)} s; the cap comes off at
+      {fmt(f.release)} s and the engine stays good. Over the last 3,000 s the trapped engine's turns
+      average {fmt(f.trapped.meanPrompt)} prompt tokens, against {fmt(f.model.Pz)} in model F and
+      {fmt(f.model.Pstat)} in the normal turn mix. The site's checks run the same code against the
+      paper's Python engine and get identical counts.
+    </p>
+  </Container>
+
+  <Container>
+    <p class="text">
+      The run was chosen from {f.selection.candidates} seeds as one in which every burst session
+      finishes before the end, the cap comes off inside the paper's engine range, and the completion
+      rate is closest to model F's. Over {f.further.seeds} further seeds that played no part in the
+      choice, {allStuck ? 'every' : `${f.further.stuck} of ${f.further.seeds}`} engine{allStuck ? '' : 's'} that
+      get{allStuck ? 's' : ''} the burst and no cap {allStuck ? 'is' : 'are'} stuck at zero hits, the
+      trapped engines' served prompts average {f.further.promptOverPz.toFixed(2)} times model F's, and
+      their completion rates average {f.further.completionsOverMiss.toFixed(2)} times the all-miss
+      capacity, from {f.further.completionsMin.toFixed(2)} to {f.further.completionsMax.toFixed(2)}.
+    </p>
+  </Container>
+
+  <!-- Conclusions -->
+  <Container>
+    <h1>Conclusions and Limitations</h1>
+    <p class="text">
+      A burst of agent sessions can leave a prefix-cached LLM serving engine missing every turn, at a
+      load it served before. In registered tests on two engines,
+      two GPUs and two models, a 200-session burst left the engine at zero hits to the end in all 30
+      runs. For an idealization of the trapped state, model F, we proved that the cycles along FIFO
+      orbits obey a linear renewal recursion whose Perron root fixes the dynamics: every trapped state
+      converges to a self-similar regime in which the turns served are young and short. For our workload
+      this gives a youth premium, so in the model a trap's measured throughput overstates the recovery
+      threshold. Of the two exits, refusing arrivals sheds sessions, while a session cap rescued 9 of 9
+      established traps at the same load without shedding, and the engine stayed good after release.
+    </p>
+    <p class="text">Limitations:</p>
     <ul>
       <li><p class="text">
         Model F is an idealization, and the paper does not prove that the engine converges to it. It
@@ -1073,9 +1100,9 @@ const TWIN_TRAP = twin('trap');
 
   <!-- Reproduce -->
   <Container>
-    <h1>Code, data and registrations</h1>
+    <h1>Code, Data and Registrations</h1>
     <p class="text">
-      <a href={REPO}>The public repository</a> holds the code, the data and the registrations behind the
+      <a href={REPO}>Our public repository</a> holds the code, the data and the registrations behind the
       paper. Tag <a href={`${REPO}/tree/trap-arxiv-v1`}><code>trap-arxiv-v1</code></a>
       is the commit the preprint describes. (The repository's name comes from an earlier draft of the
       paper, withdrawn before it was announced.)
@@ -1123,6 +1150,9 @@ const TWIN_TRAP = twin('trap');
   <Container id="cite">
     <h1>Citation</h1>
     <p class="text">
+      To cite the preprint:
+    </p>
+    <p class="text">
       Akshat Valse and Ali Jannesari. <em>Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM
       Agent Serving.</em> arXiv:2611.08902 [cs.DC], November 2026.
     </p>
@@ -1135,9 +1165,8 @@ const TWIN_TRAP = twin('trap');
      rendered by Container.astro, outside this page's scope, so the selector is global. */
   :global(#live .trap-hero) { margin: 0; border: 0; border-radius: 10px; overflow: hidden; }
 
-  /* Diagram internals (Figures 2, 3 and 7). Colors only through the site's tokens. */
+  /* Diagram internals (Figures 1, 2 and 4). Colors only through the site's tokens. */
   .trap-dg { --hl: var(--seq-lo); }
-  @media (prefers-color-scheme: dark) { .trap-dg { --hl: var(--seq-hi); } }
   .trap-dg .t-title { font-size: 14px; font-weight: 600; }
   .trap-dg .t-sub { font-size: 12.5px; }
   .trap-dg .t-it { font-size: 12.5px; font-style: italic; }
@@ -1154,24 +1183,4 @@ const TWIN_TRAP = twin('trap');
   .trap-dg .box.dashed { stroke-dasharray: 5 4; }
   .trap-dg .rule { stroke: var(--rule-strong); stroke-width: 1; fill: none; }
   .trap-dg .stat { stroke: var(--ink); stroke-width: 1.5; fill: none; }
-
-  @media (prefers-color-scheme: dark) {
-    /* Figure 3: the emphasized "Session cap" box is var(--ink) in light mode, which in dark mode
-       is a glaring off-white tile. Use the site's dark band blue, with ink text, instead. */
-    svg.trap-dg rect.box.dark { fill: var(--band); stroke: var(--band); }
-    .trap-dg .box.dark ~ text.on-dark { fill: var(--ink); }
-    /* Figure 7: translucent yellow over the dark ground turns olive and mustard. The joining
-       cycle takes cividis mid, the completing cycle the accent itself. */
-    .trap-dg .hl-soft { fill: var(--seq-mid); opacity: 0.6; }
-    .trap-dg .hl-mid { fill: var(--hl); opacity: 0.85; }
-    /* The cover is the paper's Figure 1 on white: invert it like the static figures below
-       (the same filter as global.css section 5), keeping the background copy's blur, so it is
-       not a white slab with a white glow on the dark title band. */
-    :global(body div.container.blog#first-content div.blog-title .blog-cover img.foreground) {
-      filter: invert(0.89) hue-rotate(180deg) saturate(1.1);
-    }
-    :global(body div.container.blog#first-content div.blog-title .blog-cover img.background) {
-      filter: invert(0.89) hue-rotate(180deg) saturate(1.1) blur(24px);
-    }
-  }
 </style>

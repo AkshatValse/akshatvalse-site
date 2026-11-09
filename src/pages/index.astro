@@ -1,31 +1,15 @@
 ---
+/**
+ * Home: a greeting, who I am, one italic line on the research focus, the
+ * flying, and a "Read more" button on the left; the portrait on the right.
+ * The layout follows shikun.io's home; the words are mine. Everything else
+ * lives on /research and /about.
+ */
 import Base from '../layouts/Base.astro';
-import TitleBand from '../components/clarity/TitleBand.astro';
-import Container from '../components/clarity/Container.astro';
-import Carousel from '../components/clarity/Carousel.astro';
 import Icon from '../components/clarity/Icon.astro';
-import TrapFigure from '../components/TrapFigure.astro';
-import TrapThumb from '../components/TrapThumb.astro';
-import SchemeImage from '../components/SchemeImage.astro';
-import ProjectCard from '../components/ProjectCard.astro';
-import { PROJECTS } from '../data/projects';
-import { PROFILE, ARXIV_TRAP, REPO_TRAP } from '../data/site';
-import { NEWS, MANUSCRIPTS, AWARDS } from '../data/home';
-import { trapFacts } from '../sim/trap-facts.js';
-import raretail from '../generated/raretail-poster.svg?raw';
-import diffusivity from '../generated/diffusivity-poster.svg?raw';
+import { PROFILE } from '../data/site';
 
-const f = trapFacts();
-const fmt = (x: number) => Math.round(x).toLocaleString('en-US');
-const onBand = 'background-color: rgba(255, 255, 255, 0.2)';
-
-const figures = [
-  { k: 'Inside the Trap', t: 'Two serving engines after one burst: one stays trapped, the capped one recovers.', href: '/research/inside-the-trap', media: 'trap' },
-  { k: 'Langevin sampling', t: 'Reverse-time diffusion with an exact score, graded on mode coverage.', href: '/research/langevin', media: 'img', src: '/poster/diffusion-light.webp', dark: '/poster/diffusion-dark.webp' },
-  { k: 'Langevin sampling', t: '648 particles in cos x + cos y, converging to the Gibbs law.', href: '/research/langevin', media: 'img', src: '/poster/hero-light-720.webp', dark: '/poster/hero-dark-720.webp' },
-  { k: 'Langevin sampling', t: 'Effective diffusivity against the Lifson–Jackson value 1/I₀(1)².', href: '/research/langevin', media: 'svg', svg: diffusivity },
-  { k: 'Rare events', t: 'Crude Monte Carlo fails silently where importance sampling keeps going.', href: '/research/large-deviations', media: 'svg', svg: raretail },
-];
+const { portrait } = PROFILE;
 ---
 
 <Base
@@ -33,176 +17,39 @@ const figures = [
   ogType="profile"
   description="Akshat Valse, Iowa State undergraduate researcher in applied probability for ML systems: LLM serving and KV caching, Langevin sampling, rare events."
 >
-  <!-- Title Page -->
-  <TitleBand cover={{ src: PROFILE.portrait.src, srcSmall: PROFILE.portrait.srcSmall, alt: 'Portrait of Akshat Valse', width: PROFILE.portrait.width, height: PROFILE.portrait.height, portrait: true }}>
-    <h1 class="title">{PROFILE.name}</h1>
-    <p class="author">{PROFILE.tagline}</p>
-    <p class="author" style="padding-top: 0px;">
-      {PROFILE.role}, Iowa State University (Honors) <br />
-      {PROFILE.degrees}
-    </p>
-    <p class="abstract">
-      I study the probability underneath machine-learning systems: queues inside LLM serving
-      engines, the samplers inside generative models, and the numerical schemes that learned
-      solvers become once training stops. My preprint with Ali Jannesari,
-      <a href="/research/inside-the-trap"><em>Inside the Trap</em></a>, explains why a burst of
-      agent traffic can leave a serving engine stuck at a load it served before, and what gets it
-      out. Throughout, I aim for a closed form where one exists, a registered prediction where one
-      does not, and a check that runs either way.
-    </p>
-    <div class="info">
-      <div>
-        <a href={PROFILE.cvPdf} class="button icon" style={onBand}>CV <Icon name="cv" /></a> &nbsp;&nbsp;
-        <a href={ARXIV_TRAP} class="button icon" style={onBand}>Paper <Icon name="paper" /></a> &nbsp;&nbsp;
-        <a href={PROFILE.github} class="button icon" style={onBand}>Code <Icon name="github" /></a> &nbsp;&nbsp;
-        <a href={`mailto:${PROFILE.email}`} class="button icon" style={onBand}>Email <Icon name="mail" /></a>
+  <div class="container page" id="first-content">
+    <div class="home">
+      <div class="home-intro">
+        <h1 class="title">Hi, I'm Akshat.</h1>
+        <p>
+          I am an undergraduate researcher at Iowa State University (Honors Program), working toward
+          four degrees in statistics, mathematics, data science and computer science.
+        </p>
+        <p>
+          <em>
+            My research focuses on AI/ML through different lenses: Probability, Stochastic Analysis,
+            Numerical Analysis, and High Performance Computing.
+          </em>
+        </p>
+        <p>
+          When I am not running experiments, I fly. I am a private pilot with a high-performance
+          endorsement, and I volunteer as a pilot on Pilots N Paws animal-rescue flights.
+        </p>
+        <div>
+          <a href="/about" class="button icon">Read more <Icon name="arrow" /></a>
+        </div>
+      </div>
+      <div class="home-profile">
+        <img
+          src={portrait.src}
+          srcset={`${portrait.srcSmall} 480w, ${portrait.src} 960w`}
+          sizes="(min-width: 1200px) 30vw, (min-width: 770px) 42vw, 88vw"
+          width={portrait.width}
+          height={portrait.height}
+          alt="Portrait of Akshat Valse"
+          fetchpriority="high"
+        />
       </div>
     </div>
-    <Fragment slot="info">{PROFILE.status} · {PROFILE.graduation}</Fragment>
-  </TitleBand>
-
-  <!-- Featured -->
-  <Container first id="featured">
-    <h1>Inside the Trap</h1>
-    <p class="text">
-      An agent re-sends its whole growing conversation every turn, and the serving engine keeps that
-      prefix in a GPU cache so the next turn stays cheap. That cache belongs to sessions idling in
-      tool calls, and admitting new work evicts it. A burst of new sessions can tip the engine into a
-      trap in which every turn misses and the backlog never drains, at a load it served before. In
-      registered tests on Iowa State's Nova cluster, on two engines, two GPUs and two models:
-    </p>
-    <div class="table-wrapper">
-      <table>
-        <thead><tr><th>Registered test</th><th>Result</th></tr></thead>
-        <tbody>
-          <tr><td>200-session burst, no cap: engine left at zero cache hits to the end</td><td><b>30 of 30</b> runs</td></tr>
-          <tr><td>Matched runs without the burst that stayed good</td><td><b>every</b> run</td></tr>
-          <tr><td>Client-side session cap: trap prevented</td><td><b>30 of 30</b> capped runs</td></tr>
-          <tr><td>Session cap on an established trap: rescued at the same load, no session shed</td><td><b>9 of 9</b> traps</td></tr>
-          <tr><td>Stuck runs matched by the renewal theory, retrospectively, nothing fitted to trap data</td><td><b>57</b> runs</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </Container>
-
-  <Container width="extra-extra-large" tone="gray" id="fig1">
-    <div class="figbar">
-      <span><span class="label">Live.</span> The paper's simulator (SGLang, A100, 300k-token KV pool), running in your browser from a fixed seed.</span>
-      <span class="keys">
-        <span>Color: cache hit fraction <span class="legend-ramp trap"></span></span>
-        <span>Height: sessions, √ scale</span>
-      </span>
-    </div>
-    <TrapFigure />
-    <p class="caption">
-      <b>Figure 1.</b> Both engines get the same agent traffic: {fmt(f.baseSessions)} sessions at
-      {f.mult}× the measured all-miss rate, plus a burst of {f.burstN} at {fmt(f.tB)} s. The top
-      engine is left alone and stays at zero hits to the end; the bottom one gets a cap of {f.cap}
-      sessions at {fmt(f.engage)} s, recovers, and stays good after the cap comes off at
-      {fmt(f.release)} s. The site's checks run the same code against the paper's Python engine and
-      get identical counts.
-    </p>
-  </Container>
-
-  <Container>
-    <p class="text">
-      <a href="/research/inside-the-trap" class="button icon">Project page <Icon name="arrow" /></a> &nbsp;&nbsp;
-      <a href={ARXIV_TRAP} class="button icon">arXiv <Icon name="paper" /></a> &nbsp;&nbsp;
-      <a href={REPO_TRAP} class="button icon">Code, data, registrations <Icon name="code" /></a>
-    </p>
-  </Container>
-
-  <!-- Research -->
-  <Container id="research">
-    <h1>Research</h1>
-    <p class="text">
-      Six projects with six advisors across Mathematics and Computer Science. The trap paper is a
-      renewal argument about a queue; the others are where that kind of argument comes from and
-      where it goes next.
-    </p>
-  </Container>
-
-  <Container width="extra-large" tone="gray">
-    <div class="columns-3">
-      {PROJECTS.map((p) => <ProjectCard project={p} />)}
-    </div>
-  </Container>
-
-  <!-- Live figures -->
-  <Container id="figures">
-    <h1>Every figure is a live simulation</h1>
-    <p class="text">
-      Each runs in your browser from a fixed seed and is checked against an exact reference before
-      it ships: a closed form, or for the trap the paper's own simulator.
-    </p>
-  </Container>
-
-  <Container width="max" tone="gray">
-    <Carousel>
-      {figures.map((x, i) => (
-        <div class="slider-item">
-          <a href={x.href}>
-            <div class="thumb">
-              {x.media === 'trap' && <TrapThumb id={`car-${i}`} labels={false} />}
-              {x.media === 'img' && <SchemeImage light={x.src!} dark={x.dark!} alt="" />}
-              {x.media === 'svg' && <div class="svg-fill" set:html={x.svg} />}
-            </div>
-          </a>
-          <p class="caption"><b>{x.k}.</b> {x.t}</p>
-        </div>
-      ))}
-    </Carousel>
-  </Container>
-
-  <!-- Publications -->
-  <Container id="publications">
-    <h1>Publications</h1>
-    <h2>Preprints</h2>
-    <p class="text">
-      <b>Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving.</b><br />
-      Akshat Valse and Ali Jannesari. <em>arXiv:2611.08902</em> (cs.DC), November 2026.
-    </p>
-    <p class="text">
-      <a href={ARXIV_TRAP} class="button icon">Paper <Icon name="paper" /></a> &nbsp;&nbsp;
-      <a href="https://arxiv.org/pdf/2611.08902" class="button icon">PDF <Icon name="pdf" /></a> &nbsp;&nbsp;
-      <a href={REPO_TRAP} class="button icon">Code <Icon name="code" /></a> &nbsp;&nbsp;
-      <a href="/research/inside-the-trap" class="button icon">Project page <Icon name="arrow" /></a>
-    </p>
-    <h2>Manuscripts</h2>
-    <ul>
-      {MANUSCRIPTS.map((m) => (
-        <li><p class="text">{m.href ? <a href={m.href}>{m.title}</a> : m.title}. {m.authors}. {m.status}.</p></li>
-      ))}
-    </ul>
-  </Container>
-
-  <!-- News -->
-  <Container id="news">
-    <h1>News</h1>
-    <ul>
-      {NEWS.map((n) => (
-        <li><p class="text"><b>{n.date}.</b> <Fragment set:html={n.html} /></p></li>
-      ))}
-    </ul>
-  </Container>
-
-  <!-- About -->
-  <Container id="about">
-    <h1>About</h1>
-    <div class="table-wrapper">
-      <table>
-        <tbody>
-          <tr><td><b>Education</b></td><td>{PROFILE.affiliation} · {PROFILE.degrees} · {PROFILE.graduation}</td></tr>
-          <tr><td><b>Next</b></td><td>Applying to PhD programs in machine learning and applied probability for Fall 2028 admission</td></tr>
-          <tr><td><b>Awards</b></td><td>{AWARDS.join(' · ')}</td></tr>
-          <tr><td><b>Compute</b></td><td>SLURM on Iowa State's Nova cluster; SGLang and vLLM on A100 and H200 GPUs</td></tr>
-          <tr><td><b>Elsewhere</b></td><td>Private pilot (high-performance endorsement); volunteer pilot with <a href="https://www.pilotsnpaws.org/">Pilots N Paws</a></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </Container>
+  </div>
 </Base>
-
-<style>
-  #fig1 :global(.trap-hero) { margin: 0; border: 0; border-radius: 10px; overflow: hidden; }
-</style>

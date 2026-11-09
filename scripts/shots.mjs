@@ -1,6 +1,8 @@
 /**
  * Visual check harness. Renders the built site across the breakpoints, color
  * schemes and accessibility settings the design brief asks to be verified.
+ * The site is light only; the `dark` cases check that a dark OS preference
+ * still gets the light design.
  *
  * Note on `fullPage`: Chrome resizes the viewport to capture it, which fires
  * the simulations' ResizeObserver and clears their trail buffers, so a

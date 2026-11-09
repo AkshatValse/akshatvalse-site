@@ -1,7 +1,14 @@
 ---
 /**
- * Reliability of tool-using agents (advisor: Yang Li). In experimentation and
- * development; approach and results held back until publication.
+ * Agent Reliability (advisor: Yang Li). In experimentation and development;
+ * approach and results held back until publication.
+ *
+ * Laid out like shikun.io's project pages: Introduction (the two questions and
+ * what we are doing), restart or wait and its classical baseline, how much
+ * restarting buys, the interactive baseline, rare failures, and Status. Each h1
+ * shares a container with its h2s, since navbar.js lists only those. The
+ * banner is the project's theme artwork, which ProjectLayout renders; this
+ * page sets no cover.
  *
  * Sources for every project fact: the public site (research.astro, CV) and the
  * GitHub profile README, as collected in the verified brief. Everything beyond
@@ -9,9 +16,9 @@
  * independent restarts; crude Monte Carlo arithmetic), computed and checked for
  * this page, labelled as such wherever it appears, and never project data.
  *
- * Static charts are inlined (?raw) so their var(--token) colours resolve and
- * dark mode works; they are not wrapped in .diagram, whose rules would restyle
- * them. Hand-drawn diagrams use the site's .diagram classes and tokens only.
+ * Static charts are inlined (?raw) so their var(--token) colours resolve;
+ * they are not wrapped in .diagram, whose rules would restyle them.
+ * Hand-drawn diagrams use the site's .diagram classes and tokens only.
  *
  * Scoop rule: the page says what the project asks and plans (CV level) and
  * nothing that points at a method or links the rare-failure question to any
@@ -61,7 +68,6 @@ function bell(x0: number, x1: number, base: number, height: number, u0 = -4.5, u
 }
 const d1 = bell(40, 390, 262, 160);
 const d1Ticks = [0.1, 1, 10].map((t) => ({ t, x: d1.xOf(Math.log(t)) }));
-const cov = bell(36, 444, 168, 116);
 
 /** The lognormal baseline in a few lines (the widget's AgentRestartMath.ts, with mu = 0). */
 const CODE = `// Lognormal run time with median 1: T = exp(sigma * Z).
@@ -95,55 +101,54 @@ const ROWS = [
 <ProjectLayout
   slug="agent-reliability"
   description="When is restarting a stalled LLM agent worth more than waiting, and how can a failure too rare for direct simulation be estimated? With a classical baseline."
-  authors="Akshat Valse, with Yang Li"
-  affiliation="Department of Computer Science, Iowa State University"
-  abstract="Agents that run for a long time sometimes stall and sometimes fail. This project asks when restarting a stalled run is worth more than waiting, and what in the distribution of run times decides that; and how to estimate the probability of a failure too rare for direct simulation to reach. The project is in its experimentation and development phase, starting from two pilot designs on real agents, one on restart policies and one on rare failures, each with its kill criteria registered before any data. The approach and results are held back until publication. This page sets out the problem and works out the textbook arithmetic behind each question, as a classical baseline rather than project data."
+  authors="by Akshat Valse"
+  affiliation="Advised by Yang Li, Department of Computer Science, Iowa State University"
+  abstract="We study two questions about tool-using LLM agents that run for a long time and sometimes fail. When a run stalls, when is restarting it worth more than waiting, and what in the distribution of run times decides that? And how can we estimate the probability of a failure too rare for direct simulation to reach? Here we set out both problems and the classical baseline for each; our approach and results are held back until publication."
   buttons={[
-    { label: 'Live baseline', href: '#restart-widget', icon: 'chart' },
+    { label: 'Live Baseline', href: '#restart-widget', icon: 'play' },
   ]}
-  info="Experimentation and development · Aug. 2026 – present · Approach and results held back until publication"
+  info="In Experimentation and Development"
 >
-  <Fragment slot="cover">
-    <svg class="diagram" viewBox="0 0 480 300" role="img"
-      aria-label="Classical restart rule. A bell-shaped density of log run time, with a vertical line at the current age tau and the tail beyond it shaded and labelled S of tau. Below: restart if and only if the mean residual life m of tau exceeds E[T] plus c. Classical baseline for a known run-time law.">
-      <path class="ar-tail" d={cov.tail}></path>
-      <path class="ar-curve" d={cov.curve}></path>
-      <line class="line" x1="36" y1="168" x2="444" y2="168"></line>
-      <line class="ar-now" x1={cov.tauX} y1="30" x2={cov.tauX} y2="168"></line>
-      <text x={cov.tauX + 7} y="42" font-size="15">age τ, not finished</text>
-      <text x={cov.tauX + 9} y="156" font-size="15">S(τ)</text>
-      <text class="muted-t" x="36" y="188" font-size="12.5">log run time</text>
-      <text x="240" y="234" font-size="21" text-anchor="middle" class="ar-strong">restart iff m(τ) &gt; E[T] + c</text>
-      <text class="muted-t" x="240" y="258" font-size="13" text-anchor="middle">m(τ): expected time still to go · c: relaunch cost</text>
-      <text class="muted-t" x="240" y="282" font-size="12.5" text-anchor="middle">classical baseline, for a known run-time law</text>
-    </svg>
-  </Fragment>
 
-  <!-- 1. The problem -->
+  <!-- Introduction: the problem and what we are doing -->
   <Container first>
-    <h1>Two questions about long-running agents</h1>
+    <h1>Introduction</h1>
     <p class="text">
-      Agents that run for a long time sometimes stall and sometimes fail. That raises two questions.
-      First, when a run stalls, should you restart it or wait, and what in the distribution of run
-      times decides? Second, how do you estimate the probability of a failure too rare for direct
-      simulation to reach?
+      Agents that run for a long time sometimes stall and sometimes fail. That raises two questions:
     </p>
+    <ol>
+      <li>
+        <p class="text">
+          <b>Restart or wait:</b> when a run stalls, should we restart it or keep waiting, and what
+          in the distribution of run times decides?
+        </p>
+      </li>
+      <li>
+        <p class="text">
+          <b>Rare failures:</b> how do we estimate the probability of a failure too rare for direct
+          simulation to reach?
+        </p>
+      </li>
+    </ol>
     <p class="text">
-      The project is in its experimentation and development phase. It starts from two pilot designs
-      on real agents, one for each question, each with kill criteria registered before any data. The
-      approach and results are held back until publication.
+      We ask both questions of real tool-using LLM agents. It is a research project
+      in Advanced Topics in Artificial Intelligence (COMS 6720), Department of Computer Science, Iowa
+      State University, advised by Prof. Yang Li. We are in the experimentation and development
+      phase, starting from two pilot designs on real agents, one on restart policies and one on rare
+      failures, each with its kill criteria registered before any data. The approach and results are
+      held back until publication.
     </p>
   </Container>
 
   <NoteRow>
     <p class="text">
-      Both questions have textbook versions: for the first, a run-time law you know and restarts
-      that are independent of each other; for the second, failures that are independent across
-      runs. The first then has an exact answer, and for the second the classical arithmetic shows
-      why direct simulation usually sees nothing. This page works those versions out, draws them,
-      and lets you vary them. Every quantitative statement
-      below is about that classical arithmetic, computed and checked for this page. None of it is
-      project data, and none of it describes the project's method.
+      Both questions have textbook versions. For the first, the run-time law is known and restarts
+      are independent of each other; for the second, failures are independent across runs. The first
+      then has an exact answer, and for the second the classical arithmetic shows why direct
+      simulation usually sees nothing. In the sections that follow, we work out those versions and
+      let you vary them. Every quantitative statement from here on is about that classical
+      arithmetic, computed and checked for this page: none of it is project data, and none of it
+      describes our method.
     </p>
     <Fragment slot="note">
       <b>Bears on:</b> survival analysis · rare-event estimation · agent evaluation.<br />
@@ -152,14 +157,14 @@ const ROWS = [
     </Fragment>
   </NoteRow>
 
-  <!-- 2. Restart or wait -->
+  <!-- Restart or wait: the question in its classical form -->
   <Container>
-    <h1>Restart or wait</h1>
+    <h1>Restart or Wait</h1>
     <p class="text">
-      A run has been going for time <Tex src={String.raw`\tau`} /> and has not finished. Someone has
-      to decide whether to kill it and start again, or keep waiting. In the textbook setting, with
-      a known distribution of run times and independent restarts, that decision has an exact answer.
-      Waiting costs, in expectation, the time the run still has to go: its mean residual life
+      A run has been going for time <Tex src={String.raw`\tau`} /> and has not finished. Should we
+      kill it and start again, or keep waiting? In the textbook setting, with a known distribution of
+      run times and independent restarts, the decision has an exact answer. Waiting costs, in
+      expectation, the time the run still has to go: its mean residual life
       <Tex src={String.raw`m(\tau) = \mathbb{E}[T-\tau \mid T>\tau]`} />. Restarting costs a relaunch
       <Tex src="c" /> plus a fresh run, <Tex src={String.raw`c + \mathbb{E}[T]`} />. So restart if and
       only if
@@ -167,9 +172,9 @@ const ROWS = [
     <Tex block src={String.raw`m(\tau) > \mathbb{E}[T] + c.`} />
     <p class="text">
       The same inequality decides whether a standing policy of restarting every run at cutoff
-      <Tex src={String.raw`\tau`} /> beats never restarting, as the next section shows. In the
-      classical setting, then, what in the distribution of run times decides is the mean residual
-      life, compared with a fresh run plus the cost of a relaunch.
+      <Tex src={String.raw`\tau`} /> beats never restarting, as we show below. Classically, then, what
+      in the distribution of run times decides is the mean residual life, compared with a fresh run
+      plus the cost of a relaunch.
     </p>
   </Container>
 
@@ -230,18 +235,18 @@ const ROWS = [
       still has to go, <Tex src={String.raw`m(\tau)`} />; restarting costs the relaunch
       <Tex src="c" /> plus a fresh run. Restart if and only if
       <Tex src={String.raw`m(\tau) > \mathbb{E}[T] + c`} />. This assumes a known run-time law and
-      independent restarts. The project asks the question of real agents; its approach is held back.
+      independent restarts. We ask the question of real agents; our approach is held back.
     </p>
   </Container>
 
-  <!-- 3. The classical baseline -->
+  <!-- The classical baseline: derivations -->
   <Container>
-    <h1>The classical baseline</h1>
+    <h1>The Classical Baseline</h1>
     <p class="text">
-      This section assumes a run-time law that is known exactly and restarts that are independent and
-      identically distributed. Nothing is fitted to agent data. No public source of the project
-      states these derivations: they were derived for this page and checked numerically (the checks
-      are listed under Figure 5).
+      In this section we assume a run-time law that is known exactly and restarts that are independent
+      and identically distributed. Nothing is fitted to agent data. No public source of the project
+      states these derivations: we derived them for this page and checked them numerically (see
+      Checks, below).
     </p>
 
     <h2>Notation</h2>
@@ -255,7 +260,7 @@ const ROWS = [
       that policy.
     </p>
 
-    <h2>Expected time under a cutoff</h2>
+    <h2>Expected Time Under a Cutoff</h2>
     <p class="text">Write <Tex src={String.raw`A(\tau)`} /> for the truncated mean:</p>
     <Tex block src={String.raw`A(\tau) = \mathbb{E}[\min(T,\tau)] = \int_0^\tau S(t)\,dt.`} />
     <p class="text">
@@ -267,7 +272,7 @@ const ROWS = [
     </p>
     <Tex block src={String.raw`\mathbb{E}[T_{\tau,c}] = \frac{A(\tau) + c\,S(\tau)}{F(\tau)}.`} />
 
-    <h2>An identity, and the rule</h2>
+    <h2>An Identity, and the Rule</h2>
     <p class="text">The mean residual life of a run that has reached age <Tex src={String.raw`\tau`} /> is</p>
     <Tex block src={String.raw`m(\tau) = \mathbb{E}[T - \tau \mid T > \tau] = \frac{\mathbb{E}[(T-\tau)^+]}{S(\tau)}.`} />
     <p class="text">
@@ -295,7 +300,7 @@ const ROWS = [
       <Tex src={String.raw`c + \mathbb{E}[T]`} />, and waiting costs <Tex src={String.raw`m(\tau)`} />.
     </p>
 
-    <h2>The best cutoff</h2>
+    <h2>The Best Cutoff</h2>
     <p class="text">Differentiating the expected time under a cutoff,</p>
     <Tex block src={String.raw`\frac{d}{d\tau}\,\mathbb{E}[T_{\tau,c}] = \frac{S F - f\,(A + c)}{F^2}.`} />
     <p class="text">At an interior optimum <Tex src="A + c = SF/f" />, which gives</p>
@@ -308,7 +313,7 @@ const ROWS = [
       the widget below finds it.
     </p>
 
-    <h2>Lognormal closed forms</h2>
+    <h2>Lognormal Closed Forms</h2>
     <p class="text">
       Let <Tex src={String.raw`T = e^{\mu + \sigma Z}`} /> with <Tex src="Z" /> standard normal,
       <Tex src={String.raw`z = (\ln\tau - \mu)/\sigma`} />, and <Tex src={String.raw`\Phi`} /> the
@@ -354,9 +359,9 @@ const ROWS = [
     </Fragment>
   </NoteRow>
 
-  <!-- 4. How much restarting buys -->
+  <!-- How much restarting buys -->
   <Container>
-    <h1>How much restarting buys</h1>
+    <h1>How Much Restarting Buys</h1>
     <p class="text">
       The rule says when restarting helps; how much it helps depends on the shape of the law.
       Figure 3 holds the lognormal family at median 1 and varies <Tex src={String.raw`\sigma`} />,
@@ -420,9 +425,9 @@ const ROWS = [
     </p>
   </Container>
 
-  <!-- 5. Interactive -->
+  <!-- Restart or wait, interactively -->
   <Container>
-    <h1>Restart or wait, interactively</h1>
+    <h1>Restart or Wait, Interactively</h1>
     <p class="text">
       Figure 5 computes the classical quantities for a law you choose:
       <Tex src={String.raw`\mathbb{E}[T]`} />, <Tex src={String.raw`F(\tau)`} />,
@@ -462,7 +467,7 @@ const ROWS = [
   </Container>
 
   <Container>
-    <h2>Reference values</h2>
+    <h2>Reference Values</h2>
     <p class="text">
       The lognormal family with median 1, at the cutoffs that minimise expected time. At
       <Tex src={String.raw`\sigma = 0.5`} /> the best cutoff is ill-conditioned (Checks, below), so
@@ -527,12 +532,12 @@ const ROWS = [
     </p>
   </Container>
 
-  <!-- 6. Rare failures -->
+  <!-- Failures too rare to see -->
   <Container>
-    <h1>Failures too rare to see</h1>
+    <h1>Failures Too Rare to See</h1>
     <p class="text">
-      The second question: how do you estimate the probability of a failure too rare for direct
-      simulation to reach? Picture an agent run as a loop of model and tool calls that, rarely, ends
+      The second question is how to estimate the probability of a failure too rare for direct
+      simulation to reach. Picture an agent run as a loop of model and tool calls that, rarely, ends
       in failure. With per-run failure probability <Tex src="p" /> and <Tex src="N" /> independent
       runs, the number of failures is <Tex src={String.raw`K \sim \mathrm{Bin}(N, p)`} />, and the
       classical arithmetic is short. The chance of seeing no failure at all is
@@ -543,7 +548,7 @@ const ROWS = [
     <p class="text">and when <Tex src="K = 0" /> the one-sided upper bound is</p>
     <Tex block src={String.raw`p_{\mathrm{U}} = 1 - \alpha^{1/N} \approx \frac{-\ln \alpha}{N} \approx \frac{3}{N} \quad\text{at } \alpha = 0.05.`} />
     <p class="text">
-      So when failures are much rarer than one in the number of runs you can afford, direct
+      So when failures are much rarer than one in the number of runs we can afford, direct
       simulation usually sees none, and zero failures in <Tex src="N" /> runs supports only
       <Tex src="p" /> below about <Tex src="3/N" />: for <Tex src="N = 1000" />,
       <Tex src="p < 0.00299" /> at 95%. Crude Monte Carlo then stops being an estimator: it returns
@@ -584,20 +589,17 @@ const ROWS = [
     </p>
   </Container>
 
-  <!-- 7. What we are doing -->
+  <!-- Status -->
   <Container>
-    <h1>What we are doing</h1>
+    <h1>Status</h1>
     <p class="text">
-      This is a research project in Advanced Topics in Artificial Intelligence (COMS 6720),
-      Department of Computer Science, Iowa State University, advised by Prof. Yang Li. We are asking
-      the two questions above of real tool-using LLM agents: when an agent stalls, when is restarting
-      it worth more than waiting, and how can the probability of a failure too rare for direct
-      simulation be estimated?
-    </p>
-    <p class="text">
-      The work is in its experimentation and development phase. It starts from two pre-registered
-      pilot designs on real agents, one on restart policies and one on rare failures, each with its
-      kill criteria registered before any data.
+      The project has been in the experimentation and development phase since Aug. 2026, and Figure 8
+      shows how it is set up. The approach and any results are held back until publication. That
+      includes the methods, models, agents, tools, environments, benchmarks and estimators, which
+      restart policies a pilot would test, the pilot designs and the content of their kill criteria,
+      and which direction the experiments take. No number on this page is a project result: every one
+      is classical arithmetic computed for this page. No paper, preprint or repository for this
+      project is public.
     </p>
   </Container>
 
@@ -641,22 +643,10 @@ const ROWS = [
     </p>
   </Container>
 
-  <!-- 8. Status -->
-  <Container>
-    <h1>Status</h1>
-    <p class="text">
-      In the experimentation and development phase since Aug. 2026. The approach and any results are
-      held back until publication. That includes the methods, models, agents, tools,
-      environments, benchmarks and estimators, which restart policies a pilot would test, the pilot
-      designs and the content of their kill criteria, and which direction the experiments take. No number on
-      this page is a project result: every one is classical arithmetic computed for this page. No
-      paper, preprint or repository for this project is public.
-    </p>
-  </Container>
 </ProjectLayout>
 
 <style>
-  /* Inlined static charts (their own <style> carries the colours and dark mode). */
+  /* Inlined static charts (their own <style> carries the colours). */
   .ar-svg { line-height: 0; }
   .ar-svg :global(svg) { display: block; width: 100%; height: auto; }
   /* Comparison slots must be opaque, or the lower chart shows through the upper one. */
@@ -669,14 +659,4 @@ const ROWS = [
   .ar-head { fill: var(--ink-2); }
   .ar-strong { font-weight: 600; }
   .diagram .ar-on-dark { fill: var(--ground); }
-  @media (prefers-color-scheme: dark) {
-    .ar-curve { stroke: var(--seq-hi); }
-    /* Figure 1's rule box: .box.dark is var(--ink), a near-white slab on the
-       dark band. Use the site's dark title band instead, with light text. */
-    .diagram .box.dark.ar-key { fill: var(--band); stroke: var(--band); }
-    .diagram .ar-on-dark { fill: var(--ink); }
-    /* Figure 2's "restart helps" shading: the charts' dark .sh is an olive
-       wash; keep it neutral, like the shading in Figures 1 and 5. */
-    .ar-svg :global(.sh) { fill: var(--seq-mid); fill-opacity: 0.2; }
-  }
 </style>

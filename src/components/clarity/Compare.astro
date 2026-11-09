@@ -14,13 +14,11 @@ interface Props {
   white?: boolean;
   width?: number;
   height?: number;
-  /** Images that already carry their own dark palette: skip the dark-mode inversion. */
-  noAdapt?: boolean;
 }
-const { before, after, beforeLabel, afterLabel, alt, white = false, width, height, noAdapt = false } = Astro.props;
+const { before, after, beforeLabel, afterLabel, alt, white = false, width, height } = Astro.props;
 ---
 
-<img-comparison-slider class:list={['slider-container', { white, 'no-adapt': noAdapt }]}>
+<img-comparison-slider class:list={['slider-container', { white }]}>
   <figure slot="first" class="before">
     <img class="fig" src={before} alt={`${alt}: ${beforeLabel}`} width={width} height={height} />
     <figcaption class:list={{ white }}>{beforeLabel}</figcaption>

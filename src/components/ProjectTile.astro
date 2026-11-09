@@ -1,0 +1,30 @@
+---
+/**
+ * One tile of the Research grid, as on shikun.io's Projects page: a tall 4:5
+ * frame in the project's theme (src/data/themes.ts) with its 3:4 artwork inset at 80%, then
+ * the short title (with a stage badge) and a one-line subtitle.
+ * Layout comes from `.project-grid` in src/styles/global.css.
+ */
+import type { Project } from '../data/projects';
+interface Props { project: Project }
+const { project: p } = Astro.props;
+const href = `/research/${p.slug}`;
+---
+
+<div>
+  <a class="project-cover" href={href} style={p.frame} aria-label={p.title}>
+    <img
+      src={p.art}
+      alt={p.artAlt}
+      width="1200"
+      height="1600"
+      loading="lazy"
+      decoding="async"
+    />
+  </a>
+  <div class="project-info">
+    <p class="badge">{p.badge}</p>
+    <h2><a href={href}>{p.short}</a></h2>
+    <p>{p.subtitle}</p>
+  </div>
+</div>

@@ -4,7 +4,6 @@
 .bg{fill:#ffffff}.g{stroke:#e2e5e7;stroke-width:1;fill:none}.a{stroke:#6a6e72;stroke-width:1;fill:none}
 .l{fill:#6a6e72;font:11px ui-monospace,SFMono-Regular,Menlo,monospace}.t{fill:#2f3133;font:600 13px ui-monospace,SFMono-Regular,Menlo,monospace}
 .c{stroke:#2f3133;stroke-width:1.4;fill:none}.m{fill:#2f3133}
-@media (prefers-color-scheme: dark){.bg{fill:#141719}.g{stroke:#2a3135}.a{stroke:#a1a7ab}.l{fill:#a1a7ab}.t{fill:#ebe8e3}.c{stroke:#ebe8e3}.m{fill:#ebe8e3}}
 </style>
 <rect class="bg" width="640" height="320"/>
 <g class="g"><line x1="54" y1="14" x2="624" y2="14"/><line x1="54" y1="57.33" x2="624" y2="57.33"/><line x1="54" y1="100.67" x2="624" y2="100.67"/><line x1="54" y1="144" x2="624" y2="144"/><line x1="54" y1="187.33" x2="624" y2="187.33"/><line x1="54" y1="230.67" x2="624" y2="230.67"/><line x1="54" y1="274" x2="624" y2="274"/></g>

@@ -110,14 +110,13 @@ export function mountDiffusion(root) {
     const myToken = buildToken;
     const cs = getComputedStyle(root);
     const contour = parseRGB(cs.getPropertyValue('--sim-contour') || '#7d878c');
-    const reverse = (cs.getPropertyValue('--sim-reverse') || '0').trim() === '1';
 
     if (!sim) sim = new DiffusionSampler(DIFFUSION_DEFAULTS);
 
     ramp = new Array(RAMP_STEPS);
     for (let i = 0; i < RAMP_STEPS; i++) {
       const u = i / (RAMP_STEPS - 1);
-      const [r, g, b] = cividis(reverse ? 1 - u : u);
+      const [r, g, b] = cividis(u);
       ramp[i] = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
     }
 
@@ -247,11 +246,6 @@ export function mountDiffusion(root) {
     sync();
   }, { rootMargin: '80px' }).observe(root);
   document.addEventListener('visibilitychange', sync);
-
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (!started) return;
-    stop(); built = false; build();
-  });
 
   let resizeTimer = 0;
   new ResizeObserver(() => {
