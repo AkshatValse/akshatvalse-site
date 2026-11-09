@@ -1,0 +1,22 @@
+---
+/**
+ * An image with a light and a dark rendition, chosen natively by the browser
+ * from the reader's color-scheme preference (and swapped live if it changes).
+ * Used for the build-time simulation posters, which exist in both schemes.
+ */
+interface Props {
+  light: string;
+  dark: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  loading?: 'lazy' | 'eager';
+  class?: string;
+}
+const { light, dark, alt, width, height, loading = 'lazy', class: cls } = Astro.props;
+---
+
+<picture class={cls}>
+  <source media="(prefers-color-scheme: dark)" srcset={dark} />
+  <img src={light} alt={alt} width={width} height={height} loading={loading} decoding="async" />
+</picture>

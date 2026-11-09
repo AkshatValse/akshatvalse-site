@@ -1,0 +1,86 @@
+---
+/**
+ * One research project per page, as a Clarity blog post:
+ *   title page (#first-content: title, authors, affiliation, abstract, link
+ *   buttons, venue line, cover), then the page's own Clarity containers, then
+ *   previous / next. Clarity's navbar.js builds the floating table of
+ *   contents from the h1/h2 headings inside `container blog main` divs.
+ */
+import Base from './Base.astro';
+import TitleBand from '../components/clarity/TitleBand.astro';
+import Container from '../components/clarity/Container.astro';
+import Icon, { type IconName } from '../components/clarity/Icon.astro';
+import ProjectThumb from '../components/ProjectThumb.astro';
+import { bySlug, neighbours } from '../data/projects';
+
+interface LinkButton { label: string; href: string; icon: IconName }
+
+interface Props {
+  slug: string;
+  pageTitle?: string;
+  description: string;
+  title?: string;
+  /** Author line, e.g. "Akshat Valse and Ali Jannesari". */
+  authors: string;
+  /** Affiliation line under the authors. */
+  affiliation: string;
+  abstract: string;
+  buttons?: LinkButton[];
+  /** Venue / status line at the foot of the intro, e.g. "arXiv preprint · November 2026". */
+  info: string;
+  /** Image cover (rendered as Clarity's foreground + blurred background). */
+  cover?: { src: string; alt: string; width?: number; height?: number };
+  ogType?: string;
+  jsonLd?: unknown[];
+  /** Google Scholar citation tags (paper pages). */
+  citation?: { title: string; authors: string[]; date: string; arxivId?: string; pdfUrl?: string; abstractUrl?: string; publisher?: string };
+}
+
+const { slug, pageTitle, description, title, authors, affiliation, abstract, buttons = [], info, cover, ogType = 'article', jsonLd, citation } = Astro.props;
+const p = bySlug(slug);
+const { prev, next } = neighbours(slug);
+const customCover = Astro.slots.has('cover');
+---
+
+<Base
+  title={pageTitle ?? `${p.short} · Akshat Valse`}
+  description={description}
+  ogType={ogType}
+  jsonLd={jsonLd}
+  citation={citation}
+  breadcrumbs={[{ name: 'Research', path: '/research' }, { name: p.short, path: `/research/${p.slug}` }]}
+  toc
+>
+  <TitleBand cover={cover}>
+    <h1 class="title">{title ?? p.title}</h1>
+    <p class="author">{authors}</p>
+    <p class="author" style="padding-top: 0px;">{affiliation}</p>
+    <p class="abstract">{abstract}</p>
+    {buttons.length > 0 && (
+      <div class="info">
+        <div>
+          {buttons.map((b) => (
+            <><a href={b.href} class="button icon" style="background-color: rgba(255, 255, 255, 0.2)">{b.label} <Icon name={b.icon} /></a>&nbsp;&nbsp; </>
+          ))}
+        </div>
+      </div>
+    )}
+    <Fragment slot="info">{info}</Fragment>
+    {customCover
+      ? <Fragment slot="cover"><slot name="cover" /></Fragment>
+      : !cover && <Fragment slot="cover"><ProjectThumb project={p} idSuffix="band" big /></Fragment>}
+  </TitleBand>
+
+  <slot />
+
+  <Container>
+    <hr />
+    <p class="text">
+      {prev && <a href={`/research/${prev.slug}`} class="button icon"><Icon name="arrow-left" /> {prev.short}</a>}
+      &nbsp;&nbsp;
+      <a href="/research" class="button">All research</a>
+      &nbsp;&nbsp;
+      {next && <a href={`/research/${next.slug}`} class="button icon">{next.short} <Icon name="arrow" /></a>}
+    </p>
+  </Container>
+</Base>

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 360" width="760" height="360" role="img" aria-label="Diagram: a run that has been going for time tau without finishing. Left, the run-time density with the region beyond tau shaded. Right, the choice between waiting, expected to take the mean residual life m(tau), and restarting, which costs c plus a fresh run; restart if and only if m(tau) exceeds E[T] + c.">
+<title>Diagram: a run that has been going for time tau without finishing. Left, the run-time density with the region beyond tau shaded. Right, the choice between waiting, expected to take the mean residual life m(tau), and restarting, which costs c plus a fresh run; restart if and only if m(tau) exceeds E[T] + c.</title>
+<desc>Mechanism diagram for the classical restart question. Not project data.</desc>
+<style>
+.g{stroke:var(--rule,#e2e5e7);stroke-width:1;fill:none}
+.a{stroke:var(--ink-2,#6a6e72);stroke-width:1;fill:none}
+.l{fill:var(--ink-2,#6a6e72);font:11px var(--font-mono,ui-monospace,monospace)}
+.t{fill:var(--ink,#2f3133);font:12px var(--font-sans,system-ui,sans-serif)}
+.tb{fill:var(--ink,#2f3133);font:600 12.5px var(--font-sans,system-ui,sans-serif)}
+.ts{fill:var(--ink-2,#6a6e72);font:11px var(--font-sans,system-ui,sans-serif)}
+.rf{stroke:var(--ink,#2f3133);stroke-width:1;stroke-dasharray:6 4;fill:none}
+.rd{stroke:var(--ink-2,#6a6e72);stroke-width:1;stroke-dasharray:2 3;fill:none}
+.box{fill:var(--ground,#ffffff);stroke:var(--ink-2,#6a6e72);stroke-width:1}
+.boxk{fill:var(--panel,#f5f6f6);stroke:var(--ink,#2f3133);stroke-width:1.25}
+.ed{stroke:var(--ink-2,#6a6e72);stroke-width:1.25;fill:none}
+.edk{stroke:var(--ink,#2f3133);stroke-width:1.5;fill:none}
+.ah{fill:var(--ink-2,#6a6e72)}
+.ahk{fill:var(--ink,#2f3133)}
+.sh{fill:#888578;fill-opacity:0.16;stroke:none}
+.mk{stroke:var(--ground,#ffffff);stroke-width:1.25}
+.s0{stroke:#00224e;fill:none;stroke-width:1.75}.p0{fill:#00224e}.s1{stroke:#243d6e;fill:none;stroke-width:1.75}.p1{fill:#243d6e}.s2{stroke:#50586d;fill:none;stroke-width:1.75}.p2{fill:#50586d}.s3{stroke:#727274;fill:none;stroke-width:1.75}.p3{fill:#727274}.s4{stroke:#948e78;fill:none;stroke-width:1.75}.p4{fill:#948e78}
+@media (prefers-color-scheme: dark){.s0{stroke:#676971}.p0{fill:#676971}.s1{stroke:#888578}.p1{fill:#888578}.s2{stroke:#aea272}.p2{fill:#aea272}.s3{stroke:#d6c25e}.p3{fill:#d6c25e}.s4{stroke:#fee838}.p4{fill:#fee838}.sh{fill:#bbad6d;fill-opacity:0.18}}
+</style>
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahk" d="M0 0L10 5L0 10z"/></marker><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0L10 5L0 10z"/></marker></defs>
+<text class="tb" x="40" y="34">1. A run that is already τ old</text>
+<path class="sh" d="M196.4 240L197 100.2L198 101.5L199 102.9L200 104.3L201 105.8L202 107.3L203 108.8L204 110.4L205 112L206 113.7L207 115.3L208 117L209 118.7L210 120.5L211 122.2L212 124L213 125.8L214 127.6L215 129.5L216 131.3L217 133.2L218 135.1L219 136.9L220 138.8L221 140.7L222 142.6L223 144.5L224 146.4L225 148.3L226 150.2L227 152.1L228 154L229 155.8L230 157.7L231 159.6L232 161.4L233 163.3L234 165.1L235 166.9L236 168.7L237 170.5L238 172.2L239 174L240 175.7L241 177.4L242 179.1L243 180.8L244 182.4L245 184L246 185.6L247 187.2L248 188.7L249 190.2L250 191.7L251 193.2L252 194.6L253 196L254 197.4L255 198.8L256 200.1L257 201.4L258 202.7L259 204L260 205.2L261 206.4L262 207.5L263 208.7L264 209.8L265 210.9L266 211.9L267 212.9L268 213.9L269 214.9L270 215.9L271 216.8L272 217.7L273 218.5L274 219.4L275 220.2L276 221L277 221.8L278 222.5L279 223.2L280 223.9L281 224.6L282 225.3L283 225.9L284 226.5L285 227.1L286 227.6L287 228.2L288 228.7L289 229.2L290 229.7L291 230.2L292 230.6L293 231.1L294 231.5L295 231.9L296 232.3L297 232.7L298 233L299 233.4L300 233.7L301 234L302 234.3L303 234.6L304 234.9L305 235.1L306 235.4L307 235.6L308 235.8L309 236.1L310 236.3L311 236.5L312 236.7L313 236.8L314 237L315 237.2L316 237.3L317 237.5L318 237.6L319 237.8L320 237.9L321 238L322 238.1L323 238.2L324 238.3L325 238.4L326 238.5L327 238.6L328 238.7L329 238.8L330 238.8L331 238.9L332 239L333 239L334 239.1L335 239.2L336 239.2L337 239.3L338 239.3L339 239.4L340 239.4L340 240Z"/>
+<path class="s1" d="M40 235.5L41 235.3L42 235L43 234.8L44 234.5L45 234.2L46 233.9L47 233.6L48 233.2L49 232.9L50 232.5L51 232.2L52 231.8L53 231.4L54 230.9L55 230.5L56 230L57 229.6L58 229.1L59 228.5L60 228L61 227.5L62 226.9L63 226.3L64 225.7L65 225L66 224.4L67 223.7L68 223L69 222.3L70 221.5L71 220.7L72 219.9L73 219.1L74 218.3L75 217.4L76 216.5L77 215.6L78 214.6L79 213.6L80 212.6L81 211.6L82 210.5L83 209.4L84 208.3L85 207.2L86 206L87 204.8L88 203.5L89 202.3L90 201L91 199.7L92 198.3L93 197L94 195.6L95 194.2L96 192.7L97 191.2L98 189.7L99 188.2L100 186.7L101 185.1L102 183.5L103 181.8L104 180.2L105 178.5L106 176.8L107 175.1L108 173.4L109 171.6L110 169.9L111 168.1L112 166.3L113 164.5L114 162.7L115 160.8L116 159L117 157.1L118 155.2L119 153.3L120 151.5L121 149.6L122 147.7L123 145.8L124 143.9L125 142L126 140.1L127 138.2L128 136.3L129 134.4L130 132.6L131 130.7L132 128.9L133 127L134 125.2L135 123.4L136 121.6L137 119.9L138 118.2L139 116.4L140 114.8L141 113.1L142 111.5L143 109.9L144 108.3L145 106.8L146 105.3L147 103.9L148 102.4L149 101.1L150 99.7L151 98.4L152 97.2L153 96L154 94.9L155 93.8L156 92.7L157 91.7L158 90.8L159 89.9L160 89.1L161 88.3L162 87.6L163 86.9L164 86.3L165 85.8L166 85.3L167 84.8L168 84.5L169 84.2L170 83.9L171 83.8L172 83.7L173 83.6L174 83.6L175 83.7L176 83.8L177 84L178 84.3L179 84.6L180 85L181 85.4L182 85.9L183 86.5L184 87.1L185 87.8L186 88.5L187 89.3L188 90.2L189 91.1L190 92.1L191 93.1L192 94.1L193 95.2L194 96.4L195 97.6L196 98.9L197 100.2L198 101.5L199 102.9L200 104.3L201 105.8L202 107.3L203 108.8L204 110.4L205 112L206 113.7L207 115.3L208 117L209 118.7L210 120.5L211 122.2L212 124L213 125.8L214 127.6L215 129.5L216 131.3L217 133.2L218 135.1L219 136.9L220 138.8L221 140.7L222 142.6L223 144.5L224 146.4L225 148.3L226 150.2L227 152.1L228 154L229 155.8L230 157.7L231 159.6L232 161.4L233 163.3L234 165.1L235 166.9L236 168.7L237 170.5L238 172.2L239 174L240 175.7L241 177.4L242 179.1L243 180.8L244 182.4L245 184L246 185.6L247 187.2L248 188.7L249 190.2L250 191.7L251 193.2L252 194.6L253 196L254 197.4L255 198.8L256 200.1L257 201.4L258 202.7L259 204L260 205.2L261 206.4L262 207.5L263 208.7L264 209.8L265 210.9L266 211.9L267 212.9L268 213.9L269 214.9L270 215.9L271 216.8L272 217.7L273 218.5L274 219.4L275 220.2L276 221L277 221.8L278 222.5L279 223.2L280 223.9L281 224.6L282 225.3L283 225.9L284 226.5L285 227.1L286 227.6L287 228.2L288 228.7L289 229.2L290 229.7L291 230.2L292 230.6L293 231.1L294 231.5L295 231.9L296 232.3L297 232.7L298 233L299 233.4L300 233.7L301 234L302 234.3L303 234.6L304 234.9L305 235.1L306 235.4L307 235.6L308 235.8L309 236.1L310 236.3L311 236.5L312 236.7L313 236.8L314 237L315 237.2L316 237.3L317 237.5L318 237.6L319 237.8L320 237.9L321 238L322 238.1L323 238.2L324 238.3L325 238.4L326 238.5L327 238.6L328 238.7L329 238.8L330 238.8L331 238.9L332 239L333 239L334 239.1L335 239.2L336 239.2L337 239.3L338 239.3L339 239.4L340 239.4"/>
+<line class="a" x1="40" y1="240" x2="340" y2="240"/>
+<line class="edk" x1="196.4" y1="64" x2="196.4" y2="240"/>
+<text class="t" x="202.4" y="76">now: age τ, not finished</text>
+<text class="ts" x="40" y="258">run time T (log axis); density of ln T; shaded: P(T &gt; τ) = S(τ)</text>
+<text class="ts" x="40" y="274">mean residual life m(τ) = E[T − τ | T &gt; τ]</text>
+<text class="tb" x="420" y="34">2. Wait, or restart?</text>
+<rect class="boxk" x="420" y="128" width="128" height="44" rx="4"/>
+<text class="t" x="484" y="147" text-anchor="middle">run stalled</text>
+<text class="t" x="484" y="163" text-anchor="middle">at age τ</text>
+<path class="edk" d="M548 142C580 142 560 92 596 92" marker-end="url(#arr)"/>
+<path class="edk" d="M548 158C580 158 560 208 596 208" marker-end="url(#arr)"/>
+<text class="t" x="544" y="120" text-anchor="end">wait</text>
+<text class="t" x="544" y="192" text-anchor="end">restart</text>
+<rect class="box" x="600" y="70" width="140" height="44" rx="4"/>
+<text class="t" x="670" y="89" text-anchor="middle">expected to go:</text>
+<text class="t" x="670" y="105" text-anchor="middle">m(τ)</text>
+<rect class="box" x="600" y="186" width="140" height="44" rx="4"/>
+<text class="t" x="670" y="205" text-anchor="middle">relaunch cost c,</text>
+<text class="t" x="670" y="221" text-anchor="middle">then a fresh run: E[T]</text>
+<rect class="boxk" x="420" y="262" width="320" height="64" rx="4"/>
+<text class="tb" x="580" y="285" text-anchor="middle">restart iff  m(τ) &gt; E[T] + c</text>
+<text class="ts" x="580" y="303" text-anchor="middle">the same inequality decides whether always restarting</text>
+<text class="ts" x="580" y="317" text-anchor="middle">at cutoff τ beats never restarting</text>
+<text class="ts" x="40" y="350">Classical baseline for a known run-time law and independent restarts; drawn for a lognormal with σ = 1.5, τ = 2.</text>
+
+</svg>

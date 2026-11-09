@@ -1,0 +1,52 @@
+---
+/**
+ * Clarity's Selection Display: an image with a `p.caption.selection` under it
+ * whose sentence contains an inline <select>; choosing an option swaps the
+ * image. As in the template, the select is sized to its current text.
+ *
+ *   <Selector label="Show" lead="the" trail="sampler." alt="…"
+ *     options={[{ value, label, src, width, height }]} />
+ */
+interface Option { value: string; label: string; src: string; width?: number; height?: number }
+interface Props { label: string; lead?: string; trail?: string; options: Option[]; alt: string }
+const { label, lead = '', trail = '', options, alt } = Astro.props;
+const first = options[0];
+---
+
+<div class="selection-display" data-selection data-options={JSON.stringify(options)}>
+  <img class="fig" data-img src={first.src} alt={`${alt}: ${first.label}`} width={first.width} height={first.height} />
+  <p class="caption selection">
+    <b>{label}: </b><br />
+    {lead}
+    <select data-select aria-label={alt}>
+      {options.map((o, i) => <option value={o.value} selected={i === 0}>{o.label}</option>)}
+    </select>
+    <span class="select-measure" aria-hidden="true" data-measure></span>
+    {trail}
+  </p>
+</div>
+
+<style>
+  .select-measure { position: absolute; visibility: hidden; white-space: pre; font: inherit; font-weight: inherit; }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-selection]').forEach((root) => {
+    const options = JSON.parse(root.dataset.options ?? '[]') as { value: string; label: string; src: string }[];
+    const select = root.querySelector<HTMLSelectElement>('[data-select]')!;
+    const img = root.querySelector<HTMLImageElement>('[data-img]')!;
+    const measure = root.querySelector<HTMLElement>('[data-measure]')!;
+    const base = img.alt.split(':')[0];
+    const fit = () => {
+      measure.textContent = select.options[select.selectedIndex].text;
+      select.style.width = `${measure.offsetWidth + 34}px`;
+    };
+    options.slice(1).forEach((o) => { const i = new Image(); i.src = o.src; });
+    select.addEventListener('change', () => {
+      const o = options.find((x) => x.value === select.value);
+      if (o) { img.src = o.src; img.alt = `${base}: ${o.label}`; }
+      fit();
+    });
+    fit();
+  });
+</script>

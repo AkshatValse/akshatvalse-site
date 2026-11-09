@@ -1,0 +1,16 @@
+---
+/**
+ * Clarity's comment layout: <div class="container blog main comment"> with
+ * the text on the left and a `.content-comment` column on the right. The
+ * template shows the comment column only on screens 1200px and wider.
+ *
+ *   <NoteRow><p class="text">…</p><Fragment slot="note">…</Fragment></NoteRow>
+ */
+interface Props { id?: string }
+const { id } = Astro.props;
+---
+
+<div id={id} class="container blog main comment">
+  <div class="content"><slot /></div>
+  <div class="content-comment"><p class="caption comment"><slot name="note" /></p></div>
+</div>

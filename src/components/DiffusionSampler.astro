@@ -15,6 +15,9 @@ const label =
   'energy minus log p-zero on the cividis colormap, and faint contours of the ' +
   'same energy are drawn underneath. At the end of each pass the recovered ' +
   'mixture weights are compared with the true ones.';
+
+interface Props { n?: number | string }
+const { n = 2 } = Astro.props;
 ---
 
 <figure class="figure">
@@ -34,7 +37,7 @@ const label =
     </div>
   </div>
   <figcaption class="figure-caption">
-    <b>Fig. 2.</b> Ancestral sampling from a continuous-time diffusion model. The
+    <b>Fig. {n}.</b> Ancestral sampling from a continuous-time diffusion model. The
     forward variance-preserving SDE noises a six-component Gaussian mixture into
     <span class="nowrap">𝒩(0, I)</span>; the reverse SDE carries 640 samples back over 320
     Euler–Maruyama steps. Because a mixture stays a mixture under the VP kernel, the

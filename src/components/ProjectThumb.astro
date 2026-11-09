@@ -1,0 +1,27 @@
+---
+/** The static thumbnail for a project's cover, used by cards and pagers. */
+import type { Project } from '../data/projects';
+import TrapThumb from './TrapThumb.astro';
+import TexTile from './clarity/TexTile.astro';
+import SchemeImage from './SchemeImage.astro';
+import raretail from '../generated/raretail-poster.svg?raw';
+import diffusivity from '../generated/diffusivity-poster.svg?raw';
+
+interface Props { project: Project; idSuffix?: string; big?: boolean }
+const { project: p, idSuffix = 'c', big = false } = Astro.props;
+const c = p.cover;
+---
+
+{c.kind === 'trap' && <TrapThumb id={`tt-${p.slug}-${idSuffix}`} labels={big} />}
+{c.kind === 'image' && (c.dark
+  ? <SchemeImage class="thumb-pic" light={c.src} dark={c.dark} alt={c.alt} />
+  : <img class:list={[{ 'fig-adapt': c.fit === 'contain' }]} src={c.src} alt={c.alt} loading="lazy" decoding="async" style={c.fit === 'contain' ? 'object-fit: contain' : undefined} />
+)}
+{c.kind === 'svg' && <div class="svg-thumb" set:html={c.name === 'raretail' ? raretail : diffusivity} />}
+{c.kind === 'tex' && <TexTile tex={c.tex} label={c.label} big={big} />}
+
+<style>
+  .thumb-pic, .thumb-pic :global(img) { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .svg-thumb { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 4% 3%; }
+  .svg-thumb :global(svg) { width: 100%; height: 100%; }
+</style>

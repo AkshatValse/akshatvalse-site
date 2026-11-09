@@ -16,13 +16,16 @@
     "@astrojs/mdx": "^4.3.6",
     "@astrojs/sitemap": "^3.6.0",
     "astro": "^5.14.1",
+    "img-comparison-slider": "^8.0.7",
     "katex": "^0.16.22",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
     "sharp": "^0.34.4"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.12",
     "lighthouse": "^13.4.1",
-    "puppeteer-core": "^25.4.0"
+    "puppeteer-core": "^25.4.0",
+    "typescript": "^5.9.3"
   }
 }

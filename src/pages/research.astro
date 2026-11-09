@@ -1,437 +1,52 @@
 ---
 import Base from '../layouts/Base.astro';
-import HeroSim from '../components/HeroSim.astro';
-import DiffusivityFigure from '../components/DiffusivityFigure.astro';
-import RareEventFigure from '../components/RareEventFigure.astro';
-import Tex from '../components/Tex.astro';
-
-/** String.raw keeps TeX backslashes intact: a quoted attribute would
- *  have JS eat them, and one of them is an invalid escape. */
-const tex = String.raw;
+import TitleBand from '../components/clarity/TitleBand.astro';
+import Container from '../components/clarity/Container.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { PROJECTS } from '../data/projects';
 ---
 
 <Base
   title="Research · Akshat Valse"
-  description="Inside the Trap: a renewal law for prefix-cache collapse in LLM agent serving, with registered tests on real engines; and the toolkit around it: Langevin sampling and transport coefficients, large deviations for mean-field interacting systems, stability of neural approximations to evolution equations, online calibration with early feedback, reliability of tool-using agents."
+  breadcrumbs={[{ name: 'Research', path: '/research' }]}
+  description="Six research projects in applied probability for the systems that run machine learning: prefix-cache collapse in LLM agent serving, Langevin sampling, large deviations and rare events, stability of learned PDE solvers, early-feedback calibration, and the reliability of tool-using agents."
 >
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">research</span></div>
-      <div>
-        <h1 class="page-title">Research</h1>
-        <p class="lede">
-          Six projects. The first is the one this site is built around:
-          <a href="/research/inside-the-trap"><em>Inside the Trap</em></a>, a renewal law
-          for prefix-cache collapse in LLM agent serving, tested in registered experiments
-          on real engines, whose simulator runs live as Fig. 1 on the
-          <a href="/">home page</a>. The other five are where its methods come from and
-          where they go next: Langevin sampling and what its discretization costs, large
-          deviations and rare events, the stability of learned PDE solvers, calibration
-          when feedback arrives early but one-sided, and the reliability of tool-using
-          agents. All six keep one habit: a closed form where one exists, a registered
-          prediction where one does not, and a check that runs either way.
-        </p>
-      </div>
+  <TitleBand>
+    <h1 class="title">Research</h1>
+    <p class="author">Six projects, six advisors, one habit</p>
+    <p class="abstract">
+      The first is the paper this site is built around: <a href="/research/inside-the-trap"><em>Inside the
+      Trap</em></a>, a renewal law for prefix-cache collapse in LLM agent serving, tested in registered
+      experiments on real engines. The other five are where its methods come from and where they go
+      next. All six keep one habit: a closed form where one exists, a registered prediction where one
+      does not, and a check that runs either way.
+    </p>
+    <Fragment slot="info">1 preprint · 4 manuscripts in preparation</Fragment>
+  </TitleBand>
+
+  <Container width="extra-large" tone="gray" first>
+    <div class="columns-3">
+      {PROJECTS.map((p) => <ProjectCard project={p} />)}
     </div>
-  </section>
+  </Container>
 
-  <!-- ------------------------------------------------------------------ -->
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail">
-        <dl>
-          <dt>Advisor</dt><dd>Ali Jannesari</dd>
-          <dt>Department</dt><dd>Computer Science</dd>
-          <dt>Status</dt><dd>Preprint</dd>
-        </dl>
-        <hr class="rail-rule" />
-        <dl>
-          <dt>Bears on</dt>
-          <dd>LLM serving · metastable failures · admission control</dd>
-        </dl>
-      </div>
-      <div>
-        <article class="entry">
-          <h2 class="entry-title">
-            <a href="/research/inside-the-trap">Inside the Trap: a renewal law for prefix-cache collapse in LLM agent serving</a>
-          </h2>
-          <p class="entry-meta">Ali Jannesari · SwAPP Lab, Computer Science, Iowa State University · preprint, November 2026</p>
-          <p>
-            An agent works in a loop: model call, tool call, model call, re-sending the
-            whole growing conversation each turn. Serving engines such as SGLang and
-            vLLM keep that shared prefix in a GPU KV cache so a follow-up turn costs a
-            fraction of the first. The cached KV belongs to sessions that sit idle in
-            tool calls, and admitting waiting work evicts it. A burst of new sessions
-            can therefore tip the engine into a trap in which every turn misses and the
-            backlog does not drain, at a load it served before. In registered paired
-            tests on Iowa State's Nova cluster, on two engines, two GPUs and two models,
-            a 200-session burst left the engine at zero hits to the end in all 30 runs
-            (the registered rule was met at 9 of 10 rates), every matched no-burst run
-            stayed good, and a client-side session cap prevented the trap in all 30
-            capped runs.
-          </p>
-          <p>
-            The paper asks what the trapped state is. It idealizes that state as a fluid
-            FIFO server on which every turn misses and proves that along FIFO orbits its
-            cycles obey a linear renewal recursion. As is classical, the trap drains if
-            and only if arrivals are below the all-miss capacity; above it, a Perron
-            root carries every trapped state to a known self-similar regime in which the
-            gap between turns grows linearly and the turns served are young and short.
-            For the workload studied, sessions then complete faster than the all-miss
-            capacity, so in the model a trap's measured throughput overstates the
-            recovery threshold. Retrospectively, with nothing fitted to trap data, the
-            theory matches 57 stuck runs; blind in outcome, runs trapped by a tool
-            slowdown met 4 of 5 pre-set scores, cut traps persisted, and with a 20-step
-            budget, trapped runs completed below the all-miss capacity, as predicted. Of
-            two exits, refusing arrivals sheds sessions, while a session cap restores
-            reuse: in registered tests it rescued 9 of 9 established traps at the same
-            load without shedding. The paper does not prove that the engine converges to
-            the model.
-          </p>
-          <p class="entry-meta">
-            Preprint, with Ali Jannesari:
-            <a href="https://arxiv.org/abs/2611.08902"><em>Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving</em></a>
-            (arXiv:2611.08902). Code, data and registrations:
-            <a href="https://github.com/AkshatValse/surviving-llm-stampede">surviving-llm-stampede</a>.
-            Summary, abstract and citation: <a href="/research/inside-the-trap">paper page</a>.
-            The paper's simulator runs live as Fig. 1 on the <a href="/">home page</a>.
-          </p>
-        </article>
-      </div>
+  <Container>
+    <h1>At a glance</h1>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Project</th><th>Advisor</th><th>Department</th><th>Since</th><th>Status</th></tr></thead>
+        <tbody>
+          {PROJECTS.map((p) => (
+            <tr>
+              <td><a href={`/research/${p.slug}`}>{p.short}</a></td>
+              <td>{p.advisor}</td>
+              <td>{p.dept}</td>
+              <td>{p.dates.replace(' – present', '')}</td>
+              <td>{p.status === 'Preprint' ? <b>Preprint</b> : 'Ongoing'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  </section>
-
-  <!-- ------------------------------------------------------------------ -->
-  <HeroSim priority={false} />
-
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail">
-        <dl>
-          <dt>Advisor</dt><dd>David Herzog</dd>
-          <dt>Department</dt><dd>Mathematics</dd>
-          <dt>Status</dt><dd>Ongoing</dd>
-        </dl>
-        <hr class="rail-rule" />
-        <dl>
-          <dt>Bears on</dt>
-          <dd>SGLD · annealed Langevin · diffusion correctors</dd>
-        </dl>
-      </div>
-      <div>
-        <article class="entry">
-          <h2 class="entry-title">
-            Langevin dynamics: sampling, discretization bias, transport coefficients
-          </h2>
-          <p class="entry-meta">David Herzog · Mathematics, Iowa State University · ongoing</p>
-          <p>
-            The overdamped diffusion
-            <Tex src={tex`dX_t = \nabla \log \pi(X_t)\,dt + \sqrt{2}\,dW_t`} />
-            leaves <Tex src={tex`\pi`} /> invariant, so discretizing it gives a sampler.
-            That sampler is not a niche method. Stochastic gradient Langevin dynamics is
-            its Euler–Maruyama discretization with a minibatch gradient; the inner loop
-            of annealed Langevin sampling is the same chain at a fixed noise level; the
-            corrector step of a predictor–corrector diffusion sampler is the same chain
-            against a learned score. In all three the Metropolis correction is dropped,
-            usually without comment, and the invariant law that results is
-            <Tex src={tex`\pi_h \neq \pi`} />.
-          </p>
-          <p>
-            I measure that gap where it is computable rather than bounding it. On an
-            anisotropic Gaussian the unadjusted chain is a coordinatewise AR(1) whose
-            stationary variance solves exactly,
-            <Tex src={tex`v(h) = \frac{s^2}{1 - h/2s^2}, \qquad W_2(\pi_h, \pi) = \tfrac{h}{4}\Big(\textstyle\sum_i s_i^{-2}\Big)^{1/2} + O(h^2),`} block />
-            so a measured bias that disagrees indicts the sampler, not the theory. On a
-            two-component mixture, with every chain started in one well, the log of the
-            sign-crossing rate against the approximate barrier has
-            <a href="https://github.com/AkshatValse/langevin-samplers#results">fitted
-            slopes</a> <Tex src={tex`-0.948`} /> and <Tex src={tex`-1.032`} />, near the
-            <Tex src={tex`-1`} /> of the leading Kramers exponential. Together the two results are the argument
-            for noise schedules. Bias is polynomial in <Tex src={tex`h`} /> and can be
-            halved by halving the step; mixing is exponential in the barrier, and no
-            step size buys back an exponential.
-          </p>
-          <p>
-            Fig. 3, the band above this section, runs the same dynamics in two dimensions
-            in your browser from a fixed seed: it integrates
-            <Tex src={tex`dX_t = -\nabla V(X_t)\,dt + \sqrt{2\beta^{-1}}\,dW_t`} block />
-            for <Tex src={tex`V(x, y) = \cos x + \cos y`} /> on the torus at
-            <Tex src={tex`\beta = 2`} />, by Euler–Maruyama with
-            <Tex src={tex`h = 0.004`} />, colored by the potential. Annealed Langevin
-            sampling runs this same dynamics at each noise level, and it is the
-            continuous-time limit of SGLD when <Tex src={tex`V`} /> is the loss. Particles
-            collect where <Tex src={tex`e^{-\beta V}`} /> is large and hop between wells at
-            the Kramers rate, and across 48 bins the empirical measure sits within a total
-            variation of <Tex src={tex`1.0\times 10^{-3}`} /> of the Gibbs law, with a
-            discretization bias of <Tex src={tex`9\times 10^{-4}`} /> on
-            <Tex src={tex`\mathbb{E}[\cos X]`} /> against the closed form
-            <Tex src={tex`-I_1(\beta)/I_0(\beta)`} />.
-          </p>
-        </article>
-
-        <p class="figure-lead">
-          The second thread is transport coefficients: how fast a sampler actually
-          covers a rough landscape, as against how fast it would move on a flat one.
-        </p>
-
-        <DiffusivityFigure />
-
-        <p>
-          In one periodic dimension this is not an asymptotic bound but an identity.
-          Lifson–Jackson gives
-          <Tex src={tex`D_{\mathrm{eff}} = \frac{D_0}{\langle e^{\beta V}\rangle\,\langle e^{-\beta V}\rangle},`} block />
-          the averages taken over one period. For <Tex src={tex`V(x) = \cos x`} /> both
-          are <Tex src={tex`I_0(\beta)`} />, so at <Tex src={tex`\beta = 1`} />, where
-          <Tex src={tex`D_0 = \beta^{-1} = 1`} />, the answer is
-          <Tex src={tex`D_{\mathrm{eff}} = I_0(1)^{-2} = 0.6238603604\ldots`} />, and the
-          simulation either finds it or is wrong. Any Langevin sampler, including the
-          inner loop of a score-based one, can be pointed at this potential and required
-          to return that number. One that gets the invariant measure right and the
-          diffusivity wrong has a bug in its time discretization.
-        </p>
-        <p class="entry-meta">
-          Code and results:
-          <a href="https://github.com/AkshatValse/langevin-samplers">langevin-samplers</a>.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ------------------------------------------------------------------ -->
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail">
-        <dl>
-          <dt>Advisor</dt><dd>Ruoyu Wu</dd>
-          <dt>Department</dt><dd>Mathematics</dd>
-          <dt>Status</dt><dd>Ongoing</dd>
-        </dl>
-        <hr class="rail-rule" />
-        <dl>
-          <dt>Bears on</dt>
-          <dd>PAC-Bayes · mean-field limits of training · SGD escape</dd>
-        </dl>
-      </div>
-      <div>
-        <article class="entry">
-          <h2 class="entry-title">
-            Large-deviation asymptotics for mean-field interacting systems
-          </h2>
-          <p class="entry-meta">Ruoyu Wu · Mathematics, Iowa State University · ongoing</p>
-          <p>
-            Large deviations sits underneath a good deal of learning theory. Sanov's
-            theorem and the Donsker–Varadhan variational formula for relative entropy
-            are the machinery behind PAC-Bayes generalization bounds and variational
-            mutual-information estimators. Freidlin–Wentzell small-noise theory is how
-            escape times from saddles and shallow basins are analyzed for SGD and for
-            Langevin-based optimizers. And the empirical-measure LDP for a mean-field
-            interacting particle system is structurally the same construction that sits
-            one level above the mean-field limit of wide-network training.
-          </p>
-          <p>
-            I work on rate functionals and the variational characterization of rare
-            events for the empirical measure
-            <Tex src={tex`\mu^N_t = \tfrac{1}{N}\sum_{i} \delta_{X^{i,N}_t}`} /> of such
-            a system, currently in the setting of load balancing. The object is a
-            large-deviation principle on path space; the rate functional then supplies
-            the change of measure for an importance-sampling estimator of rare events,
-            benchmarked against the analytic rate function by exact and Monte Carlo
-            numerics. The application domain is queueing, but the technique carries
-            well past it.
-          </p>
-          <p>
-            The results are held back until the preprint is out. What the figure below
-            shows instead is the mechanism the whole method rests on, on the one target
-            where the answer is known to machine precision.
-          </p>
-        </article>
-
-        <RareEventFigure />
-
-        <p>
-          Naive Monte Carlo does not merely get slow in this regime. It stops being an
-          estimator: it returns zero occurrences and no information about the magnitude.
-          Tilting the sampling law so the rare event becomes typical, then reweighting by
-          the likelihood ratio, recovers an answer, and the tilt has to come from
-          somewhere principled, because a badly chosen change of measure produces an
-          estimator with <em>infinite</em> variance that fails silently. In the Gaussian
-          case the right tilt is a mean shift and can be written down. In the mean-field
-          model it comes from the large-deviation rate function, and checking whether the
-          asymptotics have actually taken hold at the system sizes anyone simulates is
-          the part of the project I find most worth doing.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ------------------------------------------------------------------ -->
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail">
-        <dl>
-          <dt>Advisor</dt><dd>Jue Yan</dd>
-          <dt>Department</dt><dd>Mathematics</dd>
-          <dt>Status</dt><dd>Ongoing</dd>
-        </dl>
-        <hr class="rail-rule" />
-        <dl>
-          <dt>Bears on</dt>
-          <dd>learned operators · neural surrogates · rollout stability</dd>
-        </dl>
-      </div>
-      <div>
-        <article class="entry">
-          <h2 class="entry-title">Stability of neural approximations to evolution equations</h2>
-          <p class="entry-meta">Jue Yan · Mathematics, Iowa State University · ongoing</p>
-          <p>
-            A cell-average neural network solver learns a one-step finite-volume
-            operator
-            <Tex src={tex`\bar v_j^{\,n+1} = \bar v_j^{\,n} - \tfrac{\Delta t}{\Delta x}\big[\mathcal{N}(V_{j+1/2};\Theta) - \mathcal{N}(V_{j-1/2};\Theta)\big],`} block />
-            a learned surrogate for a numerical flux. Conservation comes for free: the
-            same network is evaluated at both faces of a cell, so the update telescopes
-            whatever the weights turn out to be. Stability does not. Networks trained
-            identically up to the random seed, reaching losses you cannot tell apart,
-            behave completely differently under long rollouts, and since the losses are
-            indistinguishable the loss cannot tell you which one you have. It is the
-            autoregressive-surrogate failure mode, in the simplest setting where
-            classical numerical analysis can still say something about it.
-          </p>
-          <p>
-            A trained solver is still a numerical scheme: its weights are frozen once
-            training ends, so what you have is a fixed deterministic update rule that
-            happened to be fitted rather than derived. Numerical analysis has a long
-            history of asking whether update rules of that kind are stable. I am adapting
-            von Neumann analysis to this setting, deriving the linearized amplification
-            factor of the learned time-stepping scheme and characterizing how
-            perturbations propagate through it, toward a condition on the weights alone
-            that can be checked before committing to an expensive rollout.
-          </p>
-          <p class="entry-meta">
-            Joint with Mengyuan Yang. Approach and results held back pending submission.
-          </p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- ------------------------------------------------------------------ -->
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail">
-        <dl>
-          <dt>Advisor</dt><dd>Hongyang Gao</dd>
-          <dt>Department</dt><dd>Computer Science</dd>
-          <dt>Status</dt><dd>Ongoing</dd>
-        </dl>
-        <hr class="rail-rule" />
-        <dl>
-          <dt>Bears on</dt>
-          <dd>conformal prediction · delayed feedback · volatility forecasting</dd>
-        </dl>
-      </div>
-      <div>
-        <article class="entry">
-          <h2 class="entry-title">Online calibration of neural volatility forecasts with early, one-sided feedback</h2>
-          <p class="entry-meta">Hongyang Gao · Computer Science, Iowa State University · ongoing</p>
-          <p>
-            A forecast of a cumulative quantity, the realized variance of an asset over
-            the next day, say, is scored only when the horizon ends. Every online
-            calibration method therefore learns one full horizon late, which is exactly
-            when it is slowest to react to a shift. But the increments of such a
-            quantity are non-negative, so the running sum is monotone, and if it crosses
-            the issued upper bound before the horizon ends the miss is certain at once.
-            Coverage is confirmed only at the end. The feedback is early, but
-            one-sided.
-          </p>
-          <p>
-            The method is a model-agnostic layer on top of any quantile forecaster. It
-            credits certain early misses to an online integrator as soon as they are
-            confirmed, keeps explicit accounts of forecasts still pending so the
-            eventual miss count is known to lie in an interval rather than treated as
-            settled, and applies a bounded correction only when the accounting
-            justifies it. A long-run coverage guarantee under early crediting, bounded
-            correction and missing data is written up as a proof draft, and its
-            consequences are checked numerically in adversarial runs. Whether this recovers faster after a
-            volatility jump than delayed-feedback conformal baselines, without widening
-            the bounds the rest of the time, is the question, and the answer is being
-            settled on a regime-shift simulation with exact oracle quantiles and on a
-            sealed real-data test set, against pre-registered hypotheses.
-          </p>
-          <p class="entry-meta">
-            Public overview:
-            <a href="https://github.com/AkshatValse/neural-forecasting-research-overview">neural-forecasting-research-overview</a>.
-            Code, proofs and results held back pending submission.
-          </p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- ------------------------------------------------------------------ -->
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail">
-        <dl>
-          <dt>Advisor</dt><dd>Yang Li</dd>
-          <dt>Department</dt><dd>Computer Science</dd>
-          <dt>Status</dt><dd>Ongoing</dd>
-        </dl>
-        <hr class="rail-rule" />
-        <dl>
-          <dt>Bears on</dt>
-          <dd>survival analysis · rare-event estimation · agent evaluation</dd>
-        </dl>
-      </div>
-      <div>
-        <article class="entry">
-          <h2 class="entry-title">Reliability of tool-using agents</h2>
-          <p class="entry-meta">Yang Li · Computer Science, Iowa State University · ongoing</p>
-          <p>
-            Two questions about agents that run for a long time and sometimes fail.
-            When one stalls, when is restarting it worth more than waiting, and what in
-            the distribution of run times decides that? And how do you estimate the
-            probability of a failure too rare for direct simulation to reach, the same
-            problem as the rare-event work above with an agent in place of a queue? Two
-            planned pilots on real agents, one on restart policies and one on rare
-            failures, each with its kill criteria registered before any data, with the
-            direction still being chosen between them.
-          </p>
-          <p class="entry-meta">
-            Approach and results held back pending the choice of direction.
-          </p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">preprints</span></div>
-      <div>
-        <p>
-          <a href="https://arxiv.org/abs/2611.08902"><em>Inside the Trap: A Renewal Law for
-          Prefix-Cache Collapse in LLM Agent Serving</em></a>. Akshat Valse and Ali
-          Jannesari. arXiv:2611.08902, November 2026. Code, data and registrations:
-          <a href="https://github.com/AkshatValse/surviving-llm-stampede">surviving-llm-stampede</a>.
-          <a href="/research/inside-the-trap">Paper page</a>.
-        </p>
-        <p class="pending">Further preprints will be posted here as they become available.</p>
-      </div>
-    </div>
-  </section>
+  </Container>
 </Base>
-
-<style>
-  .figure-lead { color: var(--ink-2); margin-top: 1.6rem; margin-bottom: 0; }
-  .pending {
-    color: var(--ink-2);
-    font-size: var(--step--1);
-    font-family: var(--font-mono), monospace;
-  }
-</style>

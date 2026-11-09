@@ -1,0 +1,29 @@
+---
+/**
+ * Clarity's Slide Display: a dot menu (ul.dots#slide-menu) above panels of
+ * class "slide-content"; the template's main.js switches them on click.
+ * main.js addresses the menu by id, so a page can hold ONE slide display.
+ *
+ *   <Slides count={3} labels={['A', 'B', 'C']}>
+ *     <div class="slide-content">…</div>  (×3)
+ *   </Slides>
+ */
+interface Props { count: number; labels?: string[] }
+const { count, labels = [] } = Astro.props;
+---
+
+<div class="slide-menu">
+  <ul class="dots" id="slide-menu">
+    {Array.from({ length: count }, (_, i) => (
+      <li class:list={['dot', { active: i === 0 }]} title={labels[i]} aria-label={labels[i] ?? `Panel ${i + 1}`}></li>
+    ))}
+  </ul>
+</div>
+<slot />
+
+<script>
+  // The template sets the initial display with inline styles; do the same here.
+  document.querySelectorAll<HTMLElement>('.slide-content').forEach((el, i) => {
+    el.style.display = i === 0 ? 'block' : 'none';
+  });
+</script>

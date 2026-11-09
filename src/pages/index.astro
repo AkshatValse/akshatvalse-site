@@ -1,279 +1,208 @@
 ---
 import Base from '../layouts/Base.astro';
+import TitleBand from '../components/clarity/TitleBand.astro';
+import Container from '../components/clarity/Container.astro';
+import Carousel from '../components/clarity/Carousel.astro';
+import Icon from '../components/clarity/Icon.astro';
 import TrapFigure from '../components/TrapFigure.astro';
-import DiffusionSampler from '../components/DiffusionSampler.astro';
-import Tex from '../components/Tex.astro';
+import TrapThumb from '../components/TrapThumb.astro';
+import SchemeImage from '../components/SchemeImage.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { PROJECTS } from '../data/projects';
+import { PROFILE, ARXIV_TRAP, REPO_TRAP } from '../data/site';
+import { NEWS, MANUSCRIPTS, AWARDS } from '../data/home';
 import { trapFacts } from '../sim/trap-facts.js';
+import raretail from '../generated/raretail-poster.svg?raw';
+import diffusivity from '../generated/diffusivity-poster.svg?raw';
 
-/** String.raw keeps TeX backslashes intact: a quoted attribute would
- *  have JS eat them, and one of them is an invalid escape. */
-const tex = String.raw;
-
-/** Every number about Fig. 1 comes from the run the page replays. */
 const f = trapFacts();
 const fmt = (x: number) => Math.round(x).toLocaleString('en-US');
+const onBand = 'background-color: rgba(255, 255, 255, 0.2)';
 
-const research = [
-  {
-    title: 'Inside the Trap: a renewal law for prefix-cache collapse in LLM agent serving',
-    href: '/research/inside-the-trap',
-    meta: 'Ali Jannesari · Computer Science · preprint, arXiv:2611.08902',
-    blurb:
-      'An agent re-sends its whole growing conversation every turn, and the serving engine keeps that prefix in a GPU cache so the next turn stays cheap. A burst of new sessions can tip the engine into a trap in which every turn misses and the backlog does not drain, at a load it served before. Registered tests on two engines, two GPUs and two models; a renewal law, proved for an idealization of the trapped state and checked retrospectively against 57 stuck runs; and a session cap that prevented the trap in all 30 capped runs.',
-  },
-  {
-    title: 'Langevin dynamics: sampling, discretization bias, transport coefficients',
-    meta: 'David Herzog · Mathematics · ongoing',
-    blurb:
-      'The sampler underneath score-based generative models and stochastic-gradient Langevin dynamics, analyzed where its errors are computable: discretization bias against exact stationary laws, and estimator design for effective diffusivity and mobility.',
-  },
-  {
-    title: 'Large-deviation asymptotics for mean-field interacting systems',
-    meta: 'Ruoyu Wu · Mathematics · ongoing',
-    blurb:
-      'Rate functionals and the variational characterization of rare events for the empirical measure of a mean-field particle system, currently in the setting of load balancing. This is the construction that sits one level above the mean-field limit of wide-network training, and the machinery underneath PAC-Bayes.',
-  },
-  {
-    title: 'Stability of neural approximations to evolution equations',
-    meta: 'Jue Yan · Mathematics · ongoing',
-    blurb:
-      'Conservation in a cell-average neural network solver is architectural. Stability is not, and the training loss does not separate the networks that survive a long rollout from the ones that come apart. Adapting von Neumann analysis to say which, from the weights alone.',
-  },
-  {
-    title: 'Online calibration of neural volatility forecasts with early, one-sided feedback',
-    meta: 'Hongyang Gao · Computer Science · ongoing',
-    blurb:
-      'A forecast of a cumulative quantity is scored only when its horizon ends, but a miss becomes certain the moment the running sum crosses the bound. A calibration layer that credits those certain misses early and keeps accounts of what is still pending, with a coverage guarantee written up as a proof draft and tested numerically.',
-  },
-  {
-    title: 'Reliability of tool-using agents',
-    meta: 'Yang Li · Computer Science · ongoing',
-    blurb:
-      'When an agent stalls, when is restarting it worth more than waiting, and how do you estimate the probability of a failure too rare for direct simulation to reach? Two planned pilots on real agents, with the direction still being chosen.',
-  },
+const figures = [
+  { k: 'Inside the Trap', t: 'Two serving engines after one burst: one stays trapped, the capped one recovers.', href: '/research/inside-the-trap', media: 'trap' },
+  { k: 'Langevin sampling', t: 'Reverse-time diffusion with an exact score, graded on mode coverage.', href: '/research/langevin', media: 'img', src: '/poster/diffusion-light.webp', dark: '/poster/diffusion-dark.webp' },
+  { k: 'Langevin sampling', t: '648 particles in cos x + cos y, converging to the Gibbs law.', href: '/research/langevin', media: 'img', src: '/poster/hero-light-720.webp', dark: '/poster/hero-dark-720.webp' },
+  { k: 'Langevin sampling', t: 'Effective diffusivity against the Lifson–Jackson value 1/I₀(1)².', href: '/research/langevin', media: 'svg', svg: diffusivity },
+  { k: 'Rare events', t: 'Crude Monte Carlo fails silently where importance sampling keeps going.', href: '/research/large-deviations', media: 'svg', svg: raretail },
 ];
 ---
 
 <Base
-  title="Akshat Valse · applied probability for the systems that run machine learning"
-  description="Undergraduate researcher at Iowa State University in applied probability for the systems that run machine learning. Inside the Trap (arXiv:2611.08902): why a burst of agent traffic can trap a prefix-cached LLM serving engine, a renewal law for the trapped state, and a session cap that gets the engine out."
+  title="Akshat Valse · Applied probability for ML systems · Iowa State"
+  ogType="profile"
+  description="Akshat Valse is an undergraduate researcher at Iowa State University in applied probability for machine-learning systems: LLM serving and KV caching, Langevin sampling, rare events. Author of Inside the Trap (arXiv:2611.08902)."
 >
-  <TrapFigure slot="hero" />
+  <!-- Title Page -->
+  <TitleBand cover={{ src: PROFILE.portrait.src, srcSmall: PROFILE.portrait.srcSmall, alt: 'Portrait of Akshat Valse', width: PROFILE.portrait.width, height: PROFILE.portrait.height, portrait: true }}>
+    <h1 class="title">{PROFILE.name}</h1>
+    <p class="author">{PROFILE.tagline}</p>
+    <p class="author" style="padding-top: 0px;">
+      {PROFILE.role}, Iowa State University (Honors) <br />
+      {PROFILE.degrees}
+    </p>
+    <p class="abstract">
+      I study the probability underneath machine-learning systems: queues inside LLM serving
+      engines, the samplers inside generative models, and the numerical schemes that learned
+      solvers become once training stops. My preprint with Ali Jannesari,
+      <a href="/research/inside-the-trap"><em>Inside the Trap</em></a>, explains why a burst of
+      agent traffic can leave a serving engine stuck at a load it served before, and what gets it
+      out. Throughout, I aim for a closed form where one exists, a registered prediction where one
+      does not, and a check that runs either way.
+    </p>
+    <div class="info">
+      <div>
+        <a href={PROFILE.cvPdf} class="button icon" style={onBand}>CV <Icon name="cv" /></a> &nbsp;&nbsp;
+        <a href={ARXIV_TRAP} class="button icon" style={onBand}>Paper <Icon name="paper" /></a> &nbsp;&nbsp;
+        <a href={PROFILE.github} class="button icon" style={onBand}>Code <Icon name="github" /></a> &nbsp;&nbsp;
+        <a href={`mailto:${PROFILE.email}`} class="button icon" style={onBand}>Email <Icon name="mail" /></a>
+      </div>
+    </div>
+    <Fragment slot="info">{PROFILE.status} · {PROFILE.graduation}</Fragment>
+  </TitleBand>
 
-  <section class="section shell">
-    <div class="row">
-      <div class="rail">
-        <span class="rail-label">Fig. 1</span>
-        <hr class="rail-rule" />
-        <dl>
-          <dt>Engine</dt>
-          <dd>the paper's simulator: SGLang, A100, 300k-token KV pool</dd>
-          <dt>Load</dt>
-          <dd>{f.mult} λ<sub>ref</sub>, plus {f.burstN} sessions at {fmt(f.tB)} s</dd>
-          <dt>Cap</dt>
-          <dd>{f.cap} sessions, {fmt(f.engage)}–{fmt(f.release)} s (lower lane)</dd>
-          <dt>Checked</dt>
-          <dd>served prompt {fmt(f.trapped.meanPrompt)} vs model F {fmt(f.model.Pz)}</dd>
-        </dl>
-        <div class="legend" aria-hidden="true">
-          <span>0</span><span class="legend-ramp"></span><span>1</span>
+  <!-- Featured -->
+  <Container first id="featured">
+    <h1>Inside the Trap</h1>
+    <p class="text">
+      An agent re-sends its whole growing conversation every turn, and the serving engine keeps that
+      prefix in a GPU cache so the next turn stays cheap. That cache belongs to sessions idling in
+      tool calls, and admitting new work evicts it. A burst of new sessions can tip the engine into a
+      trap in which every turn misses and the backlog never drains, at a load it served before. In
+      registered tests on Iowa State's Nova cluster, on two engines, two GPUs and two models:
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Registered test</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>200-session burst, no cap: engine left at zero cache hits to the end</td><td><b>30 of 30</b> runs</td></tr>
+          <tr><td>Matched runs without the burst that stayed good</td><td><b>every</b> run</td></tr>
+          <tr><td>Client-side session cap: trap prevented</td><td><b>30 of 30</b> capped runs</td></tr>
+          <tr><td>Session cap on an established trap: rescued at the same load, no session shed</td><td><b>9 of 9</b> traps</td></tr>
+          <tr><td>Stuck runs matched by the renewal theory, retrospectively, nothing fitted to trap data</td><td><b>57</b> runs</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </Container>
+
+  <Container width="extra-extra-large" tone="gray" id="fig1">
+    <div class="figbar">
+      <span><span class="label">Live.</span> The paper's simulator (SGLang, A100, 300k-token KV pool), running in your browser from a fixed seed.</span>
+      <span class="keys">
+        <span>Color: cache hit fraction <span class="legend-ramp"></span></span>
+        <span>Height: sessions, √ scale</span>
+      </span>
+    </div>
+    <TrapFigure />
+    <p class="caption">
+      <b>Figure 1.</b> Both engines get the same agent traffic: {fmt(f.baseSessions)} sessions at
+      {f.mult}× the measured all-miss rate, plus a burst of {f.burstN} at {fmt(f.tB)} s. The top
+      engine is left alone and stays at zero hits to the end; the bottom one gets a cap of {f.cap}
+      sessions at {fmt(f.engage)} s, recovers, and stays good after the cap comes off at
+      {fmt(f.release)} s. The site's checks run the same code against the paper's Python engine and
+      get identical counts.
+    </p>
+  </Container>
+
+  <Container>
+    <p class="text">
+      <a href="/research/inside-the-trap" class="button icon">Project page <Icon name="arrow" /></a> &nbsp;&nbsp;
+      <a href={ARXIV_TRAP} class="button icon">arXiv <Icon name="paper" /></a> &nbsp;&nbsp;
+      <a href={REPO_TRAP} class="button icon">Code, data, registrations <Icon name="code" /></a>
+    </p>
+  </Container>
+
+  <!-- Research -->
+  <Container id="research">
+    <h1>Research</h1>
+    <p class="text">
+      Six projects with six advisors across Mathematics and Computer Science. The trap paper is a
+      renewal argument about a queue; the others are where that kind of argument comes from and
+      where it goes next.
+    </p>
+  </Container>
+
+  <Container width="extra-large" tone="gray">
+    <div class="columns-3">
+      {PROJECTS.map((p) => <ProjectCard project={p} />)}
+    </div>
+  </Container>
+
+  <!-- Live figures -->
+  <Container id="figures">
+    <h1>Every figure is a live simulation</h1>
+    <p class="text">
+      Each runs in your browser from a fixed seed and is checked against an exact reference before
+      it ships: a closed form, or for the trap the paper's own simulator.
+    </p>
+  </Container>
+
+  <Container width="max" tone="gray">
+    <Carousel>
+      {figures.map((x, i) => (
+        <div class="slider-item">
+          <a href={x.href}>
+            <div class="thumb">
+              {x.media === 'trap' && <TrapThumb id={`car-${i}`} labels={false} />}
+              {x.media === 'img' && <SchemeImage light={x.src!} dark={x.dark!} alt="" />}
+              {x.media === 'svg' && <div class="svg-fill" set:html={x.svg} />}
+            </div>
+          </a>
+          <p class="caption"><b>{x.k}.</b> {x.t}</p>
         </div>
-        <p class="legend-note">Color: cache hit fraction</p>
-        <p class="legend-note">Height: sessions, √ scale</p>
-      </div>
+      ))}
+    </Carousel>
+  </Container>
 
-      <div>
-        <p class="lede">
-          I’m an undergraduate researcher at Iowa State University, working in applied
-          probability on the systems that run machine learning. My preprint with Ali
-          Jannesari, <a href="/research/inside-the-trap"><em>Inside the Trap</em></a>,
-          explains why a burst of agent traffic can leave an LLM serving engine stuck at
-          a load it served before, and what gets it out.
-        </p>
+  <!-- Publications -->
+  <Container id="publications">
+    <h1>Publications</h1>
+    <h2>Preprints</h2>
+    <p class="text">
+      <b>Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving.</b><br />
+      Akshat Valse and Ali Jannesari. <em>arXiv:2611.08902</em> (cs.DC), November 2026.
+    </p>
+    <p class="text">
+      <a href={ARXIV_TRAP} class="button icon">Paper <Icon name="paper" /></a> &nbsp;&nbsp;
+      <a href="https://arxiv.org/pdf/2611.08902" class="button icon">PDF <Icon name="pdf" /></a> &nbsp;&nbsp;
+      <a href={REPO_TRAP} class="button icon">Code <Icon name="code" /></a> &nbsp;&nbsp;
+      <a href="/research/inside-the-trap" class="button icon">Project page <Icon name="arrow" /></a>
+    </p>
+    <h2>In preparation</h2>
+    <ul>
+      {MANUSCRIPTS.map((m) => (
+        <li><p class="text">{m.href ? <a href={m.href}>{m.title}</a> : m.title}. {m.authors}.</p></li>
+      ))}
+    </ul>
+  </Container>
 
-        <p>
-          An agent works in a loop: model call, tool call, model call, re-sending the
-          whole growing conversation each turn. Serving engines such as SGLang and vLLM
-          keep that shared prefix in a GPU KV cache, so a follow-up turn whose prefix is
-          still cached prefills only its new tokens; in the paper’s workload a hit
-          prefills 551 tokens and a miss about 11,100. The cached KV belongs to sessions
-          that sit idle in tool calls, and admitting waiting work evicts it. A burst of
-          new sessions can therefore tip the engine into a trap in which every turn
-          misses and the backlog does not drain. In registered paired tests on Iowa
-          State’s Nova cluster, on two engines, two GPUs and two models, a 200-session
-          burst left the engine at zero hits to the end in all 30 runs (the registered
-          rule was met at 9 of 10 rates), every matched no-burst run stayed good, and a
-          client-side session cap prevented the trap in all 30 capped runs.
-        </p>
+  <!-- News -->
+  <Container id="news">
+    <h1>News</h1>
+    <ul>
+      {NEWS.map((n) => (
+        <li><p class="text"><b>{n.date}.</b> <Fragment set:html={n.html} /></p></li>
+      ))}
+    </ul>
+  </Container>
 
-        <p>
-          The paper then asks what the trapped state is. It idealizes that state as a
-          fluid FIFO server on which every turn misses, model F, and proves that along
-          FIFO orbits its cycles obey a linear renewal recursion. The trap drains if and
-          only if arrivals are below the all-miss capacity
-          <Tex src={tex`\lambda_{\mathrm{miss}}`} />; above it, a Perron root carries
-          every trapped state to a known self-similar regime in which the turns served
-          are young and short. For the workload studied, sessions then complete faster
-          than <Tex src={tex`\lambda_{\mathrm{miss}}`} />, so in the model a trap’s
-          measured throughput overstates the load at which it drains. With nothing
-          fitted to trap data, the theory matches 57 stuck runs retrospectively, and it
-          was also tested blind in outcome. Of two ways out, refusing arrivals sheds
-          sessions, while a session cap restores cache reuse: in registered tests it
-          rescued 9 of 9 established traps at the same load without shedding a session.
-          The paper does not prove that the engine converges to the model.
-        </p>
-
-        <p>
-          The band above runs the paper’s simulator in your browser from a fixed seed:
-          the engine calibrated to SGLang on an A100 with a 300,000-token KV pool,
-          iteration by iteration, the same code that the site’s checks run against the
-          paper’s Python engine, count for count. Both lanes get the same agent traffic:
-          a Poisson stream of {fmt(f.baseSessions)} sessions at {f.mult} times the
-          measured all-miss rate, plus a burst of {f.burstN} at {fmt(f.tB)} s, and both
-          lose their cache hits by {fmt(f.hitsGone[0])} s. The top engine is left alone
-          and stays at zero hits to the end, with about {fmt(f.trapped.sessions)} sessions
-          backed up over the last 3,000 s; it is still trapped after the last burst
-          session finishes, at {fmt(f.lastBurst)} s. The bottom one gets a cap of
-          {f.cap} sessions at {fmt(f.engage)} s: hits come back by {fmt(f.hitsBack)} s,
-          drop out again while the gate drains the backlog, and hold from
-          {fmt(f.hitsHold)} s; the cap comes off at {fmt(f.release)} s, and the engine
-          stays good. Over the last 3,000 s the trapped engine serves turns that average
-          {fmt(f.trapped.meanPrompt)} prompt tokens, against {fmt(f.model.Pz)} in model F
-          and {fmt(f.model.Pstat)} in the normal turn mix, and completes sessions at
-          {f.trapped.completionsOverMiss.toFixed(2)} times
-          <Tex src={tex`\lambda_{\mathrm{miss}}`} /> against model F’s
-          {f.model.DoverMiss.toFixed(2)}: young, short turns, as the theorem says, with
-          nothing fitted.
-        </p>
-
-        <p class="note">
-          This run was chosen from {f.selection.candidates} seeds: of the
-          {f.selection.cleared} in which every burst session finishes before the end,
-          the {f.selection.inRange} whose cap comes off inside the paper’s engine range
-          ({fmt(f.selection.releaseRange[0])}–{fmt(f.selection.releaseRange[1])} s),
-          and of those the one whose completion rate is closest to model F’s. Over
-          {f.further.seeds} further seeds that played no part in the choice, every
-          engine that gets the burst and no cap is stuck at zero hits
-          ({f.further.stuck} of {f.further.seeds}); in the {f.further.cleared} where the
-          burst sessions all finish, {f.further.clearedNoHitsAfter} stay trapped after the
-          last one; and the trapped engines’ served prompts average
-          {f.further.promptOverPz.toFixed(2)} times model F’s, while their completion
-          rates average {f.further.completionsOverMiss.toFixed(2)} times
-          <Tex src={tex`\lambda_{\mathrm{miss}}`} />, from
-          {f.further.completionsMin.toFixed(2)} to {f.further.completionsMax.toFixed(2)}.
-        </p>
-
-        <p class="more">
-          <a href="/research/inside-the-trap">The paper: summary, abstract, code and citation →</a>
-        </p>
-      </div>
+  <!-- About -->
+  <Container id="about">
+    <h1>About</h1>
+    <div class="table-wrapper">
+      <table>
+        <tbody>
+          <tr><td><b>Education</b></td><td>{PROFILE.affiliation} · {PROFILE.degrees} · {PROFILE.graduation}</td></tr>
+          <tr><td><b>Next</b></td><td>{PROFILE.status}, machine learning and applied probability</td></tr>
+          <tr><td><b>Awards</b></td><td>{AWARDS.join(' · ')}</td></tr>
+          <tr><td><b>Compute</b></td><td>SLURM on Iowa State's Nova cluster; SGLang and vLLM on A100 and H200 GPUs</td></tr>
+          <tr><td><b>Elsewhere</b></td><td>Private pilot (high-performance endorsement); volunteer pilot with <a href="https://www.pilotsnpaws.org/">Pilots N Paws</a></td></tr>
+        </tbody>
+      </table>
     </div>
-  </section>
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail">
-        <span class="rail-label">Fig. 2</span>
-        <hr class="rail-rule" />
-        <dl>
-          <dt>Object</dt>
-          <dd>VP-SDE, reverse time</dd>
-          <dt>Score</dt>
-          <dd>exact, not learned</dd>
-          <dt>Steps</dt>
-          <dd>320 Euler–Maruyama</dd>
-          <dt>Graded on</dt>
-          <dd>mode coverage</dd>
-        </dl>
-      </div>
-      <div>
-        <h2 class="section-title">The toolkit underneath</h2>
-        <p>
-          The trap paper is a renewal argument about a queue, and the rest of my work is
-          where that kind of argument comes from: Langevin dynamics and what its
-          discretization costs, large deviations and probabilities too small for direct
-          simulation to reach, and whether a PDE solver with a network inside it holds
-          together when iterated. The habit is the same throughout: a closed form where
-          one exists and a registered prediction where one does not, and a check that
-          runs either way.
-        </p>
-        <p>
-          Generative models are hard to evaluate because the target is unknown, so a
-          sampler can only be judged on whether its output looks plausible. Make the
-          target a Gaussian mixture and that changes. The mixture is closed under the
-          variance-preserving forward kernel, so every marginal <Tex src={tex`p_t`} /> is
-          again a mixture and the score <Tex src={tex`\nabla\log p_t`} /> is available in
-          closed form. Anderson's time reversal
-          <Tex src={tex`dX = \big[-\tfrac{1}{2}\beta(t)X - \beta(t)\nabla\log p_t(X)\big]dt + \sqrt{\beta(t)}\,d\bar{W}`} block />
-          then runs with an oracle score, so whatever error remains belongs to the
-          sampler and not to a network. The weights below are deliberately unequal,
-          which is what makes mode collapse detectable at all. A sampler that drops the
-          0.08 component still emits individually plausible points, and only the
-          proportions give it away.
-        </p>
-
-        <DiffusionSampler />
-
-        <p>
-          Over 16,384 samples the recovered weights match to
-          <Tex src={tex`\max_k|\hat{w}_k - w_k| = 0.006`} /> against a Monte Carlo
-          standard error of <Tex src={tex`0.0035`} />, the component means to
-          <Tex src={tex`0.010`} />, and the within-component spread to
-          <Tex src={tex`0.262`} /> against <Tex src={tex`\sigma = 0.26`} />. This is what
-          a toy target with a closed form buys you. The sampler either returns the
-          weights or it does not, and no quantity of plausible-looking output makes up
-          the difference.
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">research</span></div>
-      <div>
-        <h2 class="section-title">Research</h2>
-        {research.map((r) => (
-          <article class="entry">
-            <h3 class="entry-title">{r.href ? <a href={r.href}>{r.title}</a> : r.title}</h3>
-            <p class="entry-meta">{r.meta}</p>
-            <p>{r.blurb}</p>
-          </article>
-        ))}
-        <p class="more"><a href="/research">Full descriptions →</a></p>
-      </div>
-    </div>
-  </section>
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">elsewhere</span></div>
-      <div>
-        <h2 class="section-title">Elsewhere</h2>
-        <dl class="links">
-          <dt>Preprint</dt>
-          <dd><a href="/research/inside-the-trap">Inside the Trap</a> (<a href="https://arxiv.org/abs/2611.08902">arXiv:2611.08902</a>)</dd>
-          <dt>Code</dt>
-          <dd><a href="https://github.com/AkshatValse/surviving-llm-stampede">surviving-llm-stampede</a> · <a href="https://github.com/AkshatValse/langevin-samplers">langevin-samplers</a></dd>
-          <dt>Email</dt>
-          <dd><a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a></dd>
-          <dt>GitHub</dt>
-          <dd><a href="https://github.com/AkshatValse" rel="me">AkshatValse</a></dd>
-          <dt>CV</dt>
-          <dd><a href="/cv">/cv</a></dd>
-        </dl>
-        <p class="pending">Further preprints will be posted here as they become available.</p>
-      </div>
-    </div>
-  </section>
+  </Container>
 </Base>
 
 <style>
-  .more { margin-top: 1.6rem; }
-  .pending {
-    margin-top: 1.6rem;
-    color: var(--ink-2);
-    font-size: var(--step--1);
-    font-family: var(--font-mono), monospace;
-  }
+  #fig1 :global(.trap-hero) { margin: 0; border: 0; border-radius: 10px; overflow: hidden; }
 </style>

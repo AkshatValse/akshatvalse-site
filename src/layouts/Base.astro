@@ -1,175 +1,225 @@
 ---
-import { Font } from 'astro:assets';
-import '../styles/global.css';
+/**
+ * Every page is a Clarity page. The template's files are linked unmodified
+ * from public/clarity/ exactly as clarity.html links them; src/styles/global.css
+ * adds only the site layer (nav, simulations, rounded covers, dark mode).
+ */
 import 'katex/dist/katex.min.css';
+import 'img-comparison-slider/dist/styles.css';
+import '../styles/global.css';
+import { PROFILE, NAV } from '../data/site';
+import Icon from '../components/clarity/Icon.astro';
 
 interface Props {
   title: string;
   description: string;
   ogType?: string;
-  /** Absolute path to a per-page social card; falls back to the site card. */
   ogImage?: string;
   ogImageAlt?: string;
-  /** Extra JSON-LD blocks emitted alongside the Person graph. */
   jsonLd?: unknown[];
+  /** Load Clarity's hoverable table of contents (navbar.js), built from the h1/h2 of main containers. */
+  toc?: boolean;
+  /** Breadcrumb trail for structured data, e.g. [{name: 'Research', path: '/research'}, …]. */
+  breadcrumbs?: { name: string; path: string }[];
+  /** Google Scholar / Highwire citation tags for a paper page. */
+  citation?: {
+    title: string;
+    authors: string[];
+    date: string;
+    arxivId?: string;
+    pdfUrl?: string;
+    abstractUrl?: string;
+    publisher?: string;
+  };
+  /** Keep a page out of search results (404). */
+  noindex?: boolean;
 }
 
-const { title, description, ogType = 'website', ogImage, ogImageAlt, jsonLd } = Astro.props;
+const { title, description, ogType = 'website', ogImage, ogImageAlt, jsonLd, toc = false, breadcrumbs, citation, noindex = false } = Astro.props;
 
-/**
- * Under `build.format: 'file'` Astro serves clean URLs but reports
- * `Astro.url.pathname` as `/research.html`. Left alone that produces a
- * canonical pointing at a URL the host immediately 308s away, and a nav whose
- * aria-current never matches. Strip the extension once, use it for both.
- */
-const path =
-  Astro.url.pathname
-    .replace(/\.html$/, '')
-    .replace(/\/index$/, '')
-    .replace(/\/$/, '') || '/';
+/** Under build.format 'file' Astro reports /research.html; strip it once. */
+const path = Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '').replace(/\/$/, '') || '/';
 const canonical = new URL(path, Astro.site);
+const section = path === '/' ? '/' : '/' + path.split('/')[1];
 
-const NAV = [
-  { href: '/', label: 'Home' },
-  { href: '/research', label: 'Research' },
-  { href: '/cv', label: 'CV' },
+const SITE = Astro.site!;
+const personId = new URL('/#person', SITE).href;
+const websiteId = new URL('/#website', SITE).href;
+const ogImg = new URL(ogImage ?? '/og.png', SITE).href;
+
+/** One JSON-LD graph per page: the person, the site, this page, and its trail. */
+const graph: Record<string, unknown>[] = [
+  {
+    '@type': 'Person',
+    '@id': personId,
+    name: PROFILE.name,
+    alternateName: [PROFILE.fullName, 'A. S. Valse', 'A. Valse'],
+    givenName: 'Akshat',
+    familyName: 'Valse',
+    url: SITE.href,
+    image: new URL(PROFILE.portrait.src, SITE).href,
+    email: `mailto:${PROFILE.email}`,
+    jobTitle: 'Undergraduate Researcher',
+    description:
+      'Undergraduate researcher at Iowa State University in applied probability for the systems ' +
+      'that run machine learning: LLM serving and prefix caching, Langevin sampling, large ' +
+      'deviations and rare events, stability of learned PDE solvers, online calibration, and the ' +
+      'reliability of tool-using agents. Author, with Ali Jannesari, of "Inside the Trap: A Renewal ' +
+      'Law for Prefix-Cache Collapse in LLM Agent Serving" (arXiv:2611.08902).',
+    sameAs: [PROFILE.github, PROFILE.linkedin],
+    affiliation: { '@type': 'CollegeOrUniversity', name: 'Iowa State University', url: 'https://www.iastate.edu/' },
+    alumniOf: { '@type': 'CollegeOrUniversity', name: 'Iowa State University', url: 'https://www.iastate.edu/' },
+    knowsAbout: [
+      'Applied probability', 'Machine learning systems', 'LLM serving', 'Prefix caching', 'KV cache',
+      'Queueing theory', 'Renewal theory', 'Langevin dynamics', 'Markov chain Monte Carlo',
+      'Diffusion models', 'Large deviations', 'Importance sampling', 'Numerical analysis',
+      'Neural PDE solvers', 'Conformal prediction', 'LLM agents',
+    ],
+  },
+  {
+    '@type': 'WebSite',
+    '@id': websiteId,
+    url: SITE.href,
+    name: PROFILE.name,
+    alternateName: PROFILE.fullName,
+    description: `${PROFILE.name}: ${PROFILE.tagline.toLowerCase()}. Research, publications and CV.`,
+    publisher: { '@id': personId },
+    inLanguage: 'en',
+  },
+  {
+    '@type': path === '/' ? 'ProfilePage' : 'WebPage',
+    '@id': canonical.href,
+    url: canonical.href,
+    name: title,
+    description,
+    isPartOf: { '@id': websiteId },
+    ...(path === '/' ? { mainEntity: { '@id': personId } } : { author: { '@id': personId } }),
+    primaryImageOfPage: ogImg,
+    inLanguage: 'en',
+  },
 ];
-
-const ld = {
-  '@context': 'https://schema.org',
-  '@type': 'Person',
-  name: 'Akshat Sachin Valse',
-  // People search the full legal name; the site uses the short one everywhere else.
-  alternateName: ['Akshat Valse', 'A. S. Valse'],
-  url: Astro.site?.href,
-  email: 'mailto:avalse@iastate.edu',
-  jobTitle: 'Undergraduate researcher',
-  description:
-    'Undergraduate researcher at Iowa State University in applied probability for the ' +
-    'systems that run machine learning. Author, with Ali Jannesari, of "Inside the Trap: ' +
-    'A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving" (arXiv:2611.08902). ' +
-    'Also works on Langevin sampling and its discretization bias, large deviations for ' +
-    'mean-field interacting systems, the stability of learned PDE solvers, calibration ' +
-    'with early feedback, and the reliability of tool-using agents.',
-  // sameAs is what lets a search engine decide these accounts are one person.
-  sameAs: [
-    'https://github.com/AkshatValse',
-    'https://linkedin.com/in/akshat-sachin-valse',
-  ],
-  affiliation: { '@type': 'CollegeOrUniversity', name: 'Iowa State University' },
-  alumniOf: { '@type': 'CollegeOrUniversity', name: 'Iowa State University' },
-  knowsAbout: [
-    'Applied probability',
-    'LLM serving systems, prefix caching and metastable failures',
-    'Queueing theory, renewal theory and fluid models',
-    'Discrete-event simulation',
-    'Stochastic differential equations',
-    'Langevin dynamics and Markov chain Monte Carlo',
-    'Diffusion models and score-based generative modeling',
-    'Large deviations and mean-field interacting particle systems',
-    'Numerical analysis of learned PDE solvers',
-    'Online conformal calibration',
-    'Reliability of tool-using LLM agents',
-  ],
-};
+if (breadcrumbs?.length) {
+  graph.push({
+    '@type': 'BreadcrumbList',
+    itemListElement: [{ name: 'Home', path: '/' }, ...breadcrumbs].map((c, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: c.name,
+      item: new URL(c.path, SITE).href,
+    })),
+  });
+}
+const ld = { '@context': 'https://schema.org', '@graph': graph };
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#E0E4E6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#304463" media="(prefers-color-scheme: dark)" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="robots" content={noindex ? "noindex, follow" : "index, follow, max-image-preview:large, max-snippet:-1"} />
     <link rel="canonical" href={canonical.href} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content={PROFILE.name} />
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical.href} />
-    <meta property="og:image" content={new URL(ogImage ?? '/og.png', Astro.site).href} />
+    <meta property="og:image" content={ogImg} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta
-      property="og:image:alt"
-      content={ogImageAlt ??
-        'Akshat Sachin Valse — applied probability for the systems that run machine learning, Iowa State University. Above the name, two simulated LLM serving engines after a burst of agent traffic: the one with no cap stays trapped with its cache missing, the one given a session cap recovers.'}
-    />
-    <meta property="og:site_name" content="Akshat Sachin Valse" />
+    <meta property="og:image:alt" content={ogImageAlt ?? `${PROFILE.fullName}: ${PROFILE.tagline}.`} />
+    {ogType === 'profile' && <><meta property="profile:first_name" content="Akshat" /><meta property="profile:last_name" content="Valse" /></>}
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content={new URL(ogImage ?? '/og.png', Astro.site).href} />
-    <meta name="author" content="Akshat Sachin Valse" />
-    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImg} />
+    <meta name="author" content={PROFILE.fullName} />
+    {citation && (
+      <>
+        <meta name="citation_title" content={citation.title} />
+        {citation.authors.map((a) => <meta name="citation_author" content={a} />)}
+        <meta name="citation_publication_date" content={citation.date} />
+        <meta name="citation_online_date" content={citation.date} />
+        {citation.publisher && <meta name="citation_publisher" content={citation.publisher} />}
+        {citation.arxivId && <meta name="citation_arxiv_id" content={citation.arxivId} />}
+        {citation.pdfUrl && <meta name="citation_pdf_url" content={citation.pdfUrl} />}
+        {citation.abstractUrl && <meta name="citation_abstract_html_url" content={citation.abstractUrl} />}
+      </>
+    )}
+    <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="me" href={PROFILE.github} />
+    <link rel="me" href={PROFILE.linkedin} />
 
-    <Font cssVariable="--font-body" preload />
-    <Font cssVariable="--font-display" preload />
-    <Font cssVariable="--font-body-italic" />
-    <Font cssVariable="--font-mono" />
+    <!-- Fonts that Clarity's stylesheet imports: connect early -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+    <link rel="preload" href="/clarity/assets/fonts/Charter/charter_regular.woff2" as="font" type="font/woff2" crossorigin />
+
+    <!-- The Clarity template, unmodified -->
+    <link rel="stylesheet" type="text/css" media="all" href="/clarity/assets/stylesheets/main_free.css" />
+    <link rel="stylesheet" type="text/css" media="all" href="/clarity/clarity/clarity.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/styles/foundation.min.css" />
+    <link rel="stylesheet" href="/clarity/assets/fontawesome-free-7.2.0-web/css/all.min.css" />
+    {toc && <script is:inline src="/clarity/assets/scripts/navbar.js"></script>}
 
     <script type="application/ld+json" set:html={JSON.stringify(ld)} />
-    {jsonLd?.map((block) => (
-      <script type="application/ld+json" set:html={JSON.stringify(block)} />
-    ))}
+    {jsonLd?.map((block) => <script type="application/ld+json" set:html={JSON.stringify(block)} />)}
   </head>
 
   <body>
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#first-content">Skip to content</a>
 
-    <header class="masthead shell">
-      <div class="row">
-        <div class="rail" aria-hidden="true"></div>
-        <div>
-          <p class="name">
-            {path === '/' ? 'Akshat Valse' : <a href="/">Akshat Valse</a>}
-          </p>
-          <p class="tagline">Applied probability for the systems that run machine learning &middot; Iowa State University</p>
-          <nav class="nav" aria-label="Primary">
+    <!-- Navigation, as on shikun.io (the site that hosts Clarity) -->
+    <div class="site-nav">
+      <div class="container">
+        <div class="site-nav-inner">
+          <nav class="menu" aria-label="Primary">
             {NAV.map((item) => (
-              <a href={item.href} aria-current={path === item.href ? 'page' : undefined}>
-                {item.label}
-              </a>
+              <a href={item.href} aria-current={section === item.href ? 'page' : undefined}>{item.label}</a>
             ))}
           </nav>
+          <div class="social">
+            <a href={PROFILE.github} rel="me" aria-label="GitHub"><Icon name="github" /></a>
+            <a href={PROFILE.linkedin} rel="me" aria-label="LinkedIn"><Icon name="linkedin" /></a>
+            <a href={`mailto:${PROFILE.email}`} aria-label="Email"><Icon name="mail" /></a>
+            <a href={PROFILE.cvPdf} aria-label="CV (PDF)"><Icon name="cv" /></a>
+          </div>
         </div>
       </div>
-    </header>
+    </div>
 
-    <slot name="hero" />
+    <slot />
 
-    <main id="main">
-      <slot />
-    </main>
-
-    <footer class="footer shell">
-      <div class="row">
-        <div class="rail"><span class="rail-label">contact</span></div>
-        <div>
-          <p>
-            <span class="fullname">Akshat Sachin Valse</span>,
-            Department of Mathematics, Iowa State University.
-          </p>
-          <p class="availability">
-            PhD applications: Fall 2027 cycle &middot; B.S. expected May 2028.
-          </p>
-          <p>
-            <a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a>
-            &middot;
-            <a href="https://github.com/AkshatValse" rel="me">github.com/AkshatValse</a>
-          </p>
-          <p>
-            Outside of research I fly (private pilot, high-performance endorsement) and
-            volunteer with <a href="https://www.pilotsnpaws.org/">Pilots N Paws</a>.
-          </p>
-          <p class="colophon">
-            Set in Archivo, Source Serif&nbsp;4 and IBM Plex Mono; mathematics in KaTeX.
-            Every figure is a live simulation, each checked against an exact reference.
-            <a href="https://github.com/AkshatValse/akshatvalse-site">Source and checks</a>
-            live in <code>src/sim</code> and <code>scripts/verify-*</code>; the
-            tolerances run on every push
-            (<a href="https://github.com/AkshatValse/akshatvalse-site/actions/workflows/verify.yml">checks</a>).
-          </p>
-        </div>
+    <!-- Footer Page -->
+    <footer>
+      <div class="container">
+        <p>
+          {PROFILE.fullName} · {PROFILE.tagline} · Iowa State University ·
+          <a href={`mailto:${PROFILE.email}`}>{PROFILE.email}</a>
+        </p>
+        <p>
+          This website is built on the <a href="https://shikun.io/projects/clarity">Clarity Template</a>,
+          designed by <a href="https://shikun.io/">Shikun Liu</a>. Every figure is a live simulation
+          checked against an exact reference (<a href="https://github.com/AkshatValse/akshatvalse-site">source and checks</a>).
+        </p>
       </div>
     </footer>
+
+    <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js"></script>
+    <script is:inline src="/clarity/hljs-init.js"></script>
+    <script is:inline src="/clarity/assets/scripts/main.js"></script>
+    <script>
+      import 'img-comparison-slider';
+    </script>
   </body>
 </html>

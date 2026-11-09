@@ -1,0 +1,23 @@
+---
+/**
+ * Clarity's container: <div class="container blog {width} {tone}">.
+ *   width: main · large · extra-large · extra-extra-large · max
+ *   tone:  gray (figures, diagrams) · gray-linear (galleries)
+ *   first: the first container after the title page (extra top margin)
+ * Section headings inside `main` containers are <h1>, sub-sections <h2>:
+ * Clarity's navbar.js builds the table of contents from exactly those.
+ */
+interface Props {
+  width?: 'main' | 'large' | 'extra-large' | 'extra-extra-large' | 'max';
+  tone?: 'gray' | 'gray-linear';
+  first?: boolean;
+  id?: string;
+  class?: string;
+  style?: string;
+}
+const { width = 'main', tone, first = false, id, class: cls, style } = Astro.props;
+---
+
+<div id={id} class:list={['container', 'blog', width, tone, { first }, cls]} style={style}>
+  <slot />
+</div>

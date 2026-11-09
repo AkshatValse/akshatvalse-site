@@ -2,6 +2,9 @@
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Base from '../layouts/Base.astro';
+import TitleBand from '../components/clarity/TitleBand.astro';
+import Container from '../components/clarity/Container.astro';
+import Icon from '../components/clarity/Icon.astro';
 
 /**
  * HTML CV.
@@ -186,210 +189,98 @@ const skills = [
       'Measure-theoretic probability and stochastic differential equations; MCMC (MALA, Metropolis–Hastings) and importance sampling; large-deviation asymptotics; numerical analysis of time-stepping schemes and von Neumann stability; discrete-event simulation and queueing models; online conformal calibration; reproducible computation with recorded seeds, parameter sidecars and pre-registered predictions, so every figure regenerates from saved results.',
   },
 ];
+
+/** Project page for each research-experience entry, in CV order. */
+const projectSlugs = ['inside-the-trap', 'langevin', 'large-deviations', 'neural-pde-stability', 'online-calibration', 'agent-reliability'];
+
 ---
 
 <Base
   title="CV · Akshat Sachin Valse"
-  description="Curriculum vitae. Undergraduate researcher at Iowa State University in applied probability for the systems that run machine learning: Inside the Trap (arXiv:2611.08902), a renewal law for prefix-cache collapse in LLM agent serving; Langevin sampling, large deviations, the stability of learned PDE solvers, online calibration with early feedback, and the reliability of tool-using agents."
+  breadcrumbs={[{ name: 'CV', path: '/cv' }]}
+  description="Curriculum vitae of Akshat Sachin Valse, undergraduate researcher at Iowa State University in applied probability for the systems that run machine learning."
+  toc
 >
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">CV</span></div>
+  <TitleBand>
+    <h1 class="title">Akshat Sachin Valse</h1>
+    <p class="author">Curriculum vitae · updated November 2026</p>
+    <p class="abstract">{interests}</p>
+    <div class="info">
       <div>
-        <h1 class="page-title">Curriculum vitae</h1>
-        <p class="lede">{interests}</p>
-        <p class="entry-meta">
-          {hasPdf ? (
-            <><a href={pdf}>Download as PDF</a>. Updated November 2026.</>
-          ) : (
-            <>PDF not posted yet. Write to <a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a>.</>
-          )}
-          {' · '}
-          <a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a>
-          {' · '}
-          <a href="https://github.com/AkshatValse" rel="me">github.com/AkshatValse</a>
+        {hasPdf && <><a href={pdf} class="button icon" style="background-color: rgba(255, 255, 255, 0.2)">Download PDF <Icon name="pdf" /></a> &nbsp;&nbsp;</>}
+        <a href="mailto:avalse@iastate.edu" class="button icon" style="background-color: rgba(255, 255, 255, 0.2)">Email <Icon name="mail" /></a> &nbsp;&nbsp;
+        <a href="https://github.com/AkshatValse" rel="me" class="button icon" style="background-color: rgba(255, 255, 255, 0.2)">GitHub <Icon name="github" /></a>
+      </div>
+    </div>
+    <Fragment slot="info">Iowa State University, Honors · B.S. expected May 2028</Fragment>
+  </TitleBand>
+
+  <Container first id="education">
+    <h1>Education</h1>
+    <h2>Iowa State University, Honors Program</h2>
+    <p class="text">
+      Aug. 2024 – May 2028 (expected) · Cumulative GPA 3.86 / 4.00<br />
+      B.S. Statistics · B.S. Mathematics · B.A. Computer Science · B.S. Data Science
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>In progress, Fall 2026 (all four at the PhD level, 6000-series)</th><th>Course</th></tr></thead>
+        <tbody>{inProgress.map(([name, code]) => <tr><td>{name}</td><td>{code}</td></tr>)}</tbody>
+      </table>
+    </div>
+    <p class="text"><b>Planned, Spring 2027:</b> {planned.map(([name]) => name).join(' · ')}.</p>
+    {completed.map((g) => (
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Completed · {g.group}</th><th>Course</th></tr></thead>
+          <tbody>{g.courses.map(([name, code]) => <tr><td>{name}</td><td>{code}</td></tr>)}</tbody>
+        </table>
+      </div>
+    ))}
+  </Container>
+
+  <Container id="preprints">
+    <h1>Preprints</h1>
+    {preprints.map((p) => (
+      <>
+        <p class="text"><b>{p.title}.</b><br />{p.meta}</p>
+        <p class="text">
+          <a href={p.href} class="button icon">Paper <Icon name="paper" /></a> &nbsp;&nbsp;
+          <a href={p.code} class="button icon">Code, data, registrations <Icon name="code" /></a> &nbsp;&nbsp;
+          <a href="/research/inside-the-trap" class="button icon">Project page <Icon name="arrow" /></a>
         </p>
-      </div>
-    </div>
-  </section>
+      </>
+    ))}
+  </Container>
 
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">Education</span></div>
-      <div>
-        <h2 class="section-title">Education</h2>
-        <article class="entry">
-          <h3 class="entry-title">Iowa State University, Honors Program</h3>
-          <p class="entry-meta">Aug. 2024 – May 2028 (expected) · Cumulative GPA 3.86 / 4.00</p>
-          <p>
-            B.S. Statistics · B.S. Mathematics · B.A. Computer Science · B.S. Data Science
-          </p>
+  <Container id="research">
+    <h1>Research experience</h1>
+    {research.map((r, i) => (
+      <>
+        <h2><a href={`/research/${projectSlugs[i]}`}>{r.title}</a></h2>
+        <p class="text"><b>{r.dates}.</b> {r.role}</p>
+        <ul>{r.bullets.map((b) => <li><p class="text">{b}</p></li>)}</ul>
+      </>
+    ))}
+  </Container>
 
-          <h4 class="sub">In progress, Fall 2026 · all four at the PhD level (6000-series)</h4>
-          <ul class="courses">
-            {inProgress.map(([name, code]) => (
-              <li>{name} <span class="code">{code}</span></li>
-            ))}
-          </ul>
+  <Container id="manuscripts">
+    <h1>Manuscripts in preparation</h1>
+    <ul>{manuscripts.map((m) => <li><p class="text"><b>{m.title}.</b> {m.meta}</p></li>)}</ul>
+  </Container>
 
-          <h4 class="sub">Planned, Spring 2027</h4>
-          <ul class="courses">
-            {planned.map(([name]) => <li>{name}</li>)}
-          </ul>
+  <Container id="awards">
+    <h1>Awards and honors</h1>
+    <ul>{awards.map((a) => <li><p class="text">{a}</p></li>)}</ul>
+  </Container>
 
-          <h4 class="sub">Graduate and advanced coursework, completed</h4>
-          {completed.map((g) => (
-            <>
-              <h5 class="group">{g.group}</h5>
-              <ul class="courses">
-                {g.courses.map(([name, code]) => (
-                  <li>{name} <span class="code">{code}</span></li>
-                ))}
-              </ul>
-            </>
-          ))}
-        </article>
-      </div>
-    </div>
-  </section>
+  <Container id="service">
+    <h1>Leadership and service</h1>
+    <ul>{service.map((s) => <li><p class="text">{s}</p></li>)}</ul>
+  </Container>
 
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">Preprints</span></div>
-      <div>
-        <h2 class="section-title">Preprints</h2>
-        <ol class="manuscripts">
-          {preprints.map((p) => (
-            <li>
-              <a class="mtitle" href={p.href}>{p.title}</a>
-              <span class="entry-meta">
-                {p.meta} Code, data and registrations: <a href={p.code}>surviving-llm-stampede</a>.
-              </span>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </div>
-  </section>
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">Research</span></div>
-      <div>
-        <h2 class="section-title">Research experience</h2>
-        {research.map((r) => (
-          <article class="entry">
-            <h3 class="entry-title">{r.title}</h3>
-            <p class="entry-meta">{r.dates} · {r.role}</p>
-            <ul>
-              {r.bullets.map((b) => <li>{b}</li>)}
-            </ul>
-          </article>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">Manuscripts</span></div>
-      <div>
-        <h2 class="section-title">Manuscripts in preparation</h2>
-        <ol class="manuscripts">
-          {manuscripts.map((m) => (
-            <li>
-              <span class="mtitle">{m.title}</span>
-              <span class="entry-meta">{m.meta}</span>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </div>
-  </section>
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">Awards</span></div>
-      <div>
-        <h2 class="section-title">Awards and honors</h2>
-        <ul>
-          {awards.map((a) => <li>{a}</li>)}
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">Service</span></div>
-      <div>
-        <h2 class="section-title">Leadership and service</h2>
-        <ul>
-          {service.map((s) => <li>{s}</li>)}
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">Skills</span></div>
-      <div>
-        <h2 class="section-title">Technical skills</h2>
-        <dl class="skills">
-          {skills.map((s) => (
-            <>
-              <dt>{s.label}</dt>
-              <dd>{s.text}</dd>
-            </>
-          ))}
-        </dl>
-      </div>
-    </div>
-  </section>
+  <Container id="skills">
+    <h1>Technical skills</h1>
+    {skills.map((s) => (<><h2>{s.label}</h2><p class="text">{s.text}</p></>))}
+  </Container>
 </Base>
-
-<style>
-  .sub {
-    font-family: var(--font-mono), monospace;
-    font-size: var(--step--1);
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-    color: var(--ink-2);
-    font-weight: 500;
-    margin: 1.4rem 0 0.5rem;
-  }
-  .group {
-    font-size: inherit;
-    font-weight: 600;
-    margin: 0.9rem 0 0.25rem;
-  }
-  .courses { list-style: none; padding: 0; margin: 0; }
-  .courses li { margin-bottom: 0.2em; }
-  .code {
-    font-family: var(--font-mono), monospace;
-    font-size: var(--step--1);
-    color: var(--ink-2);
-    white-space: nowrap;
-  }
-  .manuscripts { padding-left: 1.2rem; }
-  .manuscripts li { margin-bottom: 1rem; }
-  .mtitle { display: block; font-style: italic; }
-  .manuscripts .entry-meta { display: block; margin: 0.15rem 0 0; }
-  .skills { margin: 0; }
-  .skills dt {
-    font-family: var(--font-mono), monospace;
-    font-size: var(--step--1);
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-    color: var(--ink-2);
-    font-weight: 500;
-    margin-top: 1rem;
-  }
-  .skills dt:first-child { margin-top: 0; }
-  .skills dd { margin: 0.3rem 0 0; }
-  @media print {
-    .rail { display: none; }
-    .section { padding-block: 0.6rem; }
-  }
-</style>

@@ -1,0 +1,30 @@
+---
+/**
+ * Clarity's Comparison Display: the same <img-comparison-slider> web
+ * component the template loads (npm img-comparison-slider 8, imported once in
+ * Base.astro), with the template's figure/figcaption markup. `white` switches
+ * the divider and labels to white for dark images.
+ */
+interface Props {
+  before: string;
+  after: string;
+  beforeLabel: string;
+  afterLabel: string;
+  alt: string;
+  white?: boolean;
+  width?: number;
+  height?: number;
+}
+const { before, after, beforeLabel, afterLabel, alt, white = false, width, height } = Astro.props;
+---
+
+<img-comparison-slider class:list={['slider-container', { white }]}>
+  <figure slot="first" class="before">
+    <img class="fig" src={before} alt={`${alt}: ${beforeLabel}`} width={width} height={height} />
+    <figcaption class:list={{ white }}>{beforeLabel}</figcaption>
+  </figure>
+  <figure slot="second" class="after">
+    <img class="fig" src={after} alt={`${alt}: ${afterLabel}`} width={width} height={height} />
+    <figcaption class:list={{ white }}>{afterLabel}</figcaption>
+  </figure>
+</img-comparison-slider>

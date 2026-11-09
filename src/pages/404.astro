@@ -1,18 +1,14 @@
 ---
 import Base from '../layouts/Base.astro';
+import TitleBand from '../components/clarity/TitleBand.astro';
 ---
 
-<Base title="Not found · Akshat Valse" description="That page does not exist.">
-  <section class="section shell">
-    <div class="row">
-      <div class="rail"><span class="rail-label">404</span></div>
-      <div>
-        <h1 class="page-title">Not found</h1>
-        <p>
-          Nothing at that address. Try <a href="/">the index</a>,
-          <a href="/research">research</a>, or the <a href="/cv">CV</a>.
-        </p>
-      </div>
-    </div>
-  </section>
+<Base title="Not found · Akshat Valse" description="That page does not exist." noindex>
+  <TitleBand>
+    <h1 class="title">Not found</h1>
+    <p class="abstract">
+      Nothing at that address. Try <a href="/">the home page</a>, <a href="/research">research</a>,
+      or the <a href="/cv">CV</a>.
+    </p>
+  </TitleBand>
 </Base>

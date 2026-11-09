@@ -1,0 +1,33 @@
+---
+/**
+ * Font Awesome Free icons, the icon set the Clarity template ships with
+ * (public/clarity/assets/fontawesome-free-7.2.0-web). Rendered as <i>, which
+ * Clarity's `.button.icon i` rule spaces after the label.
+ */
+const MAP = {
+  paper: 'fa-regular fa-file-lines',
+  pdf: 'fa-regular fa-file-pdf',
+  code: 'fa-solid fa-code',
+  mail: 'fa-regular fa-envelope',
+  github: 'fa-brands fa-github',
+  linkedin: 'fa-brands fa-linkedin',
+  cv: 'fa-regular fa-id-card',
+  quote: 'fa-solid fa-quote-right',
+  arrow: 'fa-solid fa-arrow-right',
+  'arrow-left': 'fa-solid fa-arrow-left',
+  external: 'fa-solid fa-arrow-up-right-from-square',
+  flask: 'fa-solid fa-flask',
+  play: 'fa-solid fa-play',
+  pause: 'fa-solid fa-pause',
+  copy: 'fa-regular fa-copy',
+  check: 'fa-solid fa-check',
+  book: 'fa-solid fa-book-open',
+  chart: 'fa-solid fa-chart-line',
+  data: 'fa-solid fa-database',
+} as const;
+export type IconName = keyof typeof MAP;
+interface Props { name: IconName }
+const { name } = Astro.props;
+---
+
+<i class={MAP[name]} aria-hidden="true"></i>

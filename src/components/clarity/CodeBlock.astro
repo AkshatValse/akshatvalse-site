@@ -1,0 +1,7 @@
+---
+/** Clarity code block. The template's main.js adds the copy button to every <pre>. */
+interface Props { code: string; lang?: string }
+const { code, lang = 'plaintext' } = Astro.props;
+---
+
+<pre><code class={lang}>{code}</code></pre>

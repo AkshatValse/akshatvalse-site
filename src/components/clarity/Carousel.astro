@@ -1,0 +1,19 @@
+---
+/**
+ * Clarity's Auto Slideshow Display, verbatim structure:
+ *   div.slideshow > div.navigation (#prev_btn, #next_btn) + div.slider > div.slider-item…
+ * The template's main.js positions items 440px apart, advances every 2 s,
+ * and pauses on hover. Place it in <Container width="max" tone="gray">.
+ * One slideshow per page (main.js addresses it by id).
+ */
+---
+
+<div class="slideshow">
+  <div class="navigation">
+    <a class="button icon" id="prev_btn" aria-label="Previous"><i class="fa-solid fa-arrow-left"></i></a>
+    <a class="button icon" id="next_btn" aria-label="Next"><i class="fa-solid fa-arrow-right"></i></a>
+  </div>
+  <div class="slider">
+    <slot />
+  </div>
+</div>

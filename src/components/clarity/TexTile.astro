@@ -1,0 +1,14 @@
+---
+/**
+ * A typographic cover: one defining equation, server-rendered by KaTeX, on a
+ * quiet gridded tile. Used where a project has no public figure yet.
+ */
+import katex from 'katex';
+interface Props { tex: string; big?: boolean; label?: string }
+const { tex, big = false, label } = Astro.props;
+const html = katex.renderToString(tex, { displayMode: true, output: 'html', throwOnError: true, strict: 'ignore' });
+---
+
+<div class:list={['tex-tile', { big }]} role="img" aria-label={label ?? tex}>
+  <div set:html={html} />
+</div>

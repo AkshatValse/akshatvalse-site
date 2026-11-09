@@ -1,0 +1,48 @@
+---
+/**
+ * Clarity's title page, verbatim structure:
+ *   div.container.blog#first-content (inline background colour)
+ *     div.blog-title[.no-cover]
+ *       div.blog-intro > div (title, author, abstract, .info > div > buttons)
+ *                      > div.info > p (venue / status line)
+ *       div.blog-cover > img.foreground + img.background   (or a custom cover)
+ * Covers are rounded (the owner's one departure from the template).
+ */
+interface Props {
+  background?: string;
+  /** Image cover: the foreground over its own 24px-blurred copy, as in Clarity. */
+  cover?: { src: string; srcSmall?: string; alt: string; width?: number; height?: number; portrait?: boolean };
+}
+const { background = '#E0E4E6', cover } = Astro.props;
+const hasCustomCover = Astro.slots.has('cover');
+const hasCover = !!cover || hasCustomCover;
+---
+
+<div class="container blog" id="first-content" style={`background-color: ${background};`}>
+  <div class:list={['blog-title', { 'no-cover': !hasCover }]}>
+    <div class="blog-intro">
+      <div>
+        <slot />
+      </div>
+      {Astro.slots.has('info') && (
+        <div class="info">
+          <p><slot name="info" /></p>
+        </div>
+      )}
+    </div>
+    {cover && (
+      <div class="blog-cover">
+        <img class="foreground" src={cover.src} alt={cover.alt} width={cover.width} height={cover.height}
+          style={cover.portrait ? 'height: auto; aspect-ratio: 4 / 5; object-fit: cover' : 'height: auto'} fetchpriority="high" />
+        <img class="background" src={cover.srcSmall ?? cover.src} alt="" aria-hidden="true"
+          style={cover.portrait ? 'height: auto; aspect-ratio: 4 / 5; object-fit: cover' : 'height: auto'} />
+      </div>
+    )}
+    {hasCustomCover && (
+      <div class="blog-cover">
+        <div class="cover-tile"><slot name="cover" /></div>
+        <div class="cover-glow" aria-hidden="true"></div>
+      </div>
+    )}
+  </div>
+</div>
