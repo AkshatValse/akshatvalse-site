@@ -1,0 +1,159 @@
+---
+import Base from '../../layouts/Base.astro';
+
+const TITLE = 'Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving';
+const ARXIV = 'https://arxiv.org/abs/2611.08902';
+const REPO = 'https://github.com/AkshatValse/surviving-llm-stampede';
+
+/** The abstract as posted on arXiv, verbatim. */
+const ABSTRACT = `Prefix caching lets an LLM agent's follow-up turns reuse cached KV, but a burst can tip an engine into a trap in which every turn misses and the backlog does not drain, at a load it served before. In registered paired tests on two engines, two GPUs and two models (passed at 9 of 10 rates), a 200-session burst left the engine at zero hits to the end in all 30 runs, while every matched no-burst run stayed good and a session cap prevented the trap in all 30 capped runs. We analyse an idealization of the trapped state exactly: for a fluid FIFO server on which every turn misses, we prove that along FIFO orbits its cycles obey a linear renewal recursion. As is classical, the trap drains if and only if arrivals are below the all-miss capacity; above it, a Perron root fixes the dynamics: every trapped state converges to a known self-similar regime in which the gap between turns grows linearly and the turns served are young and short. For our workload the backlog grows at 0.6 to 0.8 of the excess load and sessions complete faster than the all-miss capacity, a youth premium with turn-count and cost-growth factors, so in the model a trap's measured throughput overstates the recovery threshold. Retrospectively, with nothing fitted to trap data, the theory matches 57 stuck runs: the mean served prompt within 3% in 50 runs, completions above the all-miss capacity in every run, and the pooled gap growth. Blind in outcome, 4 runs trapped by a tool slowdown met 4 of 5 pre-set scores, cut traps persisted, and with a 20-step budget, trapped runs completed below the all-miss capacity, as predicted. Of two exits, refusing arrivals sheds sessions; a session cap restores reuse: in registered tests it rescued 9 of 9 established traps at the same load without shedding, and the engine stayed good after release. We do not prove that the engine converges to the model.`;
+
+/** Identical to the Citation section of the repository README. */
+const BIBTEX = `@misc{valse2026inside,
+  title         = {Inside the Trap: A Renewal Law for Prefix-Cache Collapse in {LLM} Agent Serving},
+  author        = {Valse, Akshat and Jannesari, Ali},
+  year          = {2026},
+  eprint        = {2611.08902},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.DC},
+  url           = {https://arxiv.org/abs/2611.08902}
+}`;
+
+const ISU = { '@type': 'CollegeOrUniversity', name: 'Iowa State University' };
+---
+
+<Base
+  title="Inside the Trap · Akshat Valse"
+  description="Inside the Trap (arXiv:2611.08902): why a burst of agent traffic can trap a prefix-cached LLM serving engine, a renewal law for the trapped state, and what gets the engine out."
+  ogType="article"
+  jsonLd={[
+    {
+      '@context': 'https://schema.org',
+      '@type': 'ScholarlyArticle',
+      headline: TITLE,
+      name: TITLE,
+      author: [
+        { '@type': 'Person', name: 'Akshat Valse', url: new URL('/', Astro.site).href, affiliation: ISU },
+        { '@type': 'Person', name: 'Ali Jannesari', affiliation: ISU },
+      ],
+      datePublished: '2026-11-06',
+      abstract: ABSTRACT,
+      keywords: ['LLM serving', 'prefix caching', 'KV cache', 'LLM agents', 'metastable failures', 'admission control', 'queueing'],
+      url: new URL('/research/inside-the-trap', Astro.site).href,
+      sameAs: ARXIV,
+      isAccessibleForFree: true,
+    },
+  ]}
+>
+  <section class="section shell">
+    <div class="row">
+      <div class="rail">
+        <dl>
+          <dt>Preprint</dt><dd>arXiv:2611.08902</dd>
+          <dt>Subjects</dt><dd>cs.DC · cs.PF</dd>
+          <dt>Posted</dt><dd>November 2026</dd>
+        </dl>
+        <hr class="rail-rule" />
+        <dl>
+          <dt>Bears on</dt>
+          <dd>LLM serving · prefix caching · KV cache · agent workloads</dd>
+        </dl>
+      </div>
+      <div class="prose">
+        <h1 class="page-title">
+          Inside the Trap: <span class="subtitle">A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving</span>
+        </h1>
+        <p class="entry-meta">
+          Akshat Valse and Ali Jannesari · Department of Computer Science, Iowa State
+          University · arXiv:2611.08902, November 2026 · 66 pages
+        </p>
+        <dl class="links">
+          <dt>Paper</dt>
+          <dd><a href={ARXIV}>arXiv abstract</a> · <a href="https://arxiv.org/pdf/2611.08902">PDF</a></dd>
+          <dt>Code and data</dt>
+          <dd><a href={REPO}>surviving-llm-stampede</a></dd>
+          <dt>Release</dt>
+          <dd><a href={`${REPO}/tree/trap-arxiv-v1`}>trap-arxiv-v1</a>, the commit the preprint describes</dd>
+          <dt>Cite</dt>
+          <dd><a href="#cite">BibTeX</a></dd>
+        </dl>
+
+        <h2>In brief</h2>
+        <p>
+          Why can an LLM serving engine stay stuck after a burst of agent traffic has
+          passed, at a load it served before the burst?
+        </p>
+        <p>
+          An agent works in a loop: model call, tool call, model call, re-sending the
+          whole growing conversation each turn. Serving engines such as SGLang and vLLM
+          keep that shared prefix in a GPU KV cache, so a follow-up turn whose prefix is
+          still cached prefills only its new tokens; in the paper's workload a hit
+          prefills 551 tokens and a miss about 11,100. The cached KV belongs to sessions
+          that sit idle in tool calls, and admitting waiting work evicts it. A burst of
+          new sessions can therefore tip the engine into a trap in which every turn
+          misses and the backlog does not drain.
+        </p>
+        <p>
+          In registered paired tests on Iowa State's Nova cluster, on two engines, two
+          GPUs and two models, a 200-session burst left the engine at zero hits to the
+          end in all 30 runs (the registered rule was met at 9 of 10 rates), every
+          matched no-burst run stayed good, and a client-side session cap prevented the
+          trap in all 30 capped runs.
+        </p>
+        <p>
+          The paper then asks what the trapped state is. It idealizes that state as a
+          fluid FIFO server on which every turn misses and proves that along FIFO orbits
+          its cycles obey a linear renewal recursion. The trap drains if and only if
+          arrivals are below the all-miss capacity; above it, every trapped state
+          converges to a known self-similar regime in which the turns served are young
+          and short. For the workload studied, sessions then complete faster than the
+          all-miss capacity, so in the model a trap's measured throughput overstates the
+          load at which it drains. With nothing fitted to trap data, the theory matches
+          57 stuck runs retrospectively, and it was also tested blind in outcome.
+        </p>
+        <p>
+          Of two ways out, refusing arrivals sheds sessions, while a session cap
+          restores cache reuse: in registered tests it rescued 9 of 9 established traps
+          at the same load without shedding a session. The paper does not prove that
+          the engine converges to the model.
+        </p>
+
+        <h2>Abstract</h2>
+        <p>{ABSTRACT}</p>
+
+        <h2>Code, data and registrations</h2>
+        <p>
+          <a href={REPO}>The repository</a> holds the simulator, the real-engine load
+          generator, the analysis code, all real-engine data with its job logs, and every
+          registration. Each number in the paper traces to a file and a commit or Slurm
+          job. The README shows the paper's Fig. 2 with its caption, and explains how to
+          rebuild the tables and figures from a fresh clone.
+        </p>
+        <p>
+          Every registration and blind prediction in the paper was committed and pushed
+          to GitHub before the data it concerns was read, except where the paper's
+          Appendix E.12 says otherwise. One command, run from the root of a clone,
+          checks them against the commits GitHub's push log recorded:
+        </p>
+        <pre><code>python provenance/registration-proofs/verify.py</code></pre>
+
+        <h2 id="cite">Citation</h2>
+        <pre><code>{BIBTEX}</code></pre>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-title { line-height: 1.15; }
+  .subtitle {
+    display: block;
+    font-size: var(--step-1);
+    font-family: var(--font-body), Georgia, serif;
+    font-weight: 600;
+    font-variation-settings: normal;
+    line-height: 1.32;
+    margin-top: 0.35rem;
+  }
+  .links { margin-bottom: 1.5rem; }
+</style>

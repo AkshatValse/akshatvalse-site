@@ -54,7 +54,7 @@ throttling.
   first-order distance-to-level-set estimate rasterized directly. Total
   JavaScript is under 7 KB gzipped on the heaviest page.
 - **Color encodes a quantity.** cividis appears only inside figures, where it
-  maps a potential or a log-density. Nothing else on the site is coloured, and
+  maps a potential or a log-density. Nothing else on the site is colored, and
   there is no accent color.
 - **Correct before any JavaScript runs.** Each figure ships a build-time poster
   of the same simulation, so first paint, `prefers-reduced-motion: reduce`, and
@@ -68,22 +68,26 @@ Static output in `dist/`. On Cloudflare Pages both of these must be set
 explicitly under Settings → Build → Build configuration:
 
 ```
-Build command           npm run build
+Build command           npm run verify:fast && npm run build
 Build output directory  dist
 ```
 
 Leaving them blank does not fail the build. Pages falls back to uploading the
 repository root, which serves the source tree at the project URL and returns 404
-for every page of the actual site. Framework preset "Astro" fills in the same
-two values if you would rather pick it from the list.
+for every page of the actual site. Framework preset "Astro" fills in
+`npm run build` and `dist`; prepend `npm run verify:fast && ` to the build command
+afterwards (see Checks).
 
 The CV PDF carries a dated filename (`public/akshat-valse-cv-YYYY-MM.pdf`) so no
 cache can serve a stale copy after an update; `public/_redirects` keeps `/cv.pdf`
 pointing at the current file, so the URL on applications does not break. Bump the
 name in `src/pages/cv.astro` and the redirect together.
 
-Set `SITE_URL` if the domain changes; it feeds the sitemap, canonical URLs, and
-`robots.txt`.
+Set `SITE_URL` if the domain changes; it feeds the sitemap, the canonical and Open
+Graph URLs, and the structured data. The domain is also written out by hand in
+`public/robots.txt` (the Sitemap line), in the header of `cv/cv.tex` (rebuild the PDF
+afterwards) and in the card text of `scripts/gen-og.mjs` (re-run it), and
+`scripts/submit-indexnow.mjs` defaults `SITE_HOST` to it.
 
 ## Search and social
 

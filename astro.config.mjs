@@ -5,8 +5,8 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
 /**
- * Canonical origin. Change this and the CNAME together if the domain changes;
- * it feeds the sitemap, robots.txt and every canonical/OG URL.
+ * Canonical origin. Change this if the domain changes; it feeds the sitemap and
+ * every canonical/OG URL. public/robots.txt hard-codes the domain separately.
  */
 const SITE = process.env.SITE_URL ?? 'https://akshatvalse.com';
 

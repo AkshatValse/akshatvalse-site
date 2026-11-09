@@ -15,7 +15,7 @@ import Base from '../layouts/Base.astro';
  * copy after an update. Bump PDF_FILE here and the /cv.pdf redirect in
  * public/_redirects together.
  */
-const PDF_FILE = 'akshat-valse-cv-2026-10.pdf';
+const PDF_FILE = 'akshat-valse-cv-2026-11.pdf';
 const pdf = `/${PDF_FILE}`;
 const hasPdf = existsSync(fileURLToPath(new URL(`../../public/${PDF_FILE}`, import.meta.url)));
 
@@ -28,9 +28,9 @@ type Course = [name: string, code?: string];
 
 const inProgress: Course[] = [
   ['Foundations of Probability Theory, measure-theoretic', 'STAT 6541'],
-  ['Advanced Topics in Machine Learning', 'COM S 6730'],
-  ['Advanced Topics in Artificial Intelligence', 'COM S 6720'],
-  ['Advanced Topics in High-Performance Computing', 'COM S 6250'],
+  ['Advanced Topics in Machine Learning', 'COMS 6730'],
+  ['Advanced Topics in Artificial Intelligence', 'COMS 6720'],
+  ['Advanced Topics in High-Performance Computing', 'COMS 6250'],
 ];
 
 const planned: Course[] = [
@@ -42,12 +42,12 @@ const completed: { group: string; courses: Course[] }[] = [
   {
     group: 'Probability and statistics',
     courses: [
-      ['Theory of Probability and Statistics', 'STAT 5430'],
+      ['Theory of Probability and Statistics II', 'STAT 5430'],
       ['Stochastic Process Models', 'STAT 5540'],
       ['Empirical Methods for the Computational Sciences', 'STAT 5830'],
-      ['Multivariate Analysis', 'STAT 5750'],
-      ['Categorical Data Analysis', 'STAT 5770'],
-      ['Statistical Computing', 'STAT 5860'],
+      ['Introduction to Multivariate Data Analysis', 'STAT 5750'],
+      ['Introduction to Categorical Data Analysis', 'STAT 5770'],
+      ['Introduction to Statistical Computing', 'STAT 5860'],
     ],
   },
   {
@@ -55,8 +55,8 @@ const completed: { group: string; courses: Course[] }[] = [
     courses: [
       ['Numerical Methods for Differential Equations', 'MATH 5810'],
       ['Analysis I', 'MATH 4140'],
-      ['Introduction to Mathematical Logic', 'MATH 4430X'],
-      ['Partial Differential Equations', 'MATH 3850'],
+      ['Introduction to Mathematical Finance', 'MATH 4430X'],
+      ['Introduction to Partial Differential Equations', 'MATH 3850'],
       ['Theory of Linear Algebra, honors', 'MATH 3170'],
     ],
   },
@@ -64,8 +64,8 @@ const completed: { group: string; courses: Course[] }[] = [
     group: 'Computing and machine learning',
     courses: [
       ['Concepts and Applications of Machine Learning, honors', 'DS 3030'],
-      ['Design and Analysis of Algorithms', 'COM S 3110'],
-      ['Software Development Practices', 'COM S 3090'],
+      ['Introduction to the Design and Analysis of Algorithms', 'COMS 3110'],
+      ['Software Development Practices', 'COMS 3090'],
     ],
   },
 ];
@@ -78,7 +78,7 @@ const manuscripts = [
   },
   {
     title: 'Langevin Dynamics and Transport-Coefficient Estimation for Molecular Systems',
-    meta: 'With D. Herzog. In preparation.',
+    meta: 'With D. Herzog, O. Smith and D. Wu. In preparation.',
   },
   {
     title:
@@ -86,12 +86,17 @@ const manuscripts = [
     meta: 'With M. Yang and J. Yan. In preparation.',
   },
   {
-    title: 'Metastable Failures in Prefix-Cached LLM Agent Serving',
-    meta: 'With A. Jannesari. In preparation.',
-  },
-  {
     title: 'Online Calibration of Neural Volatility Forecasts with Early, One-Sided Feedback',
-    meta: 'With H. Gao. In preparation.',
+    meta: 'In preparation.',
+  },
+];
+
+const preprints = [
+  {
+    title: 'Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving',
+    meta: 'With A. Jannesari. arXiv:2611.08902, November 2026.',
+    href: 'https://arxiv.org/abs/2611.08902',
+    code: 'https://github.com/AkshatValse/surviving-llm-stampede',
   },
 ];
 
@@ -122,33 +127,33 @@ const research = [
     role: 'Undergraduate Researcher, Department of Mathematics, Iowa State University. Advisor: Prof. Jue Yan. Funded by the NSF D4 NRT. Joint with Mengyuan Yang.',
     bullets: [
       'Adapting von Neumann stability analysis to neural-network PDE solvers: deriving the linearized amplification factor of the learned time-stepping scheme and characterizing how perturbations propagate through it, toward stability conditions on the trained weights analogous to those of classical finite-difference methods.',
-      "Reimplementing the group's solver in Python to enable systematic stability experiments across schemes and step sizes.",
+      "Reimplemented the group's solver in Python to enable systematic stability experiments across schemes and step sizes.",
     ],
   },
   {
     title: 'Metastable Failures in Prefix-Cached LLM Agent Serving',
     dates: 'Aug. 2026 – present',
-    role: 'Research project, Advanced Topics in High-Performance Computing (COM S 6250), Department of Computer Science, Iowa State University. Advisor: Prof. Ali Jannesari, SwaPP Lab.',
+    role: 'Research project, Advanced Topics in High-Performance Computing (COMS 6250), Department of Computer Science, Iowa State University. Advisor: Prof. Ali Jannesari, SwAPP Lab.',
     bullets: [
-      'Asking whether a short burst of agent traffic can push a healthy LLM serving engine into a self-sustaining all-miss, low-throughput state, and which scheduling and admission mechanisms prevent it. Built a discrete-event simulator of a continuous-batching engine with prefix caching (scheduling policies, eviction rules, memory-allocation modes, and re-implementations of recently proposed mechanisms) and a queueing-theoretic "thrashing curve" model of when caching helps, when it collapses, and when admission control restores stability.',
-      "Run real-engine experiments (SGLang serving a 7B-parameter model on NVIDIA A100 GPUs) on Iowa State's Nova HPC cluster through SLURM, with predictions registered before each run, paired control arms, and every reported number traced to a results directory, a commit and a cluster job ID. Toward an arXiv preprint.",
+      "Ran five registered paired tests on Iowa State's Nova HPC cluster through SLURM, on two serving engines (SGLang, vLLM), two GPUs (NVIDIA A100, H200) and two 7–8B models: a 200-session burst left the engine at zero hits to the end in all 30 burst runs (registered rule met at 9 of 10 rates), every matched no-burst run stayed good, and a client-side session cap prevented the trap in all 30 capped runs. In further registered tests the cap rescued 9 of 9 established traps at the same load without shedding a session.",
+      "Proved that, along FIFO orbits, the cycles of an idealized fluid server on which every turn misses obey a linear renewal recursion whose Perron root, above the all-miss capacity, carries every trapped state to a known self-similar regime; with nothing fitted to trap data, the model matches 57 stuck runs retrospectively. Built the discrete-event simulator, the real-engine load generator and the SLURM job scripts, with each registered test committed to git before its jobs were submitted and every number in the paper traced to its source file and commit or SLURM job. Preprint on arXiv, November 2026; code, data and registrations are public.",
     ],
   },
   {
     title: 'Calibrating Volatility Forecasts with Early, One-Sided Feedback',
     dates: 'Aug. 2026 – present',
-    role: 'Research project, Advanced Topics in Machine Learning (COM S 6730), Department of Computer Science, Iowa State University. Advisor: Prof. Hongyang Gao.',
+    role: 'Research project, Advanced Topics in Machine Learning (COMS 6730), Department of Computer Science, Iowa State University. Advisor: Prof. Hongyang Gao.',
     bullets: [
-      'A forecast of a cumulative quantity is scored only when its horizon ends, but its increments are non-negative, so a miss becomes certain the moment the running sum crosses the issued bound. Designed a model-agnostic calibration layer over any quantile forecaster that credits those certain early misses and keeps explicit accounts of forecasts still pending; proved its long-run coverage guarantee under early crediting, bounded correction and missing data, and checked it numerically over tens of thousands of adversarial runs.',
-      'Built a leakage-audited data pipeline (5-minute spot bars, 2020–2025, with a sealed and hashed test set), a regime-shift simulation study with exact oracle quantiles and pre-registered hypotheses, and delayed-feedback conformal and classical volatility baselines, including a temporal convolutional network trained on HPC GPUs. Paper in preparation.',
+      'A forecast of a cumulative quantity is scored only when its horizon ends, but its increments are non-negative, so a miss becomes certain the moment the running sum crosses the issued bound. Designed a model-agnostic calibration layer over any quantile forecaster that credits those certain early misses and keeps explicit accounts of forecasts still pending; drafted a proof of its long-run coverage guarantee under early crediting, bounded correction and missing data, and checked the consequences of the guarantee numerically in adversarial runs.',
+      'Built a leakage-audited data pipeline (5-minute spot bars, 2020–2025, with a sealed and hashed test set), a regime-shift simulation study with exact oracle quantiles and pre-registered hypotheses, and delayed-feedback conformal and classical volatility baselines, including a temporal convolutional network with training workflows for Apple-silicon and HPC GPUs. Paper in preparation.',
     ],
   },
   {
     title: 'Reliability of Tool-Using LLM Agents',
     dates: 'Aug. 2026 – present',
-    role: 'Research project, Advanced Topics in Artificial Intelligence (COM S 6720), Department of Computer Science, Iowa State University. Advisor: Prof. Yang Li.',
+    role: 'Research project, Advanced Topics in Artificial Intelligence (COMS 6720), Department of Computer Science, Iowa State University. Advisor: Prof. Yang Li.',
     bullets: [
-      'When an agent stalls, when is restarting it worth more than waiting, and how can the probability of a failure too rare for direct simulation be estimated? Two pre-registered pilots on real agents, one on restart policies and one on rare failures, with the direction still being chosen.',
+      'When an agent stalls, when is restarting it worth more than waiting, and how can the probability of a failure too rare for direct simulation be estimated? Two planned, pre-registered pilots on real agents, one on restart policies and one on rare failures, with the direction still being chosen.',
     ],
   },
 ];
@@ -164,14 +169,14 @@ const awards = [
 const service = [
   'Treasurer, Iowa State Data Science Club, 2025 – present. Secured $60,000+ in funding supporting 130+ members.',
   'Research Ambassador, Iowa State University Honors Program.',
-  'FAA Private Pilot Certificate, high-performance endorsement, 2025. Volunteer pilot and recruitment advisor, Pilots N Paws animal-rescue flights.',
+  'FAA Private Pilot Certificate; high-performance endorsement, 2025. Volunteer pilot and recruitment advisor, Pilots N Paws animal-rescue flights.',
 ];
 
 const skills = [
   {
     label: 'Languages and tools',
     text:
-      'PyTorch and CUDA for neural-network and GPU-accelerated simulation; Python (NumPy, SciPy, pandas, scikit-learn, matplotlib, asyncio); SLURM on GPU clusters and LLM serving engines (SGLang); R; LaTeX; git.',
+      'PyTorch and CUDA for neural-network and GPU-accelerated simulation; Python (NumPy, SciPy, pandas, scikit-learn, matplotlib, asyncio); SLURM on GPU clusters and LLM serving engines (SGLang, vLLM); R; LaTeX; git.',
   },
   {
     label: 'Methods',
@@ -193,7 +198,7 @@ const skills = [
         <p class="lede">{interests}</p>
         <p class="entry-meta">
           {hasPdf ? (
-            <><a href={pdf}>Download as PDF</a>. Updated October 2026.</>
+            <><a href={pdf}>Download as PDF</a>. Updated November 2026.</>
           ) : (
             <>PDF not posted yet. Write to <a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a>.</>
           )}
@@ -260,6 +265,25 @@ const skills = [
             </ul>
           </article>
         ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail"><span class="rail-label">Preprints</span></div>
+      <div>
+        <h2 class="section-title">Preprints</h2>
+        <ol class="manuscripts">
+          {preprints.map((p) => (
+            <li>
+              <a class="mtitle" href={p.href}>{p.title}</a>
+              <span class="entry-meta">
+                {p.meta} Code, data and registrations: <a href={p.code}>surviving-llm-stampede</a>.
+              </span>
+            </li>
+          ))}
+        </ol>
       </div>
     </div>
   </section>

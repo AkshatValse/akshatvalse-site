@@ -29,21 +29,21 @@ const research = [
   },
   {
     title: 'Metastable failures in prefix-cached LLM agent serving',
-    meta: 'Ali Jannesari · Computer Science · ongoing',
+    meta: 'Ali Jannesari · Computer Science · preprint',
     blurb:
-      'An agent re-sends its whole growing conversation every turn, and the serving engine keeps that prefix in a GPU cache so the next turn stays cheap. Under enough concurrent sessions, evictions feed on themselves. Whether a short burst can tip a healthy server into a self-sustaining slow state, and what prevents it, studied by simulation, a queueing model, and real experiments on A100s.',
+      'An agent re-sends its whole growing conversation every turn, and the serving engine keeps that prefix in a GPU cache so the next turn stays cheap. A burst of new sessions can tip the engine into a trap in which every turn misses and the backlog does not drain, at a load it served before. Registered tests on two engines, two GPUs and two models; a renewal law, proved for an idealization of the trapped state and checked retrospectively against 57 stuck runs; and a session cap that prevented the trap in all 30 capped runs.',
   },
   {
     title: 'Online calibration of forecasts with early, one-sided feedback',
     meta: 'Hongyang Gao · Computer Science · ongoing',
     blurb:
-      'A forecast of a cumulative quantity is scored only when its horizon ends, but a miss becomes certain the moment the running sum crosses the bound. A calibration layer that credits those certain misses early and keeps accounts of what is still pending, with its coverage guarantee proved and checked.',
+      'A forecast of a cumulative quantity is scored only when its horizon ends, but a miss becomes certain the moment the running sum crosses the bound. A calibration layer that credits those certain misses early and keeps accounts of what is still pending, with a coverage guarantee written up as a proof draft and tested numerically.',
   },
   {
     title: 'Reliability of tool-using agents',
     meta: 'Yang Li · Computer Science · ongoing',
     blurb:
-      'When an agent stalls, when is restarting it worth more than waiting, and how do you estimate the probability of a failure too rare for direct simulation to reach? Two pilots on real agents, with the direction still being chosen.',
+      'When an agent stalls, when is restarting it worth more than waiting, and how do you estimate the probability of a failure too rare for direct simulation to reach? Two planned pilots on real agents, with the direction still being chosen.',
   },
 ];
 ---
@@ -97,10 +97,10 @@ const research = [
           question, which is what can be proved about the objects practitioners already
           use: rates, stability, and error bounds in place of heuristics. A second set
           of projects, in computer science, carries the same habits into the systems
-          that run large language models: whether a burst of agent traffic can tip a
-          serving engine into a self-sustaining slow state, how to calibrate a forecast
-          when its feedback arrives early but one-sided, and when restarting a stalled
-          agent beats waiting. Everything moving on this page is one of the stochastic
+          that run large language models: why a burst of agent traffic can leave a
+          prefix-cached serving engine trapped, every turn missing the cache, and what
+          gets it out; how to calibrate a forecast when its feedback arrives early but
+          one-sided; and when restarting a stalled agent beats waiting. Everything moving on this page is one of the stochastic
           objects, running live and graded against a closed-form answer.
         </p>
 
@@ -198,12 +198,14 @@ const research = [
           <dd><a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a></dd>
           <dt>GitHub</dt>
           <dd><a href="https://github.com/AkshatValse" rel="me">AkshatValse</a></dd>
+          <dt>Preprint</dt>
+          <dd><a href="/research/inside-the-trap">Inside the Trap</a> (<a href="https://arxiv.org/abs/2611.08902">arXiv:2611.08902</a>)</dd>
           <dt>Code</dt>
-          <dd><a href="https://github.com/AkshatValse/langevin-samplers">langevin-samplers</a></dd>
+          <dd><a href="https://github.com/AkshatValse/langevin-samplers">langevin-samplers</a> · <a href="https://github.com/AkshatValse/surviving-llm-stampede">surviving-llm-stampede</a></dd>
           <dt>CV</dt>
           <dd><a href="/cv">/cv</a></dd>
         </dl>
-        <p class="pending">Preprints will be posted here as they become available.</p>
+        <p class="pending">Further preprints will be posted here as they become available.</p>
       </div>
     </div>
   </section>
