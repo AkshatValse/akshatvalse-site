@@ -22,10 +22,10 @@ export const PROFILE = {
 export const ARXIV_TRAP = 'https://arxiv.org/abs/2611.08902';
 export const REPO_TRAP = 'https://github.com/AkshatValse/surviving-llm-stampede';
 
-/** As on shikun.io: Home · Projects · Résumé · About (here Research and CV). */
+/** Home · About · Research · CV (the owner moved About up, next to Home). */
 export const NAV = [
   { href: '/', label: 'Home' },
+  { href: '/about', label: 'About' },
   { href: '/research', label: 'Research' },
   { href: '/cv', label: 'CV' },
-  { href: '/about', label: 'About' },
 ] as const;

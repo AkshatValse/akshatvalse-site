@@ -8,9 +8,10 @@
 // Three small ones are fine: two have finished (full ring and a tick) and one
 // is still running (ring part filled, hand moving). The big cream one in front
 // has stalled part way round its ring, and a smooth pink circular arrow wraps
-// around it, ending at twelve o'clock: it is being restarted. Layman reading:
-// "restart the stuck one instead of waiting". The ring fractions (0.38 stalled,
-// 0.62 running) are arbitrary; nothing about the project's method or results.
+// around it, ending at twelve o'clock. Layman reading: "a stalled run, and the
+// option of restarting it" (the page's open question; the cover takes no side).
+// The ring fractions (0.38 stalled, 0.62 running) are arbitrary; nothing
+// about the project's method or results.
 //
 // Math: none from the project. The shapes are signed distance fields (rounded
 // cylinders, capped arcs, capsules, a rounded triangular prism, joined with
