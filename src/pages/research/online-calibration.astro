@@ -1,7 +1,7 @@
 ---
 /**
  * Online calibration with early, one-sided feedback (Hongyang Gao, Computer
- * Science). The paper is in preparation, so this page describes the problem
+ * Science). The project is in experiments and development, so this page describes the problem
  * and what we are doing at the CV's level of detail: the observation
  * structure, formalized, two schematics and a classical toy with an exact
  * reference. The method's construction, the theory and every result stay
@@ -23,8 +23,8 @@ const ABSTRACT =
   'outcome receives feedback one full horizon later. Yet the increments of such a target are non-negative: once ' +
   'the running sum crosses the issued upper bound, the miss is certain, while coverage is only confirmed at the ' +
   'end. We are developing a model-agnostic calibration method for quantile forecasts that uses this early, ' +
-  'one-sided feedback, with theory and experiments in progress. The paper is in preparation; code, proofs ' +
-  'and results are held back pending submission.';
+  'one-sided feedback. The project is in its experimentation and development phase; code, proofs and ' +
+  'results are held back until publication.';
 
 /** χ² toy, α = 0.1: exact closed-form values (toy values, not project results). */
 const REFERENCE = [
@@ -52,7 +52,7 @@ const D1_COVERED = '72.0,330.0 92.3,304.3 112.7,302.5 133.0,301.8 153.3,300.3 17
   affiliation="Department of Computer Science, Iowa State University · Advisor: Hongyang Gao"
   abstract={ABSTRACT}
   buttons={[{ label: 'Public overview', href: OVERVIEW, icon: 'github' }]}
-  info="Ongoing · Aug. 2026 – present · Paper in preparation"
+  info="Experimentation and development · Aug. 2026 – present"
   cover={{
     src: `${ASSETS}/early-miss-schematic.svg`,
     alt: 'Schematic of one forecast horizon: two running sums against the same issued upper bound. One crosses the bound partway through, so its miss is certain from that step on; the other stays below, and its coverage is confirmed only when the horizon ends. Toy simulation, not project data.',
@@ -340,8 +340,8 @@ const D1_COVERED = '72.0,330.0 92.3,304.3 112.7,302.5 133.0,301.8 153.3,300.3 17
   <Container>
     <h1>Status</h1>
     <p class="text">
-      The paper is in preparation. Results are held back pending submission, together with the code,
-      proofs, experiment logs and write-ups. Nothing on this page is a result of the project: the
+      The project is in its experimentation and development phase. Results are held back until
+      publication, together with the code, proofs, experiment logs and write-ups. Nothing on this page is a result of the project: the
       figures and the toy describe the observation structure only, with every bound held fixed.
     </p>
     <p class="text">

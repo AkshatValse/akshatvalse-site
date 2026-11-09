@@ -9,19 +9,21 @@ import { PROJECTS } from '../data/projects';
 <Base
   title="Research · Akshat Valse"
   breadcrumbs={[{ name: 'Research', path: '/research' }]}
-  description="Six research projects by Akshat Valse: LLM serving and prefix caching, Langevin sampling, rare events, learned PDE solvers, calibration, LLM agents."
+  description="Akshat Valse's research: LLM serving and prefix caching, Langevin sampling, rare events in queues, neural PDE solvers, forecast calibration, LLM agents."
 >
   <TitleBand>
     <h1 class="title">Research</h1>
-    <p class="author">Six projects, six advisors, one habit</p>
+    <p class="author">Six projects with faculty in Computer Science and Mathematics at Iowa State</p>
     <p class="abstract">
-      The first is the paper this site is built around: <a href="/research/inside-the-trap"><em>Inside the
-      Trap</em></a>, a renewal law for prefix-cache collapse in LLM agent serving, tested in registered
-      experiments on real engines. The other five are where its methods come from and where they go
-      next. All six keep one habit: a closed form where one exists, a registered prediction where one
-      does not, and a check that runs either way.
+      My research uses probability and numerical analysis to study how machine learning systems
+      behave. The first project to reach a preprint is <a href="/research/inside-the-trap"><em>Inside
+      the Trap</em></a>, written with Ali Jannesari. It explains why an LLM serving engine can stay
+      stuck after a burst of agent traffic, even at a load it handled before, and how a session cap
+      gets it out. The other five look at Langevin samplers, rare events in load-balancing queues,
+      the stability of neural PDE solvers, forecast calibration and the reliability of LLM agents.
+      Each has its own page with the problem, the approach and where the work stands.
     </p>
-    <Fragment slot="info">1 preprint · 4 manuscripts in preparation</Fragment>
+    <Fragment slot="info">1 preprint · 2 manuscripts · 2 projects in development · 1 paused</Fragment>
   </TitleBand>
 
   <Container width="extra-large" tone="gray" first>
@@ -42,7 +44,7 @@ import { PROJECTS } from '../data/projects';
               <td>{p.advisor}</td>
               <td>{p.dept}</td>
               <td>{p.dates.replace(' – present', '')}</td>
-              <td>{p.status === 'Preprint' ? <b>Preprint</b> : 'Ongoing'}</td>
+              <td>{p.status === 'Preprint' ? <b>Preprint</b> : p.status}</td>
             </tr>
           ))}
         </tbody>

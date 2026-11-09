@@ -168,10 +168,10 @@ const figures = [
       <a href={REPO_TRAP} class="button icon">Code <Icon name="code" /></a> &nbsp;&nbsp;
       <a href="/research/inside-the-trap" class="button icon">Project page <Icon name="arrow" /></a>
     </p>
-    <h2>In preparation</h2>
+    <h2>Manuscripts</h2>
     <ul>
       {MANUSCRIPTS.map((m) => (
-        <li><p class="text">{m.href ? <a href={m.href}>{m.title}</a> : m.title}. {m.authors}.</p></li>
+        <li><p class="text">{m.href ? <a href={m.href}>{m.title}</a> : m.title}. {m.authors}. {m.status}.</p></li>
       ))}
     </ul>
   </Container>

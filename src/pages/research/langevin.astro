@@ -34,8 +34,8 @@ const ABSTRACT =
   'Metropolis step (MALA) returns the target variances at the price of rejected proposals, but on a ' +
   'separated two-well mixture its crossing rate still falls roughly exponentially with the barrier, ' +
   'as ULA’s does. Live figures check the dynamics too, against the classical Lifson–Jackson effective ' +
-  'diffusivity. The project is advised by Dr. David Herzog; a manuscript with him on transport-coefficient ' +
-  'estimation for molecular systems is in preparation, and its results are held back pending submission.';
+  'diffusivity. The project is advised by Dr. David Herzog. A manuscript with him on transport-coefficient ' +
+  'estimation for molecular systems is drafted and in his review, and its results are held back pending submission.';
 
 /** Near the stability limit, h = 0.4 (LS/results/gaussian_bias.json:466-469, 481-484, 956-959). */
 const T1 = [
@@ -133,7 +133,7 @@ const wellR = MX(xMin);
     { label: 'Code', href: REPO, icon: 'github' },
     { label: 'Try it', href: '#baseline', icon: 'play' },
   ]}
-  info="Ongoing · May 2026 – present · code MIT-licensed"
+  info="Draft in advisor review · May 2026 – present · code MIT-licensed"
 >
   <Fragment slot="cover">
     <TexTile
@@ -150,8 +150,8 @@ const wellR = MX(xMin);
       This project is carried out with Dr. David Herzog, Department of Mathematics, Iowa State
       University, who advises it. It has a public part and an unpublished one. The public part, the
       <a href={REPO}>langevin-samplers</a> repository and this site’s live figures, is reported here
-      with its results. The unpublished part is a manuscript in preparation with Dr. Herzog on
-      transport-coefficient estimation for molecular systems; <a href="#molecular-systems">its
+      with its results. The unpublished part is a manuscript with Dr. Herzog on transport-coefficient
+      estimation for molecular systems, now drafted and in his review; <a href="#molecular-systems">its
       section</a> says what it is about, and its results are held back pending submission.
     </p>
     <p class="text">
@@ -787,9 +787,9 @@ const wellR = MX(xMin);
   <Container id="molecular-systems">
     <h1>What we are doing: molecular systems</h1>
     <p class="text">
-      With Dr. David Herzog, Department of Mathematics, Iowa State University, we are preparing a
+      With Dr. David Herzog, Department of Mathematics, Iowa State University, we have drafted a
       manuscript, <em>Langevin Dynamics and Transport-Coefficient Estimation for Molecular
-      Systems</em>. The work develops samplers for overdamped Langevin
+      Systems</em>, which is now in his review. The work develops samplers for overdamped Langevin
       dynamics “staged from a 1D periodic potential up to a solvated ion in a 3D Lennard-Jones
       bath,” and uses them to estimate transport coefficients: the long-time constants, such as a
       diffusion coefficient, that describe how particles move rather than where they sit at
@@ -804,7 +804,8 @@ const wellR = MX(xMin);
     </p>
     <h2>Status</h2>
     <p class="text">
-      In preparation. The manuscript’s methods and results are held back pending submission.
+      The draft is in advisor review with Dr. Herzog. The manuscript’s methods and results are held
+      back pending submission.
     </p>
   </Container>
 

@@ -15,7 +15,13 @@ export interface Project {
   short: string;
   advisor: string;
   dept: 'Computer Science' | 'Mathematics';
-  status: 'Preprint' | 'Ongoing';
+  /** Where the work stands, as the owner states it (Nov. 2026). */
+  status:
+    | 'Preprint'
+    | 'Draft in advisor review'
+    | 'Paused, advisor on sabbatical'
+    | 'Manuscript in preparation'
+    | 'Experimentation and development';
   dates: string;
   oneLiner: string;
   tags: string[];
@@ -42,7 +48,7 @@ export const PROJECTS: Project[] = [
     short: 'Langevin sampling',
     advisor: 'David Herzog',
     dept: 'Mathematics',
-    status: 'Ongoing',
+    status: 'Draft in advisor review',
     dates: 'May 2026 – present',
     oneLiner:
       'The sampler underneath SGLD, annealed Langevin and diffusion correctors, measured where its errors are computable: bias against exact stationary laws, and effective diffusivity.',
@@ -55,7 +61,7 @@ export const PROJECTS: Project[] = [
     short: 'Rare events',
     advisor: 'Ruoyu Wu',
     dept: 'Mathematics',
-    status: 'Ongoing',
+    status: 'Paused, advisor on sabbatical',
     dates: 'Nov. 2024 – present',
     oneLiner:
       'Rate functionals for the empirical measure of a mean-field system, used to build importance samplers for events too rare for direct simulation to reach.',
@@ -68,7 +74,7 @@ export const PROJECTS: Project[] = [
     short: 'Learned PDE solvers',
     advisor: 'Jue Yan',
     dept: 'Mathematics',
-    status: 'Ongoing',
+    status: 'Manuscript in preparation',
     dates: 'May 2026 – present',
     oneLiner:
       'Conservation in a cell-average neural network solver is architectural; stability is not. Adapting von Neumann analysis to say which trained networks survive a long rollout.',
@@ -85,7 +91,7 @@ export const PROJECTS: Project[] = [
     short: 'Early-feedback calibration',
     advisor: 'Hongyang Gao',
     dept: 'Computer Science',
-    status: 'Ongoing',
+    status: 'Experimentation and development',
     dates: 'Aug. 2026 – present',
     oneLiner:
       'A forecast of a cumulative quantity is scored when its horizon ends, yet a miss can become certain before then. Developing a calibration method that uses this early, one-sided feedback.',
@@ -102,7 +108,7 @@ export const PROJECTS: Project[] = [
     short: 'Agent reliability',
     advisor: 'Yang Li',
     dept: 'Computer Science',
-    status: 'Ongoing',
+    status: 'Experimentation and development',
     dates: 'Aug. 2026 – present',
     oneLiner:
       'When an agent stalls, when is restarting worth more than waiting, and how do you estimate a failure probability too small for direct simulation to reach?',

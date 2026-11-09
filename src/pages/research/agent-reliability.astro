@@ -1,7 +1,7 @@
 ---
 /**
- * Reliability of tool-using agents (advisor: Yang Li). Ongoing; approach and
- * results held back pending the choice of direction.
+ * Reliability of tool-using agents (advisor: Yang Li). In experimentation and
+ * development; approach and results held back until publication.
  *
  * Sources for every project fact: the public site (research.astro, CV) and the
  * GitHub profile README, as collected in the verified brief. Everything beyond
@@ -97,11 +97,11 @@ const ROWS = [
   description="When is restarting a stalled LLM agent worth more than waiting, and how can a failure too rare for direct simulation be estimated? With a classical baseline."
   authors="Akshat Valse, with Yang Li"
   affiliation="Department of Computer Science, Iowa State University"
-  abstract="Agents that run for a long time sometimes stall and sometimes fail. This project asks when restarting a stalled run is worth more than waiting, and what in the distribution of run times decides that; and how to estimate the probability of a failure too rare for direct simulation to reach. Two pilots on real agents are planned, one on restart policies and one on rare failures, each with its kill criteria registered before any data; the direction is still being chosen between them, and approach and results are held back pending that choice. This page sets out the problem and works out the textbook arithmetic behind each question, as a classical baseline rather than project data."
+  abstract="Agents that run for a long time sometimes stall and sometimes fail. This project asks when restarting a stalled run is worth more than waiting, and what in the distribution of run times decides that; and how to estimate the probability of a failure too rare for direct simulation to reach. The project is in its experimentation and development phase, starting from two pilot designs on real agents, one on restart policies and one on rare failures, each with its kill criteria registered before any data. The approach and results are held back until publication. This page sets out the problem and works out the textbook arithmetic behind each question, as a classical baseline rather than project data."
   buttons={[
     { label: 'Live baseline', href: '#restart-widget', icon: 'chart' },
   ]}
-  info="Ongoing · Aug. 2026 – present · Approach and results held back pending the choice of direction"
+  info="Experimentation and development · Aug. 2026 – present · Approach and results held back until publication"
 >
   <Fragment slot="cover">
     <svg class="diagram" viewBox="0 0 480 300" role="img"
@@ -129,9 +129,9 @@ const ROWS = [
       simulation to reach?
     </p>
     <p class="text">
-      Two pilots on real agents are planned, one for each question, each with kill criteria
-      registered before any data. The direction is still being chosen between them, and approach
-      and results are held back pending that choice.
+      The project is in its experimentation and development phase. It starts from two pilot designs
+      on real agents, one for each question, each with kill criteria registered before any data. The
+      approach and results are held back until publication.
     </p>
   </Container>
 
@@ -148,7 +148,7 @@ const ROWS = [
     <Fragment slot="note">
       <b>Bears on:</b> survival analysis · rare-event estimation · agent evaluation.<br />
       <b>Advisor:</b> Yang Li, Computer Science.<br />
-      <b>Status:</b> ongoing, Aug. 2026 – present.
+      <b>Status:</b> experimentation and development, Aug. 2026 – present.
     </Fragment>
   </NoteRow>
 
@@ -595,15 +595,15 @@ const ROWS = [
       simulation be estimated?
     </p>
     <p class="text">
-      Two pre-registered pilots on real agents are planned, one on restart policies and one on rare
-      failures, each with its kill criteria registered before any data. The direction is still being
-      chosen between them.
+      The work is in its experimentation and development phase. It starts from two pre-registered
+      pilot designs on real agents, one on restart policies and one on rare failures, each with its
+      kill criteria registered before any data.
     </p>
   </Container>
 
   <Container tone="gray">
     <svg class="diagram" viewBox="0 0 680 300" role="img"
-      aria-label="Diagram. Two questions about long-running agents lead to two planned pilots, one on restart policies and one on rare failures. Each pilot carries the tag: kill criteria registered before any data. Both lead to a dashed box: direction still being chosen.">
+      aria-label="Diagram. Two questions about long-running agents lead to two pilot designs, one on restart policies and one on rare failures. Each pilot carries the tag: kill criteria registered before any data. Both lead to a dashed box: experimentation and development.">
       <defs>
         <marker id="ar-d3-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path class="ar-head" d="M0 0L10 5L0 10z"></path>
@@ -616,10 +616,10 @@ const ROWS = [
       <path class="line" d="M380 60 C 380 82, 505 74, 505 94" marker-end="url(#ar-d3-arrow)"></path>
 
       <rect class="box" x="40" y="98" width="270" height="56" rx="6"></rect>
-      <text class="muted-t" x="175" y="119" font-size="13" text-anchor="middle">Pilot A, planned</text>
+      <text class="muted-t" x="175" y="119" font-size="13" text-anchor="middle">Pilot A design</text>
       <text class="ar-strong" x="175" y="142" font-size="15" text-anchor="middle">restart policies</text>
       <rect class="box" x="370" y="98" width="270" height="56" rx="6"></rect>
-      <text class="muted-t" x="505" y="119" font-size="13" text-anchor="middle">Pilot B, planned</text>
+      <text class="muted-t" x="505" y="119" font-size="13" text-anchor="middle">Pilot B design</text>
       <text class="ar-strong" x="505" y="142" font-size="15" text-anchor="middle">rare failures</text>
 
       <rect class="box soft" x="40" y="164" width="270" height="48" rx="6"></rect>
@@ -633,10 +633,10 @@ const ROWS = [
       <path class="line" d="M505 212 C 505 236, 380 230, 362 244" marker-end="url(#ar-d3-arrow)"></path>
 
       <rect class="box dash" x="200" y="246" width="280" height="44" rx="6"></rect>
-      <text x="340" y="273" font-size="14.5" text-anchor="middle">direction still being chosen</text>
+      <text x="340" y="273" font-size="14.5" text-anchor="middle">experimentation and development</text>
     </svg>
     <p class="caption">
-      <b>Figure 8.</b> The plan, as the public sources state it. The pilot designs and the content of
+      <b>Figure 8.</b> How the project is set up. The pilot designs and the content of
       the kill criteria are not public, and the figure implies no preference between the two pilots.
     </p>
   </Container>
@@ -645,10 +645,10 @@ const ROWS = [
   <Container>
     <h1>Status</h1>
     <p class="text">
-      Ongoing, Aug. 2026 – present. The approach and any results are held back pending the choice of
-      direction and, after it, submission. That includes the methods, models, agents, tools,
+      In the experimentation and development phase since Aug. 2026. The approach and any results are
+      held back until publication. That includes the methods, models, agents, tools,
       environments, benchmarks and estimators, which restart policies a pilot would test, the pilot
-      designs and the content of their kill criteria, and which direction is chosen. No number on
+      designs and the content of their kill criteria, and which direction the experiments take. No number on
       this page is a project result: every one is classical arithmetic computed for this page. No
       paper, preprint or repository for this project is public.
     </p>

@@ -13,11 +13,11 @@ export const NEWS: { date: string; html: string }[] = [
   { date: 'Aug. 2024', html: "Entered Iowa State University's Honors Program, working toward four degrees." },
 ];
 
-export const MANUSCRIPTS: { title: string; authors: string; href?: string }[] = [
-  { title: 'Large-Deviation-Guided Importance Sampling for Rare Events in the Mean-Field Join-the-Shortest-Queue Model', authors: 'With R. Wu', href: '/research/large-deviations' },
-  { title: 'Langevin Dynamics and Transport-Coefficient Estimation for Molecular Systems', authors: 'With D. Herzog, O. Smith and D. Wu', href: '/research/langevin' },
-  { title: 'Stability Certificates for Cell-Average-Based Neural Network Solvers: von Neumann Analysis of Trained Flux Networks', authors: 'With M. Yang and J. Yan', href: '/research/neural-pde-stability' },
-  { title: 'Online Calibration of Neural Volatility Forecasts with Early, One-Sided Feedback', authors: 'In preparation', href: '/research/online-calibration' },
+/** Manuscripts and their stage. The calibration project is in experiments, so it has none yet. */
+export const MANUSCRIPTS: { title: string; authors: string; status: string; href?: string }[] = [
+  { title: 'Langevin Dynamics and Transport-Coefficient Estimation for Molecular Systems', authors: 'With D. Herzog, O. Smith and D. Wu', status: 'Draft in advisor review', href: '/research/langevin' },
+  { title: 'Stability Certificates for Cell-Average-Based Neural Network Solvers: von Neumann Analysis of Trained Flux Networks', authors: 'With M. Yang and J. Yan', status: 'In preparation', href: '/research/neural-pde-stability' },
+  { title: 'Large-Deviation-Guided Importance Sampling for Rare Events in the Mean-Field Join-the-Shortest-Queue Model', authors: 'With R. Wu', status: "Paused during the advisor's sabbatical", href: '/research/large-deviations' },
 ];
 
 export const AWARDS: string[] = [

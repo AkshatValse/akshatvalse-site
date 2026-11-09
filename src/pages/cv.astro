@@ -77,13 +77,8 @@ const completed: { group: string; courses: Course[] }[] = [
 
 const manuscripts = [
   {
-    title:
-      'Large-Deviation-Guided Importance Sampling for Rare Events in the Mean-Field Join-the-Shortest-Queue Model',
-    meta: 'With R. Wu. In preparation.',
-  },
-  {
     title: 'Langevin Dynamics and Transport-Coefficient Estimation for Molecular Systems',
-    meta: 'With D. Herzog, O. Smith and D. Wu. In preparation.',
+    meta: 'With D. Herzog, O. Smith and D. Wu. Draft in advisor review.',
   },
   {
     title:
@@ -91,8 +86,9 @@ const manuscripts = [
     meta: 'With M. Yang and J. Yan. In preparation.',
   },
   {
-    title: 'Online Calibration of Neural Volatility Forecasts with Early, One-Sided Feedback',
-    meta: 'In preparation.',
+    title:
+      'Large-Deviation-Guided Importance Sampling for Rare Events in the Mean-Field Join-the-Shortest-Queue Model',
+    meta: "With R. Wu. Paused during the advisor's sabbatical.",
   },
 ];
 
@@ -131,7 +127,7 @@ const research = [
     role: "Undergraduate Research Fellow, Department of Mathematics, Iowa State University. Advisor: Prof. Ruoyu Wu. Dean's High Impact Undergraduate Research Award.",
     bullets: [
       "Developing importance-sampling estimators for rare events in mean-field join-the-shortest-queue load-balancing systems, with the change of measure guided by large-deviation asymptotics for the system's empirical measure, and studying how the estimators behave as the number of servers grows.",
-      'Built a reproducible Python simulation framework with deterministic seeding, checked against crude Monte Carlo wherever crude Monte Carlo is reliable. Results are held back pending submission.',
+      'Built a reproducible Python simulation framework with deterministic seeding, checked against crude Monte Carlo wherever crude Monte Carlo is reliable. Results are held back pending submission. The project is paused while Prof. Wu is on sabbatical.',
     ],
   },
   {
@@ -148,8 +144,8 @@ const research = [
     dates: 'Aug. 2026 – present',
     role: 'Research project, Advanced Topics in Machine Learning (COMS 6730), Department of Computer Science, Iowa State University. Advisor: Prof. Hongyang Gao.',
     bullets: [
-      'A forecast of a cumulative quantity is scored only when its horizon ends, yet a miss can become certain before then. Developing a model-agnostic calibration method for quantile forecasts that uses this early, one-sided feedback, with theory and experiments in progress.',
-      'Built a leakage-audited data pipeline with a sealed test set, a simulation study with pre-registered hypotheses, and delayed-feedback conformal and classical volatility baselines, including a temporal convolutional network. Paper in preparation; results are held back pending submission.',
+      'A forecast of a cumulative quantity is scored only when its horizon ends, yet a miss can become certain before then. Developing a model-agnostic calibration method for quantile forecasts that uses this early, one-sided feedback, now in the experimentation and development phase.',
+      'Built a leakage-audited data pipeline with a sealed test set, a simulation study with pre-registered hypotheses, and delayed-feedback conformal and classical volatility baselines, including a temporal convolutional network. Results are held back until publication.',
     ],
   },
   {
@@ -157,7 +153,7 @@ const research = [
     dates: 'Aug. 2026 – present',
     role: 'Research project, Advanced Topics in Artificial Intelligence (COMS 6720), Department of Computer Science, Iowa State University. Advisor: Prof. Yang Li.',
     bullets: [
-      'When an agent stalls, when is restarting it worth more than waiting, and how can the probability of a failure too rare for direct simulation be estimated? Two planned, pre-registered pilots on real agents, one on restart policies and one on rare failures, with the direction still being chosen.',
+      'When an agent stalls, when is restarting it worth more than waiting, and how can the probability of a failure too rare for direct simulation be estimated? Now in the experimentation and development phase, starting from two pre-registered pilot designs on real agents, one on restart policies and one on rare failures. Results are held back until publication.',
     ],
   },
 ];
@@ -264,7 +260,7 @@ const projectSlugs = ['inside-the-trap', 'langevin', 'large-deviations', 'neural
   </Container>
 
   <Container id="manuscripts">
-    <h1>Manuscripts in preparation</h1>
+    <h1>Manuscripts</h1>
     <ul>{manuscripts.map((m) => <li><p class="text"><b>{m.title}.</b> {m.meta}</p></li>)}</ul>
   </Container>
 
