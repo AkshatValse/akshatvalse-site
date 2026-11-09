@@ -28,8 +28,8 @@
 .gr{stroke:var(--rule,#2a3135)}
 .bd,.pm,.pm2,.now{stroke:var(--ink,#ebe8e3)}
 .acc{fill:#fee838}.accs{stroke:#fee838}
-.accband{fill:#fee838;opacity:.06}
-.dot{fill:var(--ground,#141719);stroke:var(--ink-2,#a1a7ab)}
+.accband{fill:#ffffff;opacity:.07}
+.dot{fill:#304463;stroke:var(--ink-2,#a1a7ab)}
 .t,.ti{fill:var(--ink,#ebe8e3)}
 .ts,.tsi{fill:var(--ink-2,#a1a7ab)}
 .hit{stroke:var(--ink-3,#6f777c)}

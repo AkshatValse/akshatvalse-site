@@ -884,7 +884,14 @@ const wellR = MX(xMin);
   .diagram .lv-ell-inner { fill: none; stroke: var(--ink); stroke-width: 1.6; }
   @media (prefers-color-scheme: dark) {
     .diagram .lv-acc { stroke: var(--seq-hi); }
-    .diagram .lv-acc-fill { fill: var(--seq-hi); opacity: 0.12; }
+    /* Figure 7's pi_h wash: a yellow tint on the dark band reads as an olive
+       smear, so keep it neutral (as agent-reliability does) under the yellow line. */
+    .diagram .lv-acc-fill { fill: var(--seq-mid); opacity: 0.2; }
     .diagram .lv-dot { fill: var(--seq-hi); }
+    /* Figure 1's ULA step: `box dark` fills with --ink, a near-white slab in
+       dark mode. Use the dark title-band blue with light text, as the
+       neural-pde-stability and agent-reliability diagrams do. */
+    .diagram .box.dark { fill: var(--band); stroke: var(--band); }
+    .diagram .lv-on-dark { fill: var(--ink); }
   }
 </style>

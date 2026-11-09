@@ -486,4 +486,13 @@ const F3 = (() => {
   .diagram .npde-cell { fill: var(--field); stroke: none; }
   .diagram .npde-bar { stroke: var(--ink); stroke-width: 2.5; fill: none; }
   .diagram .npde-m { font-family: 'Charter', serif; font-style: italic; }
+
+  /* Dark mode: `box dark` fills with --ink, which is near-white there, so
+     Figure 1's question became a glaring light slab on the dark band. Fill it
+     with the dark title-band blue and set its text in --ink instead, keeping
+     the emphasis without the glare. Light mode is untouched. */
+  @media (prefers-color-scheme: dark) {
+    .diagram .box.dark { fill: var(--band); stroke: var(--band); }
+    .diagram text.npde-on-dark { fill: var(--ink); }
+  }
 </style>

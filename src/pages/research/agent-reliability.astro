@@ -216,7 +216,7 @@ const ROWS = [
       <text x="750" y="218" font-size="14" text-anchor="middle">relaunch cost c,</text>
       <text x="750" y="238" font-size="14" text-anchor="middle">then a fresh run: E[T]</text>
 
-      <rect class="box dark" x="460" y="272" width="390" height="92" rx="6"></rect>
+      <rect class="box dark ar-key" x="460" y="272" width="390" height="92" rx="6"></rect>
       <text class="ar-on-dark ar-strong" x="655" y="302" font-size="17" text-anchor="middle">restart iff m(τ) &gt; E[T] + c</text>
       <text class="ar-on-dark" x="655" y="327" font-size="13" text-anchor="middle">the same inequality decides whether always</text>
       <text class="ar-on-dark" x="655" y="346" font-size="13" text-anchor="middle">restarting at cutoff τ beats never restarting</text>
@@ -671,5 +671,12 @@ const ROWS = [
   .diagram .ar-on-dark { fill: var(--ground); }
   @media (prefers-color-scheme: dark) {
     .ar-curve { stroke: var(--seq-hi); }
+    /* Figure 1's rule box: .box.dark is var(--ink), a near-white slab on the
+       dark band. Use the site's dark title band instead, with light text. */
+    .diagram .box.dark.ar-key { fill: var(--band); stroke: var(--band); }
+    .diagram .ar-on-dark { fill: var(--ink); }
+    /* Figure 2's "restart helps" shading: the charts' dark .sh is an olive
+       wash; keep it neutral, like the shading in Figures 1 and 5. */
+    .ar-svg :global(.sh) { fill: var(--seq-mid); fill-opacity: 0.2; }
   }
 </style>

@@ -6,14 +6,24 @@
  * preserveAspectRatio="none": height is sessions on a square-root scale up to
  * ymax, and the fill is a horizontal gradient with hard stops wherever the
  * bin's follow-up hit fraction changes level. Levels match the live canvas
- * (src/scripts/trap.client.js): 33 of them, cividis, reversed in dark mode as
- * everywhere on the site.
+ * (src/scripts/trap.client.js): 33 of them, cividis; in dark mode the same
+ * orientation with a lifted low end (TRAP_DARK_LIFT).
  */
 
 import { hitFraction } from './trap.js';
 import { cividis } from './cividis.js';
 
 export const LEVELS = 32;
+
+/**
+ * Dark scheme for the trap figure only. The particle figures reverse cividis
+ * in dark mode so dense regions glow; for an area chart that turns the trapped
+ * state into a large bright block and flips its meaning between themes. Here
+ * dark keeps the light-mode orientation (no hits = navy, all hits = yellow)
+ * and lifts the low end to cividis(0.15) so it separates from the dark ground.
+ */
+export const TRAP_DARK_LIFT = 0.15;
+export const trapRampT = (t, dark) => (dark ? TRAP_DARK_LIFT + (1 - TRAP_DARK_LIFT) * t : t);
 
 export const hex = (t) => '#' + cividis(t).map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
 
@@ -30,8 +40,8 @@ export function laneGeometry(bins, ymax) {
     const r = runs[runs.length - 1];
     if (r && r[2] === lv) r[1] = i + 1; else runs.push([i, i + 1, lv]);
   });
-  const stops = (reverse) => runs.flatMap(([a, b, lv]) => {
-    const c = lv === null ? null : hex(reverse ? 1 - lv / LEVELS : lv / LEVELS);
+  const stops = (dark) => runs.flatMap(([a, b, lv]) => {
+    const c = lv === null ? null : hex(trapRampT(lv / LEVELS, dark));
     return [{ o: a / nBins, c }, { o: b / nBins, c }];
   });
   return { nBins, line, area: `${line}V100H0Z`, light: stops(false), dark: stops(true) };

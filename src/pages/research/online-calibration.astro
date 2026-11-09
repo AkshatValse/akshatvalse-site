@@ -365,7 +365,9 @@ const D1_COVERED = '72.0,330.0 92.3,304.3 112.7,302.5 133.0,301.8 153.3,300.3 17
   .oc-guide { stroke: var(--rule-strong); stroke-width: 1; stroke-dasharray: 2 4; fill: none; }
   .oc-arrowhead { fill: var(--ink-2); }
   @media (prefers-color-scheme: dark) {
-    .oc-band { fill: var(--seq-hi); opacity: 0.07; }
+    /* A low-alpha yellow wash turns olive on the dark ground; the navy band
+       token keeps the light mode's cool tint and pairs with the yellow marker. */
+    .oc-band { fill: var(--band); opacity: 0.5; }
     .oc-acc { fill: var(--seq-hi); }
     .oc-acc-s { stroke: var(--seq-hi); }
   }

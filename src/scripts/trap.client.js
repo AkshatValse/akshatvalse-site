@@ -15,6 +15,7 @@
 
 import { TrapScene, displayPlan, hitFraction, BIN, PROTOCOL } from '../sim/trap.js';
 import { cividis } from '../sim/cividis.js';
+import { trapRampT } from '../sim/trap-poster.js';
 
 const SIM_SPEED = 180;          // simulated seconds per wall second: the run takes about 48 s
 const HOLD_MS = 4000;           // rest on the finished run before replaying
@@ -62,10 +63,12 @@ export function mountTrap(root) {
 
   function readPalette() {
     const cs = getComputedStyle(root);
-    const reverse = cs.getPropertyValue('--sim-reverse').trim() === '1';
+    // --sim-reverse marks the dark scheme; the trap figure keeps its light
+    // orientation there and lifts the low end instead (see trap-poster.js).
+    const dark = cs.getPropertyValue('--sim-reverse').trim() === '1';
     const fills = [];
     for (let i = 0; i <= LEVELS; i++) {
-      const [r, g, b] = cividis(reverse ? 1 - i / LEVELS : i / LEVELS);
+      const [r, g, b] = cividis(trapRampT(i / LEVELS, dark));
       fills.push(`rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`);
     }
     palette = {

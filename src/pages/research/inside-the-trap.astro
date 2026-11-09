@@ -243,7 +243,7 @@ const TWIN_TRAP = twin('trap');
     <div class="figbar">
       <span><span class="label">Live.</span> The paper's simulator (SGLang, A100, 300k-token KV pool), running in your browser from a fixed seed.</span>
       <span class="keys">
-        <span>Color: cache hit fraction <span class="legend-ramp"></span></span>
+        <span>Color: cache hit fraction <span class="legend-ramp trap"></span></span>
         <span>Height: sessions, √ scale</span>
       </span>
     </div>
@@ -595,7 +595,7 @@ const TWIN_TRAP = twin('trap');
         { value: 'fp', label: 'the first-principles model', src: `${A}/fig8-theory-curves.svg`, width: 672, height: 235 },
       ]} />
     <p class="caption">
-      <b>Figure 6.</b> Closed-population throughput curves. Paper Fig. 5: real engine (black, filled; one
+      <b>Figure 6.</b> Closed-population throughput curves. Paper Fig. 5: real engine (black filled markers, white in dark mode; one
       run per <Tex src="n" />) against the simulator (gray, open, dashed), for SGLang with a 300k-token pool,
       SGLang with its native pool and vLLM with a 300k-token pool, with the registered caps; the middle
       and right panels also show the simulator's blind predictions; bottom row, the hit fraction. Paper
@@ -1154,4 +1154,24 @@ const TWIN_TRAP = twin('trap');
   .trap-dg .box.dashed { stroke-dasharray: 5 4; }
   .trap-dg .rule { stroke: var(--rule-strong); stroke-width: 1; fill: none; }
   .trap-dg .stat { stroke: var(--ink); stroke-width: 1.5; fill: none; }
+
+  @media (prefers-color-scheme: dark) {
+    /* Figure 3: the emphasized "Session cap" box is var(--ink) in light mode, which in dark mode
+       is a glaring off-white tile. Use the site's dark band blue, with ink text, instead. */
+    svg.trap-dg rect.box.dark { fill: var(--band); stroke: var(--band); }
+    .trap-dg .box.dark ~ text.on-dark { fill: var(--ink); }
+    /* Figure 7: translucent yellow over the dark ground turns olive and mustard. The joining
+       cycle takes cividis mid, the completing cycle the accent itself. */
+    .trap-dg .hl-soft { fill: var(--seq-mid); opacity: 0.6; }
+    .trap-dg .hl-mid { fill: var(--hl); opacity: 0.85; }
+    /* The cover is the paper's Figure 1 on white: invert it like the static figures below
+       (the same filter as global.css section 5), keeping the background copy's blur, so it is
+       not a white slab with a white glow on the dark title band. */
+    :global(body div.container.blog#first-content div.blog-title .blog-cover img.foreground) {
+      filter: invert(0.89) hue-rotate(180deg) saturate(1.1);
+    }
+    :global(body div.container.blog#first-content div.blog-title .blog-cover img.background) {
+      filter: invert(0.89) hue-rotate(180deg) saturate(1.1) blur(24px);
+    }
+  }
 </style>

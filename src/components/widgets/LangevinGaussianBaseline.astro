@@ -332,12 +332,19 @@
       const cs = getComputedStyle(document.documentElement);
       const get = (name: string, fallback: string): string => cs.getPropertyValue(name).trim() || fallback;
       const isDark = dark.matches;
+      const accent = isDark ? get('--seq-hi', '#fee838') : get('--seq-lo', '#00224e');
       return {
         ink: get('--ink', '#353535'),
         ink2: get('--ink-2', '#666667'),
         ink3: get('--ink-3', '#9f9fa0'),
         rule: get('--rule-strong', '#c6c6c6'),
-        accent: isDark ? get('--seq-hi', '#fee838') : get('--seq-lo', '#00224e'),
+        accent,
+        // Histogram bars. Light: a navy tint that reads as a quiet cool gray.
+        // Dark: a translucent yellow on the dark plot turns olive, so use the
+        // neutral midpoint of the colormap instead; the legend swatch matches.
+        bar: isDark ? get('--seq-mid', '#767678') : accent,
+        barAlpha: isDark ? 0.5 : 0.28,
+        swatchAlpha: isDark ? 0.5 : 0.45,
       };
     }
 
@@ -386,8 +393,8 @@
         const b = Math.floor((x[i] + xr) / bw);
         if (b >= 0 && b < BINS) counts[b]++;
       }
-      ctx.fillStyle = c.accent;
-      ctx.globalAlpha = 0.28;
+      ctx.fillStyle = c.bar;
+      ctx.globalAlpha = c.barAlpha;
       for (let b = 0; b < BINS; b++) {
         if (!counts[b]) continue;
         const d = counts[b] / (N * bw);
@@ -428,7 +435,7 @@
       const swatch = (dash: number[] | null, color: string, label: string): void => {
         if (dash === null) {
           ctx.fillStyle = color;
-          ctx.globalAlpha = 0.45;
+          ctx.globalAlpha = c.swatchAlpha;
           ctx.fillRect(lx, ly - 8, 14, 9);
           ctx.globalAlpha = 1;
         } else {
@@ -447,7 +454,7 @@
       };
       // Short labels on narrow (phone-width) canvases so the legend is not clipped.
       const narrow = W < 560;
-      swatch(null, c.accent, narrow ? `${N} chains` : `${N} chains, step ${k}`);
+      swatch(null, c.bar, narrow ? `${N} chains` : `${N} chains, step ${k}`);
       if (Number.isFinite(v)) swatch([], c.ink, narrow ? 'N(0, v(h))' : 'N(0, v(h)) exact ULA law');
       swatch([6, 4], c.ink2, narrow ? 'N(0, s²)' : 'N(0, s²) target');
 
