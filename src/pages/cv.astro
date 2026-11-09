@@ -130,9 +130,8 @@ const research = [
     dates: 'Nov. 2024 – present',
     role: "Undergraduate Research Fellow, Department of Mathematics, Iowa State University. Advisor: Prof. Ruoyu Wu. Dean's High Impact Undergraduate Research Award.",
     bullets: [
-      'Developed the first importance-sampling methodology for rare-event estimation in the mean-field join-the-shortest-queue model, deriving state-dependent exponential tilting from the Budhiraja–Friedlander–Wu (2021) large-deviation rate function; stated a logarithmic-efficiency conjecture with a proof sketch via the Dupuis–Wang subsolution framework.',
-      'Built a reproducible, performance-tuned Python simulation framework (Xoshiro256** with deterministic seeding) and validated it across 27 configurations (n ≤ 100, ρ ∈ {0.7, 0.9, 0.95}): estimates agree with crude Monte Carlo within 95% confidence intervals wherever crude Monte Carlo succeeds, and extend to probabilities as small as 10⁻³¹, where it fails entirely.',
-      'Designed and benchmarked two heuristic tilting families (rate-reversal, level-weighted) with pilot-run selection; diagnosed over-tilting at extreme rarity through likelihood-ratio calibration statistics, motivating the ongoing computation of the optimal state-dependent tilt.',
+      "Developing importance-sampling estimators for rare events in mean-field join-the-shortest-queue load-balancing systems, with the change of measure guided by large-deviation asymptotics for the system's empirical measure, and studying how the estimators behave as the number of servers grows.",
+      'Built a reproducible Python simulation framework with deterministic seeding, checked against crude Monte Carlo wherever crude Monte Carlo is reliable. Results are held back pending submission.',
     ],
   },
   {
@@ -149,8 +148,8 @@ const research = [
     dates: 'Aug. 2026 – present',
     role: 'Research project, Advanced Topics in Machine Learning (COMS 6730), Department of Computer Science, Iowa State University. Advisor: Prof. Hongyang Gao.',
     bullets: [
-      'A forecast of a cumulative quantity is scored only when its horizon ends, but its increments are non-negative, so a miss becomes certain the moment the running sum crosses the issued bound. Designed a model-agnostic calibration layer over any quantile forecaster that credits those certain early misses and keeps explicit accounts of forecasts still pending; drafted a proof of its long-run coverage guarantee under early crediting, bounded correction and missing data, and checked the consequences of the guarantee numerically in adversarial runs.',
-      'Built a leakage-audited data pipeline (5-minute spot bars, 2020–2025, with a sealed and hashed test set), a regime-shift simulation study with exact oracle quantiles and pre-registered hypotheses, and delayed-feedback conformal and classical volatility baselines, including a temporal convolutional network with training workflows for Apple-silicon and HPC GPUs. Paper in preparation.',
+      'A forecast of a cumulative quantity is scored only when its horizon ends, yet a miss can become certain before then. Developing a model-agnostic calibration method for quantile forecasts that uses this early, one-sided feedback, with theory and experiments in progress.',
+      'Built a leakage-audited data pipeline with a sealed test set, a simulation study with pre-registered hypotheses, and delayed-feedback conformal and classical volatility baselines, including a temporal convolutional network. Paper in preparation; results are held back pending submission.',
     ],
   },
   {

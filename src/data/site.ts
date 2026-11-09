@@ -10,7 +10,7 @@ export const PROFILE = {
   affiliation: 'Iowa State University, Honors Program',
   tagline: 'Applied probability for the systems that run machine learning',
   degrees: 'B.S. Statistics · B.S. Mathematics · B.A. Computer Science · B.S. Data Science',
-  status: 'PhD applications: Fall 2027 cycle',
+  status: 'Applying to PhD programs for Fall 2028 admission',
   graduation: 'B.S. expected May 2028',
   email: 'avalse@iastate.edu',
   github: 'https://github.com/AkshatValse',

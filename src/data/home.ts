@@ -1,13 +1,16 @@
 /**
  * Home-page lists. Every item is taken from the public CV (src/pages/cv.astro,
- * cv/cv.tex) or the paper's arXiv metadata; dates are the ones stated there.
+ * cv/cv.tex) or the public GitHub profile README, and was checked line by line
+ * against them; dates are the ones stated there. Undated awards are not news.
  */
 export const NEWS: { date: string; html: string }[] = [
-  { date: 'Nov. 2026', html: 'Preprint with Ali Jannesari posted: <a href="/research/inside-the-trap"><em>Inside the Trap</em></a>, a renewal law for prefix-cache collapse in LLM agent serving (<a href="https://arxiv.org/abs/2611.08902">arXiv:2611.08902</a>).' },
-  { date: 'Fall 2026', html: 'Taking four PhD-level courses: measure-theoretic probability (STAT 6541) and advanced topics in machine learning, AI and high-performance computing.' },
-  { date: 'Aug. 2026', html: 'Started projects with <a href="/research/online-calibration">Hongyang Gao</a> on early-feedback calibration and with <a href="/research/agent-reliability">Yang Li</a> on agent reliability.' },
-  { date: '2026', html: "Dean's High Impact Undergraduate Research Award, Iowa State University, for the <a href=\"/research/large-deviations\">rare-event work</a> with Ruoyu Wu." },
-  { date: 'May 2026', html: 'Joined David Herzog\'s group on <a href="/research/langevin">Langevin sampling</a> (NSF DMS-2246491) and Jue Yan\'s on <a href="/research/neural-pde-stability">stability of learned PDE solvers</a> (NSF D4 NRT).' },
+  { date: 'Nov. 2026', html: 'Preprint with Ali Jannesari (SwAPP Lab) posted: <a href="/research/inside-the-trap"><em>Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving</em></a>, <a href="https://arxiv.org/abs/2611.08902">arXiv:2611.08902</a>. The code, all real-engine data and every registration are public.' },
+  { date: 'Fall 2026', html: 'Taking four PhD-level (6000-series) courses: measure-theoretic probability (STAT 6541) and advanced topics in machine learning (COMS 6730), artificial intelligence (COMS 6720) and high-performance computing (COMS 6250).' },
+  { date: 'Aug. 2026', html: 'Started three projects: <a href="/research/inside-the-trap">metastable failures in prefix-cached LLM agent serving</a> with Ali Jannesari, <a href="/research/online-calibration">early-feedback calibration of volatility forecasts</a> with Hongyang Gao, and <a href="/research/agent-reliability">reliability of tool-using LLM agents</a> with Yang Li.' },
+  { date: '2026', html: "Dean's High Impact Undergraduate Research Award, Iowa State University." },
+  { date: 'May 2026', html: 'Joined David Herzog on <a href="/research/langevin">Langevin sampling and diffusion estimation</a> (funded by NSF award DMS-2246491) and Jue Yan on the <a href="/research/neural-pde-stability">stability of cell-average neural networks for PDEs</a> (funded by the NSF D4 NRT; joint with Mengyuan Yang).' },
+  { date: 'Nov. 2024', html: 'Undergraduate Research Fellow with Ruoyu Wu on <a href="/research/large-deviations">large deviations and rare events in queueing systems</a>.' },
+  { date: 'Aug. 2024', html: "Entered Iowa State University's Honors Program, working toward four degrees." },
 ];
 
 export const MANUSCRIPTS: { title: string; authors: string; href?: string }[] = [
