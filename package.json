@@ -8,8 +8,8 @@
     "build": "node scripts/gen-posters.mjs && astro build",
     "preview": "astro preview",
     "posters": "node scripts/gen-posters.mjs",
-    "verify": "node scripts/verify-diffusion.mjs && node scripts/verify-raretail.mjs && node scripts/verify-diffusivity.mjs && node scripts/verify-gibbs.mjs",
-    "verify:fast": "node scripts/verify-diffusion.mjs && node scripts/verify-raretail.mjs",
+    "verify": "node scripts/verify-trap.mjs && node scripts/verify-diffusion.mjs && node scripts/verify-raretail.mjs && node scripts/verify-diffusivity.mjs && node scripts/verify-gibbs.mjs",
+    "verify:fast": "node scripts/verify-trap.mjs && node scripts/verify-diffusion.mjs && node scripts/verify-raretail.mjs",
     "og": "node scripts/gen-og.mjs"
   },
   "dependencies": {

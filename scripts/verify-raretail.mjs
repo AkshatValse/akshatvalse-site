@@ -108,7 +108,7 @@ console.log('   producing them at magnitudes where crude Monte Carlo has no outp
 console.log(`\nelapsed ${((Date.now() - t0) / 1000).toFixed(1)} s`);
 
 // --- contract ---------------------------------------------------------------
-// The exact reference is the dashed curve on Fig. 4, so it is the claim that
+// The exact reference is the dashed curve on Fig. 5, so it is the claim that
 // matters most. SciPy may be absent in CI; when it is, the series and the
 // continued fraction are compared across their join at a = 1.5 instead, which
 // is weaker but still catches a broken branch.

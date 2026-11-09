@@ -1,14 +1,26 @@
 ---
 import Base from '../layouts/Base.astro';
-import HeroSim from '../components/HeroSim.astro';
+import TrapFigure from '../components/TrapFigure.astro';
 import DiffusionSampler from '../components/DiffusionSampler.astro';
 import Tex from '../components/Tex.astro';
+import { trapFacts } from '../sim/trap-facts.js';
 
 /** String.raw keeps TeX backslashes intact: a quoted attribute would
  *  have JS eat them, and one of them is an invalid escape. */
 const tex = String.raw;
 
+/** Every number about Fig. 1 comes from the run the page replays. */
+const f = trapFacts();
+const fmt = (x: number) => Math.round(x).toLocaleString('en-US');
+
 const research = [
+  {
+    title: 'Inside the Trap: a renewal law for prefix-cache collapse in LLM agent serving',
+    href: '/research/inside-the-trap',
+    meta: 'Ali Jannesari · Computer Science · preprint, arXiv:2611.08902',
+    blurb:
+      'An agent re-sends its whole growing conversation every turn, and the serving engine keeps that prefix in a GPU cache so the next turn stays cheap. A burst of new sessions can tip the engine into a trap in which every turn misses and the backlog does not drain, at a load it served before. Registered tests on two engines, two GPUs and two models; a renewal law, proved for an idealization of the trapped state and checked retrospectively against 57 stuck runs; and a session cap that prevented the trap in all 30 capped runs.',
+  },
   {
     title: 'Langevin dynamics: sampling, discretization bias, transport coefficients',
     meta: 'David Herzog · Mathematics · ongoing',
@@ -19,7 +31,7 @@ const research = [
     title: 'Large-deviation asymptotics for mean-field interacting systems',
     meta: 'Ruoyu Wu · Mathematics · ongoing',
     blurb:
-      'Rate functionals and the variational characterization of rare events for the empirical measure of a mean-field particle system. This is the construction that sits one level above the mean-field limit of wide-network training, and the machinery underneath PAC-Bayes.',
+      'Rate functionals and the variational characterization of rare events for the empirical measure of a mean-field particle system, currently in the setting of load balancing. This is the construction that sits one level above the mean-field limit of wide-network training, and the machinery underneath PAC-Bayes.',
   },
   {
     title: 'Stability of neural approximations to evolution equations',
@@ -28,13 +40,7 @@ const research = [
       'Conservation in a cell-average neural network solver is architectural. Stability is not, and the training loss does not separate the networks that survive a long rollout from the ones that come apart. Adapting von Neumann analysis to say which, from the weights alone.',
   },
   {
-    title: 'Metastable failures in prefix-cached LLM agent serving',
-    meta: 'Ali Jannesari · Computer Science · preprint',
-    blurb:
-      'An agent re-sends its whole growing conversation every turn, and the serving engine keeps that prefix in a GPU cache so the next turn stays cheap. A burst of new sessions can tip the engine into a trap in which every turn misses and the backlog does not drain, at a load it served before. Registered tests on two engines, two GPUs and two models; a renewal law, proved for an idealization of the trapped state and checked retrospectively against 57 stuck runs; and a session cap that prevented the trap in all 30 capped runs.',
-  },
-  {
-    title: 'Online calibration of forecasts with early, one-sided feedback',
+    title: 'Online calibration of neural volatility forecasts with early, one-sided feedback',
     meta: 'Hongyang Gao · Computer Science · ongoing',
     blurb:
       'A forecast of a cumulative quantity is scored only when its horizon ends, but a miss becomes certain the moment the running sum crosses the bound. A calibration layer that credits those certain misses early and keeps accounts of what is still pending, with a coverage guarantee written up as a proof draft and tested numerically.',
@@ -49,10 +55,10 @@ const research = [
 ---
 
 <Base
-  title="Akshat Valse · stochastic foundations of machine learning"
-  description="Undergraduate researcher at Iowa State University working on the stochastic foundations of machine learning: diffusion models as reverse-time SDEs, Langevin sampling and its discretization bias, large deviations for mean-field systems, the stability of learned PDE solvers, and metastability, calibration and reliability in systems that run LLMs."
+  title="Akshat Valse · applied probability for the systems that run machine learning"
+  description="Undergraduate researcher at Iowa State University in applied probability for the systems that run machine learning. Inside the Trap (arXiv:2611.08902): why a burst of agent traffic can trap a prefix-cached LLM serving engine, a renewal law for the trapped state, and a session cap that gets the engine out."
 >
-  <HeroSim slot="hero" />
+  <TrapFigure slot="hero" />
 
   <section class="section shell">
     <div class="row">
@@ -60,63 +66,105 @@ const research = [
         <span class="rail-label">Fig. 1</span>
         <hr class="rail-rule" />
         <dl>
-          <dt>Object</dt>
-          <dd>overdamped Langevin</dd>
-          <dt>Potential</dt>
-          <dd>V = cos x + cos y</dd>
-          <dt>Integrator</dt>
-          <dd>Euler–Maruyama, h = 0.004</dd>
+          <dt>Engine</dt>
+          <dd>the paper's simulator: SGLang, A100, 300k-token KV pool</dd>
+          <dt>Load</dt>
+          <dd>{f.mult} λ<sub>ref</sub>, plus {f.burstN} sessions at {fmt(f.tB)} s</dd>
+          <dt>Cap</dt>
+          <dd>{f.cap} sessions, {fmt(f.engage)}–{fmt(f.release)} s (lower lane)</dd>
           <dt>Checked</dt>
-          <dd>TV 1.0×10⁻³ vs Gibbs</dd>
+          <dd>served prompt {fmt(f.trapped.meanPrompt)} vs model F {fmt(f.model.Pz)}</dd>
         </dl>
         <div class="legend" aria-hidden="true">
-          <span>−2</span><span class="legend-ramp"></span><span>+2</span>
+          <span>0</span><span class="legend-ramp"></span><span>1</span>
         </div>
-        <p class="legend-note">Color: potential V</p>
+        <p class="legend-note">Color: cache hit fraction</p>
+        <p class="legend-note">Height: sessions, √ scale</p>
       </div>
 
       <div>
         <p class="lede">
-          I’m an undergraduate researcher at Iowa State University working on reliable
-          machine learning and scientific computing. I build Python simulations and
-          GPU experiments to measure when methods fail, explain why, and test ways to
-          improve them. My projects span LLM serving, statistical forecasting, and
-          numerical algorithms.
+          I’m an undergraduate researcher at Iowa State University, working in applied
+          probability on the systems that run machine learning. My preprint with Ali
+          Jannesari, <a href="/research/inside-the-trap"><em>Inside the Trap</em></a>,
+          explains why a burst of agent traffic can leave an LLM serving engine stuck at
+          a load it served before, and what gets it out.
         </p>
 
         <p>
-          I work on the stochastic foundations of machine learning: the theory of
-          stochastic differential equations, applied to the algorithms that now
-          generate and sample. A diffusion model is a reverse-time SDE, stochastic
-          gradient descent and its Langevin variants are diffusions in a rough loss
-          landscape, and a PAC-Bayes bound is the Donsker–Varadhan formula applied to a
-          posterior over hypotheses. Three questions occupy me: what the discretization
-          of a Langevin sampler actually costs, how to estimate probabilities too small
-          for direct simulation to reach, and whether a PDE solver with a network inside
-          it will hold together when you iterate it. Underneath all three is the same
-          question, which is what can be proved about the objects practitioners already
-          use: rates, stability, and error bounds in place of heuristics. A second set
-          of projects, in computer science, carries the same habits into the systems
-          that run large language models: why a burst of agent traffic can leave a
-          prefix-cached serving engine trapped, every turn missing the cache, and what
-          gets it out; how to calibrate a forecast when its feedback arrives early but
-          one-sided; and when restarting a stalled agent beats waiting. Everything moving on this page is one of the stochastic
-          objects, running live and graded against a closed-form answer.
+          An agent works in a loop: model call, tool call, model call, re-sending the
+          whole growing conversation each turn. Serving engines such as SGLang and vLLM
+          keep that shared prefix in a GPU KV cache, so a follow-up turn whose prefix is
+          still cached prefills only its new tokens; in the paper’s workload a hit
+          prefills 551 tokens and a miss about 11,100. The cached KV belongs to sessions
+          that sit idle in tool calls, and admitting waiting work evicts it. A burst of
+          new sessions can therefore tip the engine into a trap in which every turn
+          misses and the backlog does not drain. In registered paired tests on Iowa
+          State’s Nova cluster, on two engines, two GPUs and two models, a 200-session
+          burst left the engine at zero hits to the end in all 30 runs (the registered
+          rule was met at 9 of 10 rates), every matched no-burst run stayed good, and a
+          client-side session cap prevented the trap in all 30 capped runs.
         </p>
 
         <p>
-          The band above is running in your browser from a fixed seed. It integrates
-          <Tex src={tex`dX_t = -\nabla V(X_t)\,dt + \sqrt{2\beta^{-1}}\,dW_t`} block />
-          on the torus. Annealed Langevin sampling runs this same dynamics at each noise
-          level, and it is the continuous-time limit of SGLD when <Tex src={tex`V`} /> is
-          the loss. Replace <Tex src={tex`\nabla V`} /> by a learned score and you have a
-          generative model. Because the score here is exact, the answer can be checked.
-          Particles collect where <Tex src={tex`e^{-\beta V}`} /> is large and hop
-          between wells at the Kramers rate, and across 48 bins the empirical measure
-          sits within a total variation of <Tex src={tex`1.0\times 10^{-3}`} /> of the
-          Gibbs law, with a discretization bias of <Tex src={tex`9\times 10^{-4}`} /> on
-          <Tex src={tex`\mathbb{E}[\cos X]`} /> against the closed form
-          <Tex src={tex`-I_1(\beta)/I_0(\beta)`} />.
+          The paper then asks what the trapped state is. It idealizes that state as a
+          fluid FIFO server on which every turn misses, model F, and proves that along
+          FIFO orbits its cycles obey a linear renewal recursion. The trap drains if and
+          only if arrivals are below the all-miss capacity
+          <Tex src={tex`\lambda_{\mathrm{miss}}`} />; above it, a Perron root carries
+          every trapped state to a known self-similar regime in which the turns served
+          are young and short. For the workload studied, sessions then complete faster
+          than <Tex src={tex`\lambda_{\mathrm{miss}}`} />, so in the model a trap’s
+          measured throughput overstates the load at which it drains. With nothing
+          fitted to trap data, the theory matches 57 stuck runs retrospectively, and it
+          was also tested blind in outcome. Of two ways out, refusing arrivals sheds
+          sessions, while a session cap restores cache reuse: in registered tests it
+          rescued 9 of 9 established traps at the same load without shedding a session.
+          The paper does not prove that the engine converges to the model.
+        </p>
+
+        <p>
+          The band above runs the paper’s simulator in your browser from a fixed seed:
+          the engine calibrated to SGLang on an A100 with a 300,000-token KV pool,
+          iteration by iteration, the same code that the site’s checks run against the
+          paper’s Python engine, count for count. Both lanes get the same agent traffic:
+          a Poisson stream of {fmt(f.baseSessions)} sessions at {f.mult} times the
+          measured all-miss rate, plus a burst of {f.burstN} at {fmt(f.tB)} s, and both
+          lose their cache hits by {fmt(f.hitsGone[0])} s. The top engine is left alone
+          and stays at zero hits to the end, with about {fmt(f.trapped.sessions)} sessions
+          backed up over the last 3,000 s; it is still trapped after the last burst
+          session finishes, at {fmt(f.lastBurst)} s. The bottom one gets a cap of
+          {f.cap} sessions at {fmt(f.engage)} s: hits come back by {fmt(f.hitsBack)} s,
+          drop out again while the gate drains the backlog, and hold from
+          {fmt(f.hitsHold)} s; the cap comes off at {fmt(f.release)} s, and the engine
+          stays good. Over the last 3,000 s the trapped engine serves turns that average
+          {fmt(f.trapped.meanPrompt)} prompt tokens, against {fmt(f.model.Pz)} in model F
+          and {fmt(f.model.Pstat)} in the normal turn mix, and completes sessions at
+          {f.trapped.completionsOverMiss.toFixed(2)} times
+          <Tex src={tex`\lambda_{\mathrm{miss}}`} /> against model F’s
+          {f.model.DoverMiss.toFixed(2)}: young, short turns, as the theorem says, with
+          nothing fitted.
+        </p>
+
+        <p class="note">
+          This run was chosen from {f.selection.candidates} seeds: of the
+          {f.selection.cleared} in which every burst session finishes before the end,
+          the {f.selection.inRange} whose cap comes off inside the paper’s engine range
+          ({fmt(f.selection.releaseRange[0])}–{fmt(f.selection.releaseRange[1])} s),
+          and of those the one whose completion rate is closest to model F’s. Over
+          {f.further.seeds} further seeds that played no part in the choice, every
+          engine that gets the burst and no cap is stuck at zero hits
+          ({f.further.stuck} of {f.further.seeds}); in the {f.further.cleared} where the
+          burst sessions all finish, {f.further.clearedNoHitsAfter} stay trapped after the
+          last one; and the trapped engines’ served prompts average
+          {f.further.promptOverPz.toFixed(2)} times model F’s, while their completion
+          rates average {f.further.completionsOverMiss.toFixed(2)} times
+          <Tex src={tex`\lambda_{\mathrm{miss}}`} />, from
+          {f.further.completionsMin.toFixed(2)} to {f.further.completionsMax.toFixed(2)}.
+        </p>
+
+        <p class="more">
+          <a href="/research/inside-the-trap">The paper: summary, abstract, code and citation →</a>
         </p>
       </div>
     </div>
@@ -139,7 +187,16 @@ const research = [
         </dl>
       </div>
       <div>
-        <h2 class="section-title">A diffusion model with an answer key</h2>
+        <h2 class="section-title">The toolkit underneath</h2>
+        <p>
+          The trap paper is a renewal argument about a queue, and the rest of my work is
+          where that kind of argument comes from: Langevin dynamics and what its
+          discretization costs, large deviations and probabilities too small for direct
+          simulation to reach, and whether a PDE solver with a network inside it holds
+          together when iterated. The habit is the same throughout: a closed form where
+          one exists and a registered prediction where one does not, and a check that
+          runs either way.
+        </p>
         <p>
           Generative models are hard to evaluate because the target is unknown, so a
           sampler can only be judged on whether its output looks plausible. Make the
@@ -178,7 +235,7 @@ const research = [
         <h2 class="section-title">Research</h2>
         {research.map((r) => (
           <article class="entry">
-            <h3 class="entry-title">{r.title}</h3>
+            <h3 class="entry-title">{r.href ? <a href={r.href}>{r.title}</a> : r.title}</h3>
             <p class="entry-meta">{r.meta}</p>
             <p>{r.blurb}</p>
           </article>
@@ -194,14 +251,14 @@ const research = [
       <div>
         <h2 class="section-title">Elsewhere</h2>
         <dl class="links">
+          <dt>Preprint</dt>
+          <dd><a href="/research/inside-the-trap">Inside the Trap</a> (<a href="https://arxiv.org/abs/2611.08902">arXiv:2611.08902</a>)</dd>
+          <dt>Code</dt>
+          <dd><a href="https://github.com/AkshatValse/surviving-llm-stampede">surviving-llm-stampede</a> · <a href="https://github.com/AkshatValse/langevin-samplers">langevin-samplers</a></dd>
           <dt>Email</dt>
           <dd><a href="mailto:avalse@iastate.edu">avalse@iastate.edu</a></dd>
           <dt>GitHub</dt>
           <dd><a href="https://github.com/AkshatValse" rel="me">AkshatValse</a></dd>
-          <dt>Preprint</dt>
-          <dd><a href="/research/inside-the-trap">Inside the Trap</a> (<a href="https://arxiv.org/abs/2611.08902">arXiv:2611.08902</a>)</dd>
-          <dt>Code</dt>
-          <dd><a href="https://github.com/AkshatValse/langevin-samplers">langevin-samplers</a> · <a href="https://github.com/AkshatValse/surviving-llm-stampede">surviving-llm-stampede</a></dd>
           <dt>CV</dt>
           <dd><a href="/cv">/cv</a></dd>
         </dl>
@@ -212,13 +269,7 @@ const research = [
 </Base>
 
 <style>
-  .legend-note {
-    font-family: var(--font-mono), monospace;
-    font-size: var(--step--1);
-    color: var(--ink-2);
-    margin: 0.3rem 0 0;
-  }
-  .more { margin-top: 2rem; }
+  .more { margin-top: 1.6rem; }
   .pending {
     margin-top: 1.6rem;
     color: var(--ink-2);

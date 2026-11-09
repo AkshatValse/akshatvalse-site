@@ -19,7 +19,7 @@ const CHROME =
 const BASE = process.argv[2] ?? 'http://localhost:4321';
 const PATHS = process.argv.slice(3).length
   ? process.argv.slice(3)
-  : ['/', '/research', '/cv'];
+  : ['/', '/research', '/research/inside-the-trap', '/cv'];
 
 const browser = await puppeteer.launch({
   executablePath: CHROME,

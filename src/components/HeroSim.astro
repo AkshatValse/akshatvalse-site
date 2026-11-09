@@ -7,6 +7,12 @@
  * time the live loop starts from, with explicit intrinsic dimensions, so the
  * band never reflows when the canvas takes over.
  */
+interface Props {
+  /** The home page's band is the largest paint; elsewhere the poster can wait. */
+  priority?: boolean;
+}
+const { priority = true } = Astro.props;
+
 const label =
   'Live simulation: 648 particles undergoing overdamped Langevin dynamics ' +
   'in the periodic potential V(x, y) = cos x + cos y at inverse temperature ' +
@@ -42,7 +48,8 @@ const label =
       width="1440"
       height="480"
       alt=""
-      fetchpriority="high"
+      fetchpriority={priority ? 'high' : undefined}
+      loading={priority ? undefined : 'lazy'}
       decoding="async"
     />
   </picture>

@@ -2,23 +2,47 @@
 
 Personal research site. Astro, no UI framework, no client-side dependencies.
 
-Every figure on the site is a simulation running in the reader's browser, and
-every one of them is checked against a closed-form answer before it ships. The
-checks are the scripts in `scripts/verify-*.mjs`; their output is quoted in the
-figure captions, so a caption that disagrees with a fresh run is a bug.
+The site is built around the preprint *Inside the Trap: A Renewal Law for
+Prefix-Cache Collapse in LLM Agent Serving* (Valse and Jannesari,
+arXiv:2611.08902). Every figure on the site is a simulation running in the
+reader's browser, and every one of them is checked against an exact reference
+before it ships: a closed form, or for Fig. 1 the paper's model F and the
+paper's own simulator. The checks are the scripts in `scripts/verify-*.mjs`.
 
-## The four simulations
+## The five simulations
 
-| | object | reference value | check |
-|---|---|---|---|
-| Fig. 1 | overdamped Langevin in `V = cos x + cos y` on the torus, `β = 2` | Gibbs measure `∝ exp(−βV)`; `E[cos X] = −I₁(β)/I₀(β)` | `verify-gibbs.mjs` |
-| Fig. 2 | reverse-time VP-SDE with the exact score of a 6-component Gaussian mixture | true mixture weights, means, and `σ` | `verify-diffusion.mjs` |
-| Fig. 3 | effective diffusivity in `V = cos x`, `β = 1` | Lifson–Jackson, `1/I₀(1)² = 0.6238603604…` | `verify-diffusivity.mjs` |
-| Fig. 4 | Gaussian-tail estimation by crude Monte Carlo and importance sampling | `P(Z > a) = Φ(−a)` for `Z ~ N(0,1)` | `verify-raretail.mjs` |
+| | page | object | reference value | check |
+|---|---|---|---|---|
+| Fig. 1 | `/`, `/research/inside-the-trap` | the paper's prefix-cached serving engine (SGLang, A100, 300k-token KV pool) under agent traffic at 1.35 `λ_ref`, a 200-session burst, and the R1 rescue cap | model F: mean served prompt `P_z = 9324.1` in the trap, frozen in the paper's `configs/icml_trap_predict.yaml`; the paper's Python engine, count for count | `verify-trap.mjs` |
+| Fig. 2 | `/` | reverse-time VP-SDE with the exact score of a 6-component Gaussian mixture | true mixture weights, means, and `σ` | `verify-diffusion.mjs` |
+| Fig. 3 | `/research` | overdamped Langevin in `V = cos x + cos y` on the torus, `β = 2` | Gibbs measure `∝ exp(−βV)`; `E[cos X] = −I₁(β)/I₀(β)` | `verify-gibbs.mjs` |
+| Fig. 4 | `/research` | effective diffusivity in `V = cos x`, `β = 1` | Lifson–Jackson, `1/I₀(1)² = 0.6238603604…` | `verify-diffusivity.mjs` |
+| Fig. 5 | `/research` | Gaussian-tail estimation by crude Monte Carlo and importance sampling | `P(Z > a) = Φ(−a)` for `Z ~ N(0,1)` | `verify-raretail.mjs` |
 
-Current results: total variation `1.0e-3` against the Gibbs marginal over 48
-bins; recovered mixture weights within `0.006` of truth at a Monte Carlo floor of
-`0.0035`; `D̂(2000) = 0.6218 ± 0.0098` against `0.62386`.
+Current results, Fig. 1: on the display plan the JavaScript engine reproduces
+the paper's Python engine run iteration by iteration
+(`engine.batch_decode_iterations=false`) exactly: turns, hits, iterations,
+evictions, release time and every completion time, in the three arms of the
+paired test E2 and the R1 rescue run (`scripts/trap-golden/` regenerates the
+reference; with the paper's default the counts are the same and completion
+times agree to about 2e-10 s). The display run was selected from 40 seeds: of
+the 9 whose burst sessions all finish before the end, the 5 whose rescue cap
+comes off inside the paper's engine range (3,980-4,550 s), and of those the one
+whose completion rate is closest to model F's. Its trapped engine's mean served
+prompt is `0.9925 P_z`. Over 40 further seeds that played no part in the
+choice, every burst run without a cap is stuck at zero hits, the mean served
+prompt pools to `1.028 P_z`, and completions average `1.117 lambda_miss`
+(0.95 to 1.31).
+
+Figs. 2-5: recovered mixture weights within `0.006` of truth at a Monte Carlo
+floor of `0.0035` (Fig. 2); total variation `1.0e-3` against the Gibbs marginal
+over 48 bins (Fig. 3); `D̂(2000) = 0.6218 ± 0.0098` against `0.62386` (Fig. 4).
+
+Fig. 1 is deterministic to the last bit in every browser (`src/sim/trap.js`
+avoids `Math.log`, whose last bit each JavaScript engine chooses), so the run a
+reader sees is the run the check grades, and every number quoted next to it is
+computed at build time from that run (`src/sim/trap-facts.js`) rather than copied
+by hand.
 
 ## Layout
 
@@ -52,9 +76,10 @@ throttling.
 - **No plotting or physics libraries.** The integrators are Euler–Maruyama by
   hand, the colormap is a 33-entry cividis table, and the contours come from a
   first-order distance-to-level-set estimate rasterized directly. Total
-  JavaScript is under 7 KB gzipped on the heaviest page.
+  JavaScript is 10.4 KB gzipped on the heaviest page (the home page, with
+  Figs. 1 and 2), against a budget of 15 KB.
 - **Color encodes a quantity.** cividis appears only inside figures, where it
-  maps a potential or a log-density. Nothing else on the site is colored, and
+  maps a potential, a log-density or a cache hit fraction. Nothing else on the site is colored, and
   there is no accent color.
 - **Correct before any JavaScript runs.** Each figure ships a build-time poster
   of the same simulation, so first paint, `prefers-reduced-motion: reduce`, and
@@ -93,8 +118,8 @@ afterwards) and in the card text of `scripts/gen-og.mjs` (re-run it), and
 
 `public/og.png` is the link-preview card. It is rendered by `node scripts/gen-og.mjs`
 using headless Chrome and the site's own woff2 files, then committed, so a Linux build
-box never has to reproduce it. Re-run it after changing the name, the tagline or the
-hero, then rebuild.
+box never has to reproduce it. Its picture is Fig. 1, drawn from the same run as the
+page. Re-run it after changing the name, the tagline or Fig. 1, then rebuild.
 
 `node scripts/submit-indexnow.mjs` pushes the sitemap's URLs to IndexNow, which covers
 Bing, Yandex, Seznam and Naver, and through Bing also DuckDuckGo and Ecosia. Google has
@@ -102,16 +127,17 @@ no equivalent and has to be reached through Search Console.
 
 ## Checks
 
-`npm run verify` runs all four verification scripts. Each ends in a CONTRACT
+`npm run verify` runs all five verification scripts. Each ends in a CONTRACT
 block that asserts its tolerance and exits non-zero on a breach. The checks
-validate the simulations; caption values are manually recorded snapshots and
-are not compared automatically with each run. Refresh them when a verification
-result changes. Measured values are also recorded next to each tolerance for
-review.
+validate the simulations. For Figs. 2 to 5 the caption values are manually
+recorded snapshots and are not compared automatically with each run; refresh
+them when a verification result changes. Fig. 1's numbers are computed at build
+time from the run itself. Measured values are also recorded next to each
+tolerance for review.
 
 GitHub Actions runs them on every push, on pull requests, and weekly. The
 Cloudflare build command (set in the Pages dashboard, not in this repo) is
-`npm run verify:fast && npm run build`, so a tolerance breach in the two quick
+`npm run verify:fast && npm run build`, so a tolerance breach in the three quick
 checks also blocks the deploy; the two slow ones (about 100 s combined) run in
 Actions rather than on every deploy. If a script referenced by that command is
 renamed or removed, update the dashboard command in the same change: a missing

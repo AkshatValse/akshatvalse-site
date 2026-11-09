@@ -1,5 +1,11 @@
 ---
 import Base from '../../layouts/Base.astro';
+import TrapFigure from '../../components/TrapFigure.astro';
+import { trapFacts } from '../../sim/trap-facts.js';
+
+/** Numbers about Fig. 1 come from the run the band replays. */
+const f = trapFacts();
+const fmt = (x: number) => Math.round(x).toLocaleString('en-US');
 
 const TITLE = 'Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving';
 const ARXIV = 'https://arxiv.org/abs/2611.08902';
@@ -45,6 +51,8 @@ const ISU = { '@type': 'CollegeOrUniversity', name: 'Iowa State University' };
     },
   ]}
 >
+  <TrapFigure slot="hero" />
+
   <section class="section shell">
     <div class="row">
       <div class="rail">
@@ -58,6 +66,13 @@ const ISU = { '@type': 'CollegeOrUniversity', name: 'Iowa State University' };
           <dt>Bears on</dt>
           <dd>LLM serving · prefix caching · KV cache · agent workloads</dd>
         </dl>
+        <hr class="rail-rule" />
+        <span class="rail-label">Fig. 1</span>
+        <div class="legend" aria-hidden="true">
+          <span>0</span><span class="legend-ramp"></span><span>1</span>
+        </div>
+        <p class="legend-note">Color: cache hit fraction</p>
+        <p class="legend-note">Height: sessions, √ scale</p>
       </div>
       <div class="prose">
         <h1 class="page-title">
@@ -116,6 +131,36 @@ const ISU = { '@type': 'CollegeOrUniversity', name: 'Iowa State University' };
           restores cache reuse: in registered tests it rescued 9 of 9 established traps
           at the same load without shedding a session. The paper does not prove that
           the engine converges to the model.
+        </p>
+
+        <h2>The figure above</h2>
+        <p>
+          Fig. 1 runs the paper’s simulator in your browser from a fixed seed: the engine
+          calibrated to SGLang on an A100 with a 300,000-token KV pool, iteration by
+          iteration. Each lane’s height is the number of sessions in the system, on a
+          square-root scale, and its color is the fraction of follow-up turns served from
+          the prefix cache, from 0 to 1. Both lanes get the same agent traffic: a Poisson
+          stream of {fmt(f.baseSessions)} sessions at {f.mult} times the measured all-miss
+          rate, plus a burst of {f.burstN} at {fmt(f.tB)} s. The top engine has no cap and
+          stays at zero cache hits to the end. The bottom one gets the paper’s rescue cap
+          of {f.cap} sessions at {fmt(f.engage)} s: its hits come back by
+          {fmt(f.hitsBack)} s, drop out again while the gate drains the backlog, and hold
+          from {fmt(f.hitsHold)} s, and the cap comes off at {fmt(f.release)} s. Over the
+          last 3,000 s the trapped engine’s turns average {fmt(f.trapped.meanPrompt)}
+          prompt tokens, against {fmt(f.model.Pz)} in model F and {fmt(f.model.Pstat)} in
+          the normal turn mix. The site’s checks run the same code against the paper’s
+          Python engine and get identical counts.
+        </p>
+        <p>
+          This run was chosen from {f.selection.candidates} seeds as one in which every
+          burst session finishes before the end, the cap comes off inside the paper’s
+          engine range, and the completion rate is closest to model F’s. Over
+          {f.further.seeds} further seeds that played no part in the choice, every engine
+          that gets the burst and no cap is stuck at zero hits, the trapped engines’ served
+          prompts average {f.further.promptOverPz.toFixed(2)} times model F’s, and their
+          completion rates average {f.further.completionsOverMiss.toFixed(2)} times the
+          all-miss capacity, from {f.further.completionsMin.toFixed(2)} to
+          {f.further.completionsMax.toFixed(2)}.
         </p>
 
         <h2>Abstract</h2>

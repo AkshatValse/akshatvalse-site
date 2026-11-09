@@ -45,11 +45,12 @@ const ld = {
   email: 'mailto:avalse@iastate.edu',
   jobTitle: 'Undergraduate researcher',
   description:
-    'Undergraduate researcher at Iowa State University working on the stochastic ' +
-    'foundations of machine learning: Langevin sampling and its discretization bias, ' +
-    'large deviations for mean-field interacting systems, the stability of learned ' +
-    'PDE solvers, and metastability, calibration and reliability in the systems that ' +
-    'run large language models.',
+    'Undergraduate researcher at Iowa State University in applied probability for the ' +
+    'systems that run machine learning. Author, with Ali Jannesari, of "Inside the Trap: ' +
+    'A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving" (arXiv:2611.08902). ' +
+    'Also works on Langevin sampling and its discretization bias, large deviations for ' +
+    'mean-field interacting systems, the stability of learned PDE solvers, calibration ' +
+    'with early feedback, and the reliability of tool-using agents.',
   // sameAs is what lets a search engine decide these accounts are one person.
   sameAs: [
     'https://github.com/AkshatValse',
@@ -58,14 +59,15 @@ const ld = {
   affiliation: { '@type': 'CollegeOrUniversity', name: 'Iowa State University' },
   alumniOf: { '@type': 'CollegeOrUniversity', name: 'Iowa State University' },
   knowsAbout: [
-    'Stochastic differential equations',
-    'Diffusion models and score-based generative modeling',
-    'Langevin dynamics and Markov chain Monte Carlo',
-    'Large deviations and mean-field interacting particle systems',
-    'Machine learning theory',
-    'Numerical analysis of learned PDE solvers',
+    'Applied probability',
     'LLM serving systems, prefix caching and metastable failures',
-    'Queueing theory and discrete-event simulation',
+    'Queueing theory, renewal theory and fluid models',
+    'Discrete-event simulation',
+    'Stochastic differential equations',
+    'Langevin dynamics and Markov chain Monte Carlo',
+    'Diffusion models and score-based generative modeling',
+    'Large deviations and mean-field interacting particle systems',
+    'Numerical analysis of learned PDE solvers',
     'Online conformal calibration',
     'Reliability of tool-using LLM agents',
   ],
@@ -90,7 +92,7 @@ const ld = {
     <meta
       property="og:image:alt"
       content={ogImageAlt ??
-        'Akshat Sachin Valse — stochastic foundations of machine learning, Iowa State University. Above the name, a field of particles undergoing Langevin dynamics collected into the wells of a periodic potential.'}
+        'Akshat Sachin Valse — applied probability for the systems that run machine learning, Iowa State University. Above the name, two simulated LLM serving engines after a burst of agent traffic: the one with no cap stays trapped with its cache missing, the one given a session cap recovers.'}
     />
     <meta property="og:site_name" content="Akshat Sachin Valse" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -120,7 +122,7 @@ const ld = {
           <p class="name">
             {path === '/' ? 'Akshat Valse' : <a href="/">Akshat Valse</a>}
           </p>
-          <p class="tagline">Stochastic foundations of machine learning &middot; Iowa State University</p>
+          <p class="tagline">Applied probability for the systems that run machine learning &middot; Iowa State University</p>
           <nav class="nav" aria-label="Primary">
             {NAV.map((item) => (
               <a href={item.href} aria-current={path === item.href ? 'page' : undefined}>
@@ -160,7 +162,7 @@ const ld = {
           </p>
           <p class="colophon">
             Set in Archivo, Source Serif&nbsp;4 and IBM Plex Mono; mathematics in KaTeX.
-            Every figure is a live simulation, each checked against a closed form.
+            Every figure is a live simulation, each checked against an exact reference.
             <a href="https://github.com/AkshatValse/akshatvalse-site">Source and checks</a>
             live in <code>src/sim</code> and <code>scripts/verify-*</code>; the
             tolerances run on every push

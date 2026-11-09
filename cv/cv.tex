@@ -21,7 +21,7 @@
   pdftitle={Akshat Sachin Valse -- Curriculum Vitae},
   pdfauthor={Akshat Sachin Valse},
   pdfsubject={Curriculum vitae},
-  pdfkeywords={stochastic analysis, Langevin sampling, large deviations, rare-event simulation, neural PDE solvers, LLM serving, online conformal calibration, agent reliability},
+  pdfkeywords={applied probability, LLM serving, prefix caching, renewal theory, queueing, Langevin sampling, large deviations, rare-event simulation, neural PDE solvers, online conformal calibration, agent reliability},
 }
 
 \pagestyle{fancy}
@@ -54,10 +54,11 @@
     \ \textperiodcentered\ \href{https://akshatvalse.com}{akshatvalse.com}
     \ \textperiodcentered\ \href{https://github.com/AkshatValse}{github.com/AkshatValse}
   }\\[0.6em]
-  {\small\itshape Stochastic analysis for machine learning: Langevin sampling and its
-  discretization,\\ large deviations and rare-event simulation, the stability of
-  learned PDE solvers,\\ and the queueing, calibration and reliability questions
-  raised by systems that run LLMs.}
+  {\small\itshape Applied probability for the systems that run machine learning: a renewal
+  law for prefix-cache\\ collapse in LLM agent serving, tested in registered experiments on
+  real engines; Langevin sampling\\ and its discretization, large deviations and rare-event
+  simulation, the stability of learned PDE\\ solvers, online calibration with early feedback,
+  and the reliability of tool-using agents.}
 \end{center}
 
 % ---------------------------------------------------------------------------
@@ -103,8 +104,43 @@ Processes.
 \course{Software Development Practices}{coms 3090}.
 
 % ---------------------------------------------------------------------------
+\section{Preprints}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=0.4em,topsep=0.3em]
+  \item \textit{Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent
+    Serving.} With A.\ Jannesari.
+    \href{https://arxiv.org/abs/2611.08902}{arXiv:2611.08902}, November 2026. Code, data
+    and registrations:
+    \href{https://github.com/AkshatValse/surviving-llm-stampede}{github.com/AkshatValse/surviving-llm-stampede}.
+\end{enumerate}
+
+% ---------------------------------------------------------------------------
 \section{Research Experience}
 
+\entry{Metastable Failures in Prefix-Cached LLM Agent Serving}{Aug.\ 2026 -- present}
+\subentry{Research project, Advanced Topics in High-Performance Computing
+(COMS 6250), Department of Computer Science, Iowa State University.
+Advisor: Prof.\ Ali Jannesari, SwAPP Lab.}
+\begin{itemize}
+  \item Ran five registered paired tests on Iowa State's Nova HPC cluster through SLURM,
+    on two serving engines (SGLang, vLLM), two GPUs (NVIDIA A100, H200) and two
+    7--8B models: a 200-session burst left the engine at zero hits to the end in all
+    30 burst runs (registered rule met at 9 of 10 rates), every matched no-burst run
+    stayed good, and a client-side session cap prevented the trap in all 30 capped
+    runs. In further registered tests the cap rescued 9 of 9 established traps at
+    the same load without shedding a session.
+  \item Proved that, along FIFO orbits, the cycles of an idealized fluid server on which
+    every turn misses obey a linear renewal recursion whose Perron root, above the
+    all-miss capacity, carries every trapped state to a known self-similar regime;
+    with nothing fitted to trap data, the model matches 57 stuck runs
+    retrospectively. Built the discrete-event simulator, the real-engine load
+    generator and the SLURM job scripts, with each registered test committed to git
+    before its jobs were submitted and every number in the paper traced to its source
+    file and commit or SLURM job. Preprint on arXiv, November 2026; code, data and
+    registrations are public.
+\end{itemize}
+
+\vspace{0.35em}
 \entry{Langevin Sampling and Diffusion Estimation for Molecular Systems}{May 2026 -- present}
 \subentry{Research Collaborator, Department of Mathematics, Iowa State University.
 Advisor: Prof.\ David Herzog. Funded by NSF award DMS-2246491.}
@@ -158,30 +194,6 @@ Advisor: Prof.\ Jue Yan. Funded by the NSF D4 NRT. Joint with Mengyuan Yang.}
 \end{itemize}
 
 \vspace{0.35em}
-\entry{Metastable Failures in Prefix-Cached LLM Agent Serving}{Aug.\ 2026 -- present}
-\subentry{Research project, Advanced Topics in High-Performance Computing
-(COMS 6250), Department of Computer Science, Iowa State University.
-Advisor: Prof.\ Ali Jannesari, SwAPP Lab.}
-\begin{itemize}
-  \item Ran five registered paired tests on Iowa State's Nova HPC cluster through SLURM,
-    on two serving engines (SGLang, vLLM), two GPUs (NVIDIA A100, H200) and two
-    7--8B models: a 200-session burst left the engine at zero hits to the end in all
-    30 burst runs (registered rule met at 9 of 10 rates), every matched no-burst run
-    stayed good, and a client-side session cap prevented the trap in all 30 capped
-    runs. In further registered tests the cap rescued 9 of 9 established traps at
-    the same load without shedding a session.
-  \item Proved that, along FIFO orbits, the cycles of an idealized fluid server on which
-    every turn misses obey a linear renewal recursion whose Perron root, above the
-    all-miss capacity, carries every trapped state to a known self-similar regime;
-    with nothing fitted to trap data, the model matches 57 stuck runs
-    retrospectively. Built the discrete-event simulator, the real-engine load
-    generator and the SLURM job scripts, with each registered test committed to git
-    before its jobs were submitted and every number in the paper traced to its source
-    file and commit or SLURM job. Preprint on arXiv, November 2026; code, data and
-    registrations are public.
-\end{itemize}
-
-\vspace{0.35em}
 \entry{Calibrating Volatility Forecasts with Early, One-Sided Feedback}{Aug.\ 2026 -- present}
 \subentry{Research project, Advanced Topics in Machine Learning (COMS 6730),
 Department of Computer Science, Iowa State University. Advisor: Prof.\ Hongyang Gao.}
@@ -211,17 +223,6 @@ Advisor: Prof.\ Yang Li.}
     planned, pre-registered pilots on real agents, one on restart policies and one on rare
     failures, with the direction still being chosen.
 \end{itemize}
-
-% ---------------------------------------------------------------------------
-\section{Preprints}
-
-\begin{enumerate}[leftmargin=1.4em,itemsep=0.4em,topsep=0.3em]
-  \item \textit{Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent
-    Serving.} With A.\ Jannesari.
-    \href{https://arxiv.org/abs/2611.08902}{arXiv:2611.08902}, November 2026. Code, data
-    and registrations:
-    \href{https://github.com/AkshatValse/surviving-llm-stampede}{github.com/AkshatValse/surviving-llm-stampede}.
-\end{enumerate}
 
 % ---------------------------------------------------------------------------
 \section{Manuscripts in Preparation}

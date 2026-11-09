@@ -2,8 +2,8 @@ name: verify
 
 # Every figure on the site quotes a number, and every one of those numbers is
 # owned by a script in scripts/. This runs all of them and fails on a tolerance
-# breach, so the footer's claim that each figure is checked against a closed
-# form is machine-enforced rather than asserted.
+# breach, so the footer's claim that each figure is checked against an exact
+# reference is machine-enforced rather than asserted.
 #
 # The weekly cron matters more than it looks: these are Monte Carlo checks with
 # fixed seeds, so a scheduled run catches a regression introduced by a Node or
@@ -37,6 +37,7 @@ jobs:
 
       - name: Fast checks
         run: |
+          node scripts/verify-trap.mjs
           node scripts/verify-diffusion.mjs
           node scripts/verify-raretail.mjs
 

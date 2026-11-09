@@ -1,0 +1,182 @@
+---
+/**
+ * Fig. 1, the trap: full-bleed band with two lanes on one time axis.
+ *
+ * Everything the band shows before any script runs is the finished run, drawn
+ * at build time from the same seeded simulation the page replays
+ * (src/sim/trap-facts.js), as an inline SVG that stretches to any aspect
+ * without cropping. The canvases replay the run over it; see
+ * src/scripts/trap.client.js.
+ */
+import { trapFacts } from '../sim/trap-facts.js';
+import { laneGeometry } from '../sim/trap-poster.js';
+
+const f = trapFacts();
+const nBins = f.H / f.bin;
+const fmt = (x: number) => Math.round(x).toLocaleString('en-US');
+const pct = (t: number) => `${((100 * t) / f.H).toFixed(3)}%`;
+
+const lanes = [
+  { title: 'No cap', ...laneGeometry(f.bins[0], f.ymax), final: f.final[0] },
+  { title: `Cap of ${f.cap} from ${fmt(f.engage)} s`, ...laneGeometry(f.bins[1], f.ymax), final: f.final[1] },
+];
+
+const markers = [
+  [{ at: f.tB, label: 'burst', side: 'right' }, { at: f.lastBurst, label: 'last burst session ends', side: 'left' }],
+  [{ at: f.tB, label: '', side: 'right' }, { at: f.engage, label: 'cap on', side: 'right' }, { at: f.release, label: 'cap off', side: 'right' }],
+];
+// 8,000 is left out: the clock readout sits at the right end of the axis.
+const ticks = [0, 2000, 4000, 6000];
+
+const label =
+  `Live simulation, Figure 1. Two copies of a prefix-cached LLM serving engine, the paper's simulator calibrated to ` +
+  `SGLang on an A100 GPU, receive the same agent traffic: a Poisson stream of sessions at ${f.mult} times the measured ` +
+  `all-miss rate, plus a burst of ${f.burstN} sessions at ${fmt(f.tB)} seconds. Each lane plots the sessions in the system over ` +
+  `${fmt(f.H)} simulated seconds, colored by the fraction of follow-up turns served from the prefix cache. In both ` +
+  `lanes the burst drives that fraction to zero. The top engine, with no cap, stays at zero hits to the end of the run, ` +
+  `with about ${fmt(f.trapped.sessions)} sessions backed up over the last 3,000 seconds, and is still trapped after the ` +
+  `last burst session has finished at ${fmt(f.lastBurst)} seconds; this run was chosen from ${f.selection.candidates} ` +
+  `seeds for having every burst session finish before the end, the cap lifted inside the paper's engine range, and a ` +
+  `completion rate close to model F's. The bottom engine gets a client-side cap of ` +
+  `${f.cap} sessions at ${fmt(f.engage)} seconds: hits return by ${fmt(f.hitsBack)} seconds, drop out again while the ` +
+  `gate drains the backlog, and hold from ${fmt(f.hitsHold)} seconds; the cap is lifted at ${fmt(f.release)} seconds, ` +
+  `and the engine stays good.`;
+---
+
+<div class="trap-hero" data-sim="trap" data-ymax={f.ymax} role="img" aria-label={label}>
+  <div class="trap-lanes" aria-hidden="true">
+    {lanes.map((l, j) => (
+      <div class="trap-lane">
+      <p class="trap-tag">
+        <span class="trap-title">{l.title}</span>
+        <span>hits <b data-hit>{l.final.hit === null ? '–' : l.final.hit.toFixed(2)}</b></span>
+        <span><b data-n>{fmt(l.final.n)}</b> sessions</span>
+      </p>
+      <div class="trap-plot" data-plot>
+        <svg class="trap-poster" viewBox={`0 0 ${nBins} 100`} preserveAspectRatio="none" focusable="false">
+          <defs>
+            {(['light', 'dark'] as const).map((scheme) => (
+              <linearGradient id={`trap-g${j}-${scheme}`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={nBins} y2="0">
+                {l[scheme].map((s) => s.c === null
+                  ? <stop offset={s.o.toFixed(5)} style="stop-color: var(--sim-contour)" />
+                  : <stop offset={s.o.toFixed(5)} stop-color={s.c} />)}
+              </linearGradient>
+            ))}
+          </defs>
+          <path class={`trap-area trap-area-${j}`} d={l.area} />
+          <path class="trap-line" d={l.line} vector-effect="non-scaling-stroke" />
+        </svg>
+        <canvas hidden></canvas>
+        {markers[j].map((m) => (
+          <div class={`trap-mark trap-mark-${m.side}`} data-at={m.at} style={`left: ${pct(m.at)}`}>
+            {m.label && <span>{m.label}</span>}
+          </div>
+        ))}
+      </div>
+      </div>
+    ))}
+    <div class="trap-axis">
+      {ticks.map((t) => <span class="trap-tick" style={`left: ${pct(t)}`}>{fmt(t)}</span>)}
+      <span class="trap-now">t = <b data-t>{fmt(f.H)}</b> s</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  import '../scripts/trap.client.js';
+</script>
+
+<style>
+  .trap-hero {
+    width: 100%;
+    margin-block: clamp(1rem, 2.5vw, 1.75rem) 0;
+    border-block: 1px solid var(--rule);
+    background: var(--sim-bg);
+    height: clamp(360px, 64vh, 680px);
+    padding: 0.75rem clamp(0.75rem, 2vw, 1.5rem) 0.35rem;
+    font-family: var(--font-mono), monospace;
+    font-size: var(--step--1);
+    color: var(--ink-2);
+  }
+  .trap-lanes {
+    height: 100%;
+    display: grid;
+    grid-template-rows: 1fr 1fr auto;
+    gap: 0.6rem;
+  }
+  .trap-lane { display: flex; flex-direction: column; min-height: 0; }
+  .trap-plot { position: relative; flex: 1 1 auto; min-height: 0; border-bottom: 1px solid var(--rule); }
+  .trap-plot > svg, .trap-plot > canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  }
+  .trap-plot > canvas[hidden] { display: none; }
+  .trap-poster { transition: opacity 0.6s; }
+  [data-live] .trap-poster { opacity: 0.22; }
+
+  .trap-area-0 { fill: url(#trap-g0-light); }
+  .trap-area-1 { fill: url(#trap-g1-light); }
+  @media (prefers-color-scheme: dark) {
+    .trap-area-0 { fill: url(#trap-g0-dark); }
+    .trap-area-1 { fill: url(#trap-g1-dark); }
+  }
+  .trap-line { fill: none; stroke: var(--ink-2); stroke-width: 1; }
+
+  .trap-mark {
+    position: absolute; top: 0; bottom: 0; width: 0;
+    border-left: 1px dashed var(--ink-2);
+    transition: opacity 0.3s;
+  }
+  [data-live] .trap-mark:not([data-past]) { opacity: 0.25; }
+  .trap-mark span {
+    position: absolute; bottom: 0.3rem;
+    white-space: nowrap;
+    background: var(--ground);
+    color: var(--ink);
+    padding: 0.05rem 0.35rem;
+    line-height: 1.4;
+  }
+  .trap-mark-right span { left: 0.3rem; }
+  .trap-mark-left span { right: 0.3rem; }
+
+  .trap-tag {
+    align-self: flex-start;
+    max-width: 100%;
+    margin: 0 0 0.3rem;
+    display: flex; flex-wrap: wrap; gap: 0 0.9rem;
+    background: var(--ground);
+    border: 1px solid var(--rule);
+    padding: 0.2rem 0.5rem;
+    line-height: 1.45;
+    font-variant-numeric: tabular-nums;
+  }
+  .trap-tag b { color: var(--ink); font-weight: 500; }
+  .trap-title { color: var(--ink); }
+
+  .trap-axis { position: relative; height: 1.5rem; line-height: 1.5rem; }
+  .trap-tick { position: absolute; top: 0; transform: translateX(-50%); }
+  .trap-tick:first-child { transform: none; }
+  .trap-now {
+    position: absolute; right: 0; top: 0;
+    font-variant-numeric: tabular-nums;
+    background: var(--sim-bg); padding-left: 0.5rem;
+  }
+  .trap-now b { color: var(--ink); font-weight: 500; }
+
+  /* Readouts keep their width as the numbers change, so a pill never rewraps
+     mid-replay. */
+  .trap-tag b[data-hit] { display: inline-block; min-width: 4ch; }
+  .trap-tag b[data-n] { display: inline-block; min-width: 3ch; text-align: right; }
+
+  /* Phones: the clock needs the room of the 6,000 tick; the long marker label
+     wraps so it clears 'burst'; and every pill takes two lines, title above
+     readouts, so both lanes keep the same height. */
+  @media (max-width: 26rem) {
+    .trap-tick:nth-child(4) { display: none; }
+    .trap-title { flex-basis: 100%; }
+  }
+  @media (max-width: 22.5rem) {
+    .trap-mark-left span { white-space: normal; width: calc(12ch + 0.7rem); text-align: right; }
+  }
+
+  @media print { .trap-hero { display: none; } }
+</style>

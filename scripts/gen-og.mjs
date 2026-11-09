@@ -13,7 +13,7 @@
  *
  * The output is committed rather than generated during `npm run build`, so a
  * Linux build box never has to reproduce it. Re-run this by hand after
- * changing the name, the tagline, or the hero.
+ * changing the name, the tagline, or Fig. 1 (src/sim/trap.js).
  *
  *   node scripts/gen-og.mjs      (requires a prior `astro build`)
  */
@@ -23,6 +23,8 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import puppeteer from 'puppeteer-core';
 import sharp from 'sharp';
+import { trapFacts } from '../src/sim/trap-facts.js';
+import { laneSVG } from '../src/sim/trap-poster.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist');
@@ -71,8 +73,12 @@ const css = readFileSync(path.join(ROOT, 'src', 'styles', 'global.css'), 'utf8')
 const light = css.slice(0, css.indexOf('@media'));
 const token = (n) => light.match(new RegExp(`--${n}:\\s*([^;]+);`))[1].trim();
 
-const hero = readFileSync(path.join(ROOT, 'public', 'poster', 'hero-light-1440.webp'))
-  .toString('base64');
+/** The field is Fig. 1, the trap, drawn from the same run as the page. */
+const f = trapFacts();
+const lanes = [0, 1].map((j) => laneSVG(f.bins[j], f.ymax, {
+  contour: token('sim-contour'), line: token('ink-2'), id: `og${j}`,
+}));
+const capLabel = `Cap of ${f.cap} from ${f.engage.toLocaleString('en-US')} s`;
 
 const W = 1200, H = 630;
 
@@ -81,19 +87,26 @@ const page = `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:M;src:url(data:font/woff2;base64,${mono.b64}) format('woff2')}
 *{margin:0;padding:0;box-sizing:border-box}
 body{width:${W}px;height:${H}px;background:${token('ground')};overflow:hidden}
-.field{height:372px;width:100%;background-image:url(data:image/webp;base64,${hero});
-  background-size:cover;background-position:center;border-bottom:1px solid ${token('rule')}}
+.field{height:372px;width:100%;background:${token('sim-bg')};border-bottom:1px solid ${token('rule')};
+  padding:14px 18px 10px;display:grid;grid-template-rows:1fr 1fr;gap:10px}
+.lane{position:relative;border-bottom:1px solid ${token('rule')}}
+.lane svg{position:absolute;inset:0}
+.tag{position:absolute;top:6px;left:6px;font-family:M;font-size:17px;line-height:1.4;margin:0;
+  padding:2px 9px;background:${token('ground')};border:1px solid ${token('rule')};color:${token('ink')}}
 .band{height:258px;padding:38px 56px 0;display:flex;flex-direction:column;justify-content:flex-start}
 h1{font-family:D;font-weight:600;font-variation-settings:'wdth' 120;font-size:70px;
   line-height:1;letter-spacing:-.02em;color:${token('ink')}}
 p{font-family:M;font-size:22px;line-height:1.5;color:${token('ink-2')};margin-top:20px;letter-spacing:.01em}
 b{color:${token('ink')};font-weight:500}
 </style></head><body>
-<div class="field"></div>
+<div class="field">
+  <div class="lane">${lanes[0]}<p class="tag">No cap</p></div>
+  <div class="lane">${lanes[1]}<p class="tag">${capLabel}</p></div>
+</div>
 <div class="band">
   <h1>Akshat Sachin Valse</h1>
-  <p>stochastic foundations of machine learning &middot; Iowa State University</p>
-  <p><b>akshatvalse.com</b></p>
+  <p>applied probability for the systems that run machine learning</p>
+  <p><b>akshatvalse.com</b> &middot; Iowa State University</p>
 </div>
 </body></html>`;
 

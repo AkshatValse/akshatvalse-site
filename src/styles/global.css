@@ -351,6 +351,14 @@ em, i, cite, dfn, var, blockquote em {
 @media (prefers-color-scheme: dark) {
   .legend-ramp { background: linear-gradient(to right, var(--seq-hi), var(--seq-mid), var(--seq-lo)); }
 }
+.legend-note {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--step--1);
+  color: var(--ink-2);
+  margin: 0.3rem 0 0;
+}
+/* A qualification set apart from the argument it qualifies. */
+.note { color: var(--ink-2); font-size: var(--step--1); line-height: 1.6; }
 
 /* The hero breaks the measure: full viewport width, flush to both edges. */
 .hero {

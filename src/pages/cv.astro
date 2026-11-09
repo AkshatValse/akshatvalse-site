@@ -20,9 +20,11 @@ const pdf = `/${PDF_FILE}`;
 const hasPdf = existsSync(fileURLToPath(new URL(`../../public/${PDF_FILE}`, import.meta.url)));
 
 const interests =
-  'Stochastic analysis for machine learning: Langevin sampling and its discretization, ' +
-  'large deviations and rare-event simulation, the stability of learned PDE solvers, ' +
-  'and the queueing, calibration and reliability questions raised by systems that run LLMs.';
+  'Applied probability for the systems that run machine learning: a renewal law for ' +
+  'prefix-cache collapse in LLM agent serving, tested in registered experiments on real ' +
+  'engines; Langevin sampling and its discretization, large deviations and rare-event ' +
+  'simulation, the stability of learned PDE solvers, online calibration with early ' +
+  'feedback, and the reliability of tool-using agents.';
 
 type Course = [name: string, code?: string];
 
@@ -102,6 +104,15 @@ const preprints = [
 
 const research = [
   {
+    title: 'Metastable Failures in Prefix-Cached LLM Agent Serving',
+    dates: 'Aug. 2026 – present',
+    role: 'Research project, Advanced Topics in High-Performance Computing (COMS 6250), Department of Computer Science, Iowa State University. Advisor: Prof. Ali Jannesari, SwAPP Lab.',
+    bullets: [
+      "Ran five registered paired tests on Iowa State's Nova HPC cluster through SLURM, on two serving engines (SGLang, vLLM), two GPUs (NVIDIA A100, H200) and two 7–8B models: a 200-session burst left the engine at zero hits to the end in all 30 burst runs (registered rule met at 9 of 10 rates), every matched no-burst run stayed good, and a client-side session cap prevented the trap in all 30 capped runs. In further registered tests the cap rescued 9 of 9 established traps at the same load without shedding a session.",
+      "Proved that, along FIFO orbits, the cycles of an idealized fluid server on which every turn misses obey a linear renewal recursion whose Perron root, above the all-miss capacity, carries every trapped state to a known self-similar regime; with nothing fitted to trap data, the model matches 57 stuck runs retrospectively. Built the discrete-event simulator, the real-engine load generator and the SLURM job scripts, with each registered test committed to git before its jobs were submitted and every number in the paper traced to its source file and commit or SLURM job. Preprint on arXiv, November 2026; code, data and registrations are public.",
+    ],
+  },
+  {
     title: 'Langevin Sampling and Diffusion Estimation for Molecular Systems',
     dates: 'May 2026 – present',
     role: 'Research Collaborator, Department of Mathematics, Iowa State University. Advisor: Prof. David Herzog. Funded by NSF award DMS-2246491.',
@@ -128,15 +139,6 @@ const research = [
     bullets: [
       'Adapting von Neumann stability analysis to neural-network PDE solvers: deriving the linearized amplification factor of the learned time-stepping scheme and characterizing how perturbations propagate through it, toward stability conditions on the trained weights analogous to those of classical finite-difference methods.',
       "Reimplemented the group's solver in Python to enable systematic stability experiments across schemes and step sizes.",
-    ],
-  },
-  {
-    title: 'Metastable Failures in Prefix-Cached LLM Agent Serving',
-    dates: 'Aug. 2026 – present',
-    role: 'Research project, Advanced Topics in High-Performance Computing (COMS 6250), Department of Computer Science, Iowa State University. Advisor: Prof. Ali Jannesari, SwAPP Lab.',
-    bullets: [
-      "Ran five registered paired tests on Iowa State's Nova HPC cluster through SLURM, on two serving engines (SGLang, vLLM), two GPUs (NVIDIA A100, H200) and two 7–8B models: a 200-session burst left the engine at zero hits to the end in all 30 burst runs (registered rule met at 9 of 10 rates), every matched no-burst run stayed good, and a client-side session cap prevented the trap in all 30 capped runs. In further registered tests the cap rescued 9 of 9 established traps at the same load without shedding a session.",
-      "Proved that, along FIFO orbits, the cycles of an idealized fluid server on which every turn misses obey a linear renewal recursion whose Perron root, above the all-miss capacity, carries every trapped state to a known self-similar regime; with nothing fitted to trap data, the model matches 57 stuck runs retrospectively. Built the discrete-event simulator, the real-engine load generator and the SLURM job scripts, with each registered test committed to git before its jobs were submitted and every number in the paper traced to its source file and commit or SLURM job. Preprint on arXiv, November 2026; code, data and registrations are public.",
     ],
   },
   {
@@ -188,7 +190,7 @@ const skills = [
 
 <Base
   title="CV · Akshat Sachin Valse"
-  description="Curriculum vitae. Undergraduate researcher at Iowa State University: Langevin sampling, large deviations for mean-field systems, the stability of learned PDE solvers, and metastability, calibration and reliability in systems that run LLMs."
+  description="Curriculum vitae. Undergraduate researcher at Iowa State University in applied probability for the systems that run machine learning: Inside the Trap (arXiv:2611.08902), a renewal law for prefix-cache collapse in LLM agent serving; Langevin sampling, large deviations, the stability of learned PDE solvers, online calibration with early feedback, and the reliability of tool-using agents."
 >
   <section class="section shell">
     <div class="row">
@@ -253,24 +255,6 @@ const skills = [
 
   <section class="section shell">
     <div class="row">
-      <div class="rail"><span class="rail-label">Research</span></div>
-      <div>
-        <h2 class="section-title">Research experience</h2>
-        {research.map((r) => (
-          <article class="entry">
-            <h3 class="entry-title">{r.title}</h3>
-            <p class="entry-meta">{r.dates} · {r.role}</p>
-            <ul>
-              {r.bullets.map((b) => <li>{b}</li>)}
-            </ul>
-          </article>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <section class="section shell">
-    <div class="row">
       <div class="rail"><span class="rail-label">Preprints</span></div>
       <div>
         <h2 class="section-title">Preprints</h2>
@@ -284,6 +268,24 @@ const skills = [
             </li>
           ))}
         </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail"><span class="rail-label">Research</span></div>
+      <div>
+        <h2 class="section-title">Research experience</h2>
+        {research.map((r) => (
+          <article class="entry">
+            <h3 class="entry-title">{r.title}</h3>
+            <p class="entry-meta">{r.dates} · {r.role}</p>
+            <ul>
+              {r.bullets.map((b) => <li>{b}</li>)}
+            </ul>
+          </article>
+        ))}
       </div>
     </div>
   </section>

@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import HeroSim from '../components/HeroSim.astro';
 import DiffusivityFigure from '../components/DiffusivityFigure.astro';
 import RareEventFigure from '../components/RareEventFigure.astro';
 import Tex from '../components/Tex.astro';
@@ -11,7 +12,7 @@ const tex = String.raw;
 
 <Base
   title="Research · Akshat Valse"
-  description="Langevin sampling and transport coefficients; large deviations for mean-field interacting systems; stability of neural approximations to evolution equations; metastable failures in LLM serving; online calibration with early feedback; reliability of tool-using agents."
+  description="Inside the Trap: a renewal law for prefix-cache collapse in LLM agent serving, with registered tests on real engines; and the toolkit around it: Langevin sampling and transport coefficients, large deviations for mean-field interacting systems, stability of neural approximations to evolution equations, online calibration with early feedback, reliability of tool-using agents."
 >
   <section class="section shell">
     <div class="row">
@@ -19,18 +20,91 @@ const tex = String.raw;
       <div>
         <h1 class="page-title">Research</h1>
         <p class="lede">
-          Six projects. The first three are ordered by how central they are to one
-          question: what can be proved about the stochastic objects machine learning
-          already runs on. The answer is usually less than one would hope, and more than
-          gets checked. The other three, in computer science, carry the same habits,
-          a closed form where one exists and a registered prediction where one does not,
-          into the systems that run large language models.
+          Six projects. The first is the one this site is built around:
+          <a href="/research/inside-the-trap"><em>Inside the Trap</em></a>, a renewal law
+          for prefix-cache collapse in LLM agent serving, tested in registered experiments
+          on real engines, whose simulator runs live as Fig. 1 on the
+          <a href="/">home page</a>. The other five are where its methods come from and
+          where they go next: Langevin sampling and what its discretization costs, large
+          deviations and rare events, the stability of learned PDE solvers, calibration
+          when feedback arrives early but one-sided, and the reliability of tool-using
+          agents. All six keep one habit: a closed form where one exists, a registered
+          prediction where one does not, and a check that runs either way.
         </p>
       </div>
     </div>
   </section>
 
   <!-- ------------------------------------------------------------------ -->
+
+  <section class="section shell">
+    <div class="row">
+      <div class="rail">
+        <dl>
+          <dt>Advisor</dt><dd>Ali Jannesari</dd>
+          <dt>Department</dt><dd>Computer Science</dd>
+          <dt>Status</dt><dd>Preprint</dd>
+        </dl>
+        <hr class="rail-rule" />
+        <dl>
+          <dt>Bears on</dt>
+          <dd>LLM serving · metastable failures · admission control</dd>
+        </dl>
+      </div>
+      <div>
+        <article class="entry">
+          <h2 class="entry-title">
+            <a href="/research/inside-the-trap">Inside the Trap: a renewal law for prefix-cache collapse in LLM agent serving</a>
+          </h2>
+          <p class="entry-meta">Ali Jannesari · SwAPP Lab, Computer Science, Iowa State University · preprint, November 2026</p>
+          <p>
+            An agent works in a loop: model call, tool call, model call, re-sending the
+            whole growing conversation each turn. Serving engines such as SGLang and
+            vLLM keep that shared prefix in a GPU KV cache so a follow-up turn costs a
+            fraction of the first. The cached KV belongs to sessions that sit idle in
+            tool calls, and admitting waiting work evicts it. A burst of new sessions
+            can therefore tip the engine into a trap in which every turn misses and the
+            backlog does not drain, at a load it served before. In registered paired
+            tests on Iowa State's Nova cluster, on two engines, two GPUs and two models,
+            a 200-session burst left the engine at zero hits to the end in all 30 runs
+            (the registered rule was met at 9 of 10 rates), every matched no-burst run
+            stayed good, and a client-side session cap prevented the trap in all 30
+            capped runs.
+          </p>
+          <p>
+            The paper asks what the trapped state is. It idealizes that state as a fluid
+            FIFO server on which every turn misses and proves that along FIFO orbits its
+            cycles obey a linear renewal recursion. As is classical, the trap drains if
+            and only if arrivals are below the all-miss capacity; above it, a Perron
+            root carries every trapped state to a known self-similar regime in which the
+            gap between turns grows linearly and the turns served are young and short.
+            For the workload studied, sessions then complete faster than the all-miss
+            capacity, so in the model a trap's measured throughput overstates the
+            recovery threshold. Retrospectively, with nothing fitted to trap data, the
+            theory matches 57 stuck runs; blind in outcome, runs trapped by a tool
+            slowdown met 4 of 5 pre-set scores, cut traps persisted, and with a 20-step
+            budget, trapped runs completed below the all-miss capacity, as predicted. Of
+            two exits, refusing arrivals sheds sessions, while a session cap restores
+            reuse: in registered tests it rescued 9 of 9 established traps at the same
+            load without shedding. The paper does not prove that the engine converges to
+            the model.
+          </p>
+          <p class="entry-meta">
+            Preprint, with Ali Jannesari:
+            <a href="https://arxiv.org/abs/2611.08902"><em>Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving</em></a>
+            (arXiv:2611.08902). Code, data and registrations:
+            <a href="https://github.com/AkshatValse/surviving-llm-stampede">surviving-llm-stampede</a>.
+            Summary, abstract and citation: <a href="/research/inside-the-trap">paper page</a>.
+            The paper's simulator runs live as Fig. 1 on the <a href="/">home page</a>.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <HeroSim priority={false} />
+
 
   <section class="section shell">
     <div class="row">
@@ -78,6 +152,22 @@ const tex = String.raw;
             for noise schedules. Bias is polynomial in <Tex src={tex`h`} /> and can be
             halved by halving the step; mixing is exponential in the barrier, and no
             step size buys back an exponential.
+          </p>
+          <p>
+            Fig. 3, the band above this section, runs the same dynamics in two dimensions
+            in your browser from a fixed seed: it integrates
+            <Tex src={tex`dX_t = -\nabla V(X_t)\,dt + \sqrt{2\beta^{-1}}\,dW_t`} block />
+            for <Tex src={tex`V(x, y) = \cos x + \cos y`} /> on the torus at
+            <Tex src={tex`\beta = 2`} />, by Euler–Maruyama with
+            <Tex src={tex`h = 0.004`} />, colored by the potential. Annealed Langevin
+            sampling runs this same dynamics at each noise level, and it is the
+            continuous-time limit of SGLD when <Tex src={tex`V`} /> is the loss. Particles
+            collect where <Tex src={tex`e^{-\beta V}`} /> is large and hop between wells at
+            the Kramers rate, and across 48 bins the empirical measure sits within a total
+            variation of <Tex src={tex`1.0\times 10^{-3}`} /> of the Gibbs law, with a
+            discretization bias of <Tex src={tex`9\times 10^{-4}`} /> on
+            <Tex src={tex`\mathbb{E}[\cos X]`} /> against the closed form
+            <Tex src={tex`-I_1(\beta)/I_0(\beta)`} />.
           </p>
         </article>
 
@@ -222,70 +312,6 @@ const tex = String.raw;
           </p>
           <p class="entry-meta">
             Joint with Mengyuan Yang. Approach and results held back pending submission.
-          </p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- ------------------------------------------------------------------ -->
-
-  <section class="section shell">
-    <div class="row">
-      <div class="rail">
-        <dl>
-          <dt>Advisor</dt><dd>Ali Jannesari</dd>
-          <dt>Department</dt><dd>Computer Science</dd>
-          <dt>Status</dt><dd>Preprint</dd>
-        </dl>
-        <hr class="rail-rule" />
-        <dl>
-          <dt>Bears on</dt>
-          <dd>LLM serving · metastable failures · admission control</dd>
-        </dl>
-      </div>
-      <div>
-        <article class="entry">
-          <h2 class="entry-title">Metastable failures in prefix-cached LLM agent serving</h2>
-          <p class="entry-meta">Ali Jannesari · SwAPP Lab, Computer Science, Iowa State University · preprint, November 2026</p>
-          <p>
-            An agent works in a loop: model call, tool call, model call, re-sending the
-            whole growing conversation each turn. Serving engines such as SGLang and
-            vLLM keep that shared prefix in a GPU KV cache so a follow-up turn costs a
-            fraction of the first. The cached KV belongs to sessions that sit idle in
-            tool calls, and admitting waiting work evicts it. A burst of new sessions
-            can therefore tip the engine into a trap in which every turn misses and the
-            backlog does not drain, at a load it served before. In registered paired
-            tests on Iowa State's Nova cluster, on two engines, two GPUs and two models,
-            a 200-session burst left the engine at zero hits to the end in all 30 runs
-            (the registered rule was met at 9 of 10 rates), every matched no-burst run
-            stayed good, and a client-side session cap prevented the trap in all 30
-            capped runs.
-          </p>
-          <p>
-            The paper asks what the trapped state is. It idealizes that state as a fluid
-            FIFO server on which every turn misses and proves that along FIFO orbits its
-            cycles obey a linear renewal recursion. As is classical, the trap drains if
-            and only if arrivals are below the all-miss capacity; above it, a Perron
-            root carries every trapped state to a known self-similar regime in which the
-            gap between turns grows linearly and the turns served are young and short.
-            For the workload studied, sessions then complete faster than the all-miss
-            capacity, so in the model a trap's measured throughput overstates the
-            recovery threshold. Retrospectively, with nothing fitted to trap data, the
-            theory matches 57 stuck runs; blind in outcome, runs trapped by a tool
-            slowdown met 4 of 5 pre-set scores, cut traps persisted, and with a 20-step
-            budget, trapped runs completed below the all-miss capacity, as predicted. Of
-            two exits, refusing arrivals sheds sessions, while a session cap restores
-            reuse: in registered tests it rescued 9 of 9 established traps at the same
-            load without shedding. The paper does not prove that the engine converges to
-            the model.
-          </p>
-          <p class="entry-meta">
-            Preprint, with Ali Jannesari:
-            <a href="https://arxiv.org/abs/2611.08902"><em>Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving</em></a>
-            (arXiv:2611.08902). Code, data and registrations:
-            <a href="https://github.com/AkshatValse/surviving-llm-stampede">surviving-llm-stampede</a>.
-            Summary, abstract and citation: <a href="/research/inside-the-trap">paper page</a>.
           </p>
         </article>
       </div>
