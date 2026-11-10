@@ -35,6 +35,9 @@ jobs:
       # verify-raretail falls back to an internal consistency check and says so.
       - uses: astral-sh/setup-uv@v5
 
+      - name: Visit logging tests
+        run: npm run test:visits
+
       - name: Fast checks
         run: |
           node scripts/verify-trap.mjs
