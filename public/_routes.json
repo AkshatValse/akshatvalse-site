@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/_astro/*",
+    "/clarity/*",
+    "/poster/*",
+    "/img/*",
+    "/og/*",
+    "/favicon.svg",
+    "/og.png",
+    "/robots.txt",
+    "/sitemap-index.xml",
+    "/sitemap-0.xml",
+    "/akshat-valse-cv-2026-11.pdf",
+    "/4dd6641ccbc9494eebd2f636139bc2a7.txt"
+  ]
+}

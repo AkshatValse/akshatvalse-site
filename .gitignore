@@ -28,3 +28,6 @@ cv/*.synctex.gz
 claude-code-site-guide.md
 AUDIT.md
 CONSISTENCY.md
+
+# Local state from wrangler (pages dev, d1)
+.wrangler/

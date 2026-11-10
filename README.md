@@ -114,6 +114,40 @@ Graph URLs, and the structured data. The domain is also written out by hand in
 afterwards) and in the card text of `scripts/gen-og.mjs` (re-run it), and
 `scripts/submit-indexnow.mjs` defaults `SITE_HOST` to it.
 
+## Visitor analytics
+
+Two layers, neither using cookies on readers:
+
+- **Cloudflare Web Analytics** (enabled in the Pages project; Cloudflare injects
+  its beacon at deploy time, which the CSP in `public/_headers` allows): page
+  views, referrers, countries, devices. Dashboard: Workers & Pages →
+  akshatvalse-site → Metrics.
+- **Network log** (`functions/_middleware.js`, `analytics/visit.js`): one row per
+  page view in the D1 database `akshatvalse-visits`, holding the hour, page,
+  country, the network's organisation name and number (a university, company
+  or ISP), a referrer label (`google`, `linkedin`, `stanford.edu`, `internal`,
+  `other`, ...), phone or desktop, and whether the client looked automated or
+  was a prefetch. No IP addresses, user agents, full referrers or query strings.
+  Rows are deleted after 400 days. `analytics/visit.js` documents every field.
+
+`npm run visitors` (or `npm run visitors -- 7` for a week) prints who has been
+reading what. It needs `npx wrangler@4.159.0 login` once. It prints to the
+terminal only; never commit its output, since this repo is public. Open
+`https://akshatvalse.com/?nolog=1` once in each browser you use so your own
+visits are not counted (`?nolog=0` undoes it).
+
+Setup, already done once: the table comes from `migrations/0001_visits.sql`
+(`npx wrangler@4.159.0 d1 execute akshatvalse-visits --remote --file
+migrations/0001_visits.sql`); the Pages project binds the database as `VISITS`
+for the **Production** environment only (Settings → Bindings), so preview
+deployments never log; and Settings → Runtime → **Fail open** is set, so pages
+keep loading if the free daily Functions quota ever runs out. The function only
+logs requests for akshatvalse.com and swallows every failure (they appear in the
+Functions log), so a missing binding or a D1 outage never affects a page.
+`public/_routes.json` keeps the static folders away from the function.
+`npm run test:visits` (also in CI) covers the logging rules and the middleware's
+failure paths.
+
 ## Search and social
 
 `public/og.png` is the link-preview card. It is rendered by `node scripts/gen-og.mjs`
