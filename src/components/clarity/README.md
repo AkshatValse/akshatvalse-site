@@ -44,7 +44,7 @@ section 1; use those classes and add no new card, badge or shadow designs.
 - **Project grid** (Research): `.project-grid`, three columns on desktop, two
   on tablets, one on phones. Each cell is
   `<div>` > `a.project-cover[style=<p.frame>] > img` (the 3:4 artwork at
-  `/research/<slug>/cover-art.webp`, inset at 80% width in a tall 4:5 frame)
+  `/research/<slug>/cover-art.svg`, inset at 80% width in a tall 4:5 frame)
   `+ .project-info > p.badge` (the uppercase stage label) `+ h2 > a` (bold
   short title) `+ p` (the one-line subtitle). `ProjectTile.astro` renders it.
 - **Publications**: `.paper-list > hr`, then one `.paper-row` per paper:
@@ -80,17 +80,20 @@ once in `src/data/themes.ts`; each project in `src/data/projects.ts` names its
 | online-calibration | vsl | dark |
 | agent-reliability | kaleido | dark |
 
-Each project has one 3:4 artwork (`art`, a 1200x1600 WebP, with `artAlt`),
+Each project has one 3:4 artwork (`art`, a 1200x1600 SVG, with `artAlt`),
 used, as on shikun.io, both inset in its grid frame and as the banner of its
-project page. The covers are illustrations for a general audience: one soft,
-clay-like 3D subject on a studio backdrop in the project's theme colours (a
-marble in a valley, beads in a cupped tray, a checkout queue, a wave across
-tiles, a stack rising through a disc, stopwatches). Each is rendered by a
-seeded, dependency-light ray tracer in `scripts/cover-art/<slug>.mjs`
-(`npm run cover-art` regenerates all six byte for byte, about a minute on a
-laptop). Unpublished projects' artwork is a metaphor for the public question
-only, never a result. Never use paper screenshots or equations as banners.
-When the art changes, rewrite its `artAlt`.
+project page. The covers follow shikun.io's own covers: abstract emblems, each
+one bold idea in a few large shapes or one crisp all-over pattern, smooth
+gradients or clean flat fills, full-bleed, no text, no thin busy linework, and
+each with its own technique (a log-spiral whirl, contour terraces, an
+isometric cube field, a row of gradient columns, a staircase over a line,
+concentric arcs). Colours come only from the project's theme (Kaleido pastels;
+MTAN navy, indigo, purple and coral to apricot; VSL grays and slate with one
+blue accent); no green or teal. Each is written by a deterministic script in
+`scripts/cover-art/<slug>.mjs` (`npm run cover-art` regenerates all six byte
+for byte in about a second). Unpublished projects' artwork is a metaphor for
+the public question only, never a result. Never use paper screenshots or
+equations as banners. When the art changes, rewrite its `artAlt`.
 
 Describe a project the way shikun.io's project pages do: title "Name:
 Descriptive Title"; author line "by A, B, & C" (advisors who are not
