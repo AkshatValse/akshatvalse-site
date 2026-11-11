@@ -21,13 +21,15 @@ import Tex from '../../components/Tex.astro';
 import TrapFigure from '../../components/TrapFigure.astro';
 import TrapPerronCalculator from '../../components/widgets/TrapPerronCalculator.astro';
 import { trapFacts } from '../../sim/trap-facts.js';
-import { costs, trapLimits } from '../../sim/modelf.js';
+import { COST, costs, trapLimits } from '../../sim/modelf.js';
 import { LAMBDA_REF } from '../../sim/trap.js';
 
 /** Numbers about the live figure (Figure 11) come from the run it replays. */
 const f = trapFacts();
 const fmt = (x: number) => Math.round(x).toLocaleString('en-US');
 const allStuck = f.further.stuck === f.further.seeds;
+/** The decode share delta the site's model F uses, in milliseconds (Figure 5 caption). */
+const deltaMs = (COST.delta * 1000).toFixed(1);
 
 const TITLE = 'Inside the Trap: A Renewal Law for Prefix-Cache Collapse in LLM Agent Serving';
 const ARXIV = 'https://arxiv.org/abs/2611.08902';
@@ -645,8 +647,8 @@ const TWIN_TRAP = twin('trap');
       <b>Figure 5.</b> Model F, computed in your browser. For the chosen workload and load the calculator
       solves the Perron equation by bisection and evaluates Theorem 1(a) and Theorem 2. Left, the turns a
       trapped server serves (bars) against the stationary mix (line); right, <Tex src={String.raw`D/\lambda_{\mathrm{miss}}`} />
-      across loads. The paper does not print <Tex src={String.raw`\delta`} />: for the standard workload the
-      site's value gives <Tex src={String.raw`\lambda_{\mathrm{miss}}=1.004\,\lambda_{\mathrm{ref}}`} />, and
+      across loads. The paper does not print <Tex src={String.raw`\delta`} />. The site uses
+      <Tex src={String.raw`\delta`} /> = {deltaMs} ms, and for the standard workload that value gives <Tex src={String.raw`\lambda_{\mathrm{miss}}=1.004\,\lambda_{\mathrm{ref}}`} />, and
       for MIRROR it is pinned to the stated <Tex src={String.raw`1.046\,\lambda_{\mathrm{ref}}`} />. Beside
       each reading is the paper's published model-F value for the 300k cell, or MIRROR's frozen prediction,
       where one exists; agreement means within one unit of the last printed digit. These are model F's
