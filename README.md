@@ -213,8 +213,8 @@ from the same data as the site (`src/data/projects.ts`, `themes.ts`, the
 cover-art SVGs, the portrait, and each project page's `authors`, `affiliation`
 and `info` props), then committed, so a Linux build box never has to reproduce
 them. The site sets its titles in regular weight, so the cards never use bold.
-Re-run it after changing a project's title, subtitle, stage,
-theme or artwork, the tagline or the portrait, and commit the PNGs. Social sites
+Re-run it after changing a project's title, authors, affiliation,
+stage, theme or artwork, the tagline or the portrait, and commit the PNGs. Social sites
 cache cards by URL for days: to refresh a card for already-shared links, rename
 the file (and the path in the layout), or re-scrape it in LinkedIn's Post
 Inspector. X draws the page title over the bottom left of a large-image card, so
