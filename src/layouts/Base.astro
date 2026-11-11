@@ -8,7 +8,7 @@
 import 'katex/dist/katex.min.css';
 import 'img-comparison-slider/dist/styles.css';
 import '../styles/global.css';
-import { PROFILE, NAV } from '../data/site';
+import { PROFILE, NAV, OG_REV } from '../data/site';
 import Icon from '../components/clarity/Icon.astro';
 
 interface Props {
@@ -52,7 +52,7 @@ const section = path === '/' ? '/' : '/' + path.split('/')[1];
 const SITE = Astro.site!;
 const personId = new URL('/#person', SITE).href;
 const websiteId = new URL('/#website', SITE).href;
-const ogImg = new URL(ogImage ?? '/og/site.png', SITE).href;
+const ogImg = new URL(ogImage ?? `/og/site-r${OG_REV}.png`, SITE).href;
 
 /** One JSON-LD graph per page: the person, the site, this page, and its trail. */
 const graph: Record<string, unknown>[] = [

@@ -3,6 +3,13 @@
  * is taken from the CV (cv/cv.tex) or the public GitHub profile; edit there and
  * here together.
  */
+/**
+ * Revision of the social cards in public/og/ (scripts/gen-og.mjs names the files
+ * <slug>-r<OG_REV>.png). Bump it whenever the cards are regenerated: Cloudflare
+ * and the social sites cache /og/* by URL for days, so a changed card needs a new name.
+ */
+export const OG_REV = 2;
+
 export const PROFILE = {
   name: 'Akshat Valse',
   fullName: 'Akshat Sachin Valse',

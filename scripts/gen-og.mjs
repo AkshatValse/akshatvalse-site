@@ -4,12 +4,12 @@
  * Writes the images that link previews show on X, LinkedIn, Slack, Bluesky and
  * anywhere else a page of the site is shared:
  *
- *   public/og/<slug>.png   one per research project, set like that project's
+ *   public/og/<slug>-r<N>.png  one per research project, set like that project's
  *                          title page: the title in regular-weight Poppins,
  *                          the authors and affiliation in italics and the
  *                          venue or stage in small capitals, on white, with
  *                          the cover artwork inset in its themed frame
- *   public/og/site.png     every other page: the name, the tagline and the
+ *   public/og/site-r<N>.png    every other page: the name, the tagline and the
  *                          portrait in the same frame
  *
  * Everything comes from the same data as the site (src/data/projects.ts,
@@ -19,7 +19,8 @@
  * light weights, never bold (the site sets its titles in regular weight), loaded
  * from Google Fonts by headless Chrome, so this needs a network connection.
  *
- * The output is committed rather than generated during `npm run build`, so a
+ * N is OG_REV in src/data/site.ts: bump it when you regenerate, because the CDN and
+ * the social sites cache /og/* by URL for days. The output is committed rather than generated during `npm run build`, so a
  * Linux build box never has to reproduce it. Re-run after changing a project's
  * title, subtitle, stage, theme or artwork, the tagline, or the portrait:
  *
@@ -29,7 +30,7 @@
  * X draws the page title over the bottom left of a large-image card.
  */
 import { register } from 'node:module';
-import { readFileSync, mkdirSync, rmSync } from 'node:fs';
+import { readFileSync, mkdirSync, rmSync, readdirSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 import puppeteer from 'puppeteer-core';
@@ -45,7 +46,7 @@ register(
 );
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { PROJECTS } = await import(pathToFileURL(path.join(ROOT, 'src/data/projects.ts')).href);
-const { PROFILE } = await import(pathToFileURL(path.join(ROOT, 'src/data/site.ts')).href);
+const { PROFILE, OG_REV } = await import(pathToFileURL(path.join(ROOT, 'src/data/site.ts')).href);
 
 /** Override with CHROME_PATH when the browser lives somewhere else. */
 const CHROME =
@@ -116,7 +117,7 @@ const cards = [
   ...PROJECTS.map((p) => {
     const m = pageMeta(p.slug);
     return {
-      file: `${p.slug}.png`,
+      file: `${p.slug}-r${OG_REV}.png`,
       html: page({
         title: p.title, lines: [{ text: m.authors }, { text: m.affiliation }], info: m.info,
         frameStyle: p.frame,
@@ -125,7 +126,7 @@ const cards = [
     };
   }),
   {
-    file: 'site.png',
+    file: `site-r${OG_REV}.png`,
     html: page({
       big: true, title: PROFILE.name,
       lines: [{ text: PROFILE.tagline, plain: true }, { text: 'Iowa State University' }], info: 'akshatvalse.com',
@@ -137,6 +138,7 @@ const cards = [
 
 const OUT = path.join(ROOT, 'public', 'og');
 mkdirSync(OUT, { recursive: true });
+for (const f of readdirSync(OUT)) if (f.endsWith('.png')) rmSync(path.join(OUT, f)); // stale revisions
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'shell' });
 try {
   const tab = await browser.newPage();

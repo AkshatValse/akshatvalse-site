@@ -12,6 +12,7 @@ import TitleBand from '../components/clarity/TitleBand.astro';
 import Container from '../components/clarity/Container.astro';
 import Icon, { type IconName } from '../components/clarity/Icon.astro';
 import { bySlug, neighbours } from '../data/projects';
+import { OG_REV } from '../data/site';
 
 interface LinkButton { label: string; href: string; icon: IconName }
 
@@ -43,7 +44,7 @@ const { prev, next } = neighbours(slug);
   title={pageTitle ?? `${p.short} · Akshat Valse`}
   description={description}
   ogType={ogType}
-  ogImage={`/og/${p.slug}.png`}
+  ogImage={`/og/${p.slug}-r${OG_REV}.png`}
   ogImageAlt={`${p.short}: ${p.subtitle}. ${p.badge}, by Akshat Valse. The project's cover artwork in its themed frame.`}
   jsonLd={jsonLd}
   citation={citation}
