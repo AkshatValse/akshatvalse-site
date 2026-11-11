@@ -1,33 +1,57 @@
 /**
  * Visit logging for akshatvalse.com: which pages are read, and from which
  * networks. Pure functions only, so they can be tested without Cloudflare;
- * functions/_middleware.js does the I/O.
+ * functions/_middleware.js and functions/api/read.js do the I/O. The privacy
+ * note at /privacy says the same things in plain words; keep the three (this
+ * header, the README section "Visitor analytics", /privacy) in step.
  *
- * What one row holds, and nothing else:
- *   ts        the hour of the view, UTC ("2026-11-10T15:00Z")
- *   path      the page's path, without any query string or fragment
- *   country   two-letter country code, as Cloudflare reports it
- *   org       the name of the network the visitor connects from (the
- *             organisation that owns its autonomous system): a university,
- *             a company, or a home or mobile provider
- *   asn       that network's number
- *   referrer  a label for where the visit came from: a known site
- *             ("google", "scholar.google", "linkedin", ...), a university
- *             domain ("stanford.edu"), "internal", "other", or null (direct)
- *   device    'mobile' (phones, Android tablets) or 'desktop' (all else)
- *   bot       0 a person, 1 automated (crawler, link preview, script),
- *             2 a browser prefetch (the page may or may not have been opened)
+ * What one page-view row (table `visits`) holds, and nothing else:
+ *   ts         the hour of the view, UTC ("2026-11-10T15:00Z")
+ *   path       the page's path, without any query string or fragment; also
+ *              the path of the CV PDF when it is downloaded
+ *   country    two-letter country code, as Cloudflare reports it
+ *   org        the name of the network the visitor connects from (the
+ *              organisation that owns its autonomous system): a university,
+ *              a company, or a home or mobile provider
+ *   asn        that network's number
+ *   referrer   a label for where the visit came from: a known site
+ *              ("google", "scholar.google", "linkedin", ...), a university
+ *              domain ("stanford.edu"), "internal", "other", or null (direct)
+ *   from_path  when the referrer is this site, the path of the page the reader
+ *              came from (no query string); otherwise null
+ *   device     'mobile' (phones, Android tablets) or 'desktop' (all else)
+ *   bot        0 a person, 1 automated, 2 a browser prefetch (the page may or
+ *              may not have been opened)
+ *   bot_kind   for bot = 1, what kind of automated fetch: 'assistant' (an AI
+ *              assistant fetching the page for a person), 'preview' (a link
+ *              preview in chat, mail or social), 'search', 'ai-crawler',
+ *              'monitor', 'headless' (claims to be a current Chrome or Edge
+ *              but lacks headers that browser always sends), 'script' (any
+ *              other automated client); otherwise null. A label derived from
+ *              the user agent and other request headers; the user agent
+ *              itself is never stored.
+ *
+ * What one read row (table `reads`, sent by src/scripts/read-beacon.js when a
+ * page is hidden or left) holds: ts, path, country, org, asn, device as above,
+ * plus two buckets, never raw values: `dwell`, how long the page was visible
+ * ('<10s', '10-30s', '30s-2m', '2-5m', '5-15m', '>15m'), and `scroll`, the
+ * deepest point reached in quarters of the page (1 to 4).
+ *
+ * Not logged at all: a request that carries Sec-GPC: 1 or DNT: 1, the header
+ * X-No-Log: 1, or the owner's opt-out cookie (set by opening /?nolog=1).
  *
  * Never stored: IP addresses, user-agent strings, full referrer URLs or
  * arbitrary referrer host names, query strings, cookies' contents, or any
- * identifier. Rows hold no identifier, but on a very small network a few rows
- * in the same hour may well be one person; treat the data that way.
- * Rows older than RETENTION_DAYS are deleted on every write.
+ * identifier of a reader. Rows hold no identifier, but on a very small network
+ * a few rows in the same hour may well be one person; treat the data that way.
+ * Rows older than RETENTION_DAYS (400 days) are deleted, checked on about one
+ * write in PRUNE_ONE_IN (50).
  */
 
 export const SITE_HOSTS = new Set(['akshatvalse.com', 'www.akshatvalse.com']);
 export const MAX_PATH = 200;
 export const RETENTION_DAYS = 400;
+export const PRUNE_ONE_IN = 50;
 
 /** User agents that are not a person reading the page. Link-preview fetchers
  *  (LinkedIn, Slack, iMessage...) and AI assistants fetching a page for a user
@@ -41,11 +65,26 @@ const BOT_UA = new RegExp([
   'node-fetch', 'undici', 'libwww', 'feedfetcher', 'validator',
 ].join('|'), 'i');
 
+/** The kind of automated fetch, from the user agent. Checked in order; the
+ *  first match wins. An automated client that matches none is 'script'. */
+const KIND_PATTERNS = [
+  ['assistant', /chatgpt-user|claude-user|claude-web|perplexity-user|mistralai-user|duckassistbot|meta-externalfetcher|-user\b/i],
+  ['ai-crawler', /gptbot|oai-searchbot|claudebot|claude-searchbot|anthropic-ai|ccbot|perplexitybot|bytespider|amazonbot|applebot-extended|cohere-ai|diffbot|meta-externalagent|imagesiftbot|omgili|timpibot|youbot/i],
+  ['preview', /linkedinbot|slackbot|slack-imgproxy|facebookexternalhit|facebot|twitterbot|whatsapp|telegrambot|discordbot|skypeuripreview|mastodon|embedly|iframely|cardyb|bingpreview|redditbot|pinterest|vkshare|preview|ms-office/i],
+  ['search', /googlebot|google-inspectiontool|googleother|bingbot|msnbot|duckduckbot|slurp|baiduspider|yandex|applebot|petalbot|seznambot|sogou|exabot|ahrefsbot|semrushbot|mj12bot|dotbot|feedfetcher|archive\.org_bot|ia_archiver|archiver|crawl|spider/i],
+  ['monitor', /pingdom|uptime|monitor|lighthouse|pagespeed|gtmetrix|statuscake|site24x7|scanner|validator|healthcheck|datadog|newrelic/i],
+  ['headless', /headlesschrome|headless|phantomjs|puppeteer|playwright|selenium/i],
+];
+
 const MOBILE_UA = /mobi|android|iphone|ipod/i;
 
 /** Paths of files, not pages. _routes.json keeps most of these away from the
  *  function; this is the backstop. */
 const ASSET_PATH = /\.(?:css|js|mjs|map|json|xml|txt|pdf|png|jpe?g|gif|webp|avif|svg|ico|woff2?|ttf|otf|mp4|webm)$/i;
+
+/** The CV, matched by pattern so that the dated file name can change each
+ *  month (public/akshat-valse-cv-YYYY-MM.pdf, named in PROFILE.cvPdf). */
+const CV_PATH = /^\/akshat-valse-cv-\d{4}-\d{2}\.pdf$/i;
 
 /** Sites worth naming as referrers. Checked in order; the first match wins.
  *  Anything not listed here (and not a university) is stored as "other". */
@@ -81,10 +120,27 @@ const SOURCES = [
   [/(^|\.)claude\.ai$/, 'claude'],
 ];
 
+/** Whether a path is the CV PDF. */
+export function isCvPath(pathname) {
+  return CV_PATH.test(pathname ?? '');
+}
+
+/** A PDF viewer fetches in ranges. A download counts when the request has no
+ *  Range header, or its range starts at byte 0. */
+export function startsAtZero(range) {
+  return !range || /^\s*bytes\s*=\s*0\s*-/i.test(range);
+}
+
 /** Whether a request/response pair is something to log at all. */
-export function shouldLog({ method, hostname, pathname, status, contentType, navigate }) {
+export function shouldLog({ method, hostname, pathname, status, contentType, navigate, range }) {
   if (method !== 'GET') return false;
   if (!SITE_HOSTS.has(hostname)) return false;
+  if (isCvPath(pathname)) {
+    if (!startsAtZero(range)) return false;
+    if (status === 200 || status === 206) return /^application\/pdf\b/i.test(contentType ?? '');
+    if (status === 304) return Boolean(navigate);
+    return false;
+  }
   if (ASSET_PATH.test(pathname)) return false;
   if (cleanPath(pathname) === '/404') return false;
   // A fresh page, or a cached page the browser revalidated while navigating
@@ -94,6 +150,16 @@ export function shouldLog({ method, hostname, pathname, status, contentType, nav
   return false;
 }
 
+/** Why a request must not be logged, or null. `secGpc`, `dnt` and `xNoLog` are
+ *  the raw header values; `cookie` is the Cookie header. */
+export function skipReason({ cookie, secGpc, dnt, xNoLog } = {}) {
+  if (isOptedOut(cookie)) return 'cookie';
+  if (secGpc?.trim() === '1') return 'gpc';
+  if (dnt?.trim() === '1') return 'dnt';
+  if (xNoLog?.trim() === '1') return 'header';
+  return null;
+}
+
 /** Whether request headers mark a speculative load (prefetch or prerender). */
 export function isSpeculative(purpose, xMoz) {
   return /prefetch|prerender/i.test(purpose ?? '') || /prefetch/i.test(xMoz ?? '');
@@ -101,6 +167,36 @@ export function isSpeculative(purpose, xMoz) {
 
 export function isBot(userAgent) {
   return !userAgent || BOT_UA.test(userAgent);
+}
+
+/** Whether a user agent claims a current Chrome or Edge (version 100 or later).
+ *  Those browsers always send Sec-Fetch-Mode and, over HTTPS, Sec-CH-UA.
+ *  Safari and Firefox are never matched (they send no Sec-CH-UA), nor are
+ *  iOS browsers or in-app web views, which may omit the headers. */
+export function claimsModernChromium(userAgent) {
+  const ua = userAgent ?? '';
+  if (/\bwv\b|CriOS|EdgiOS|FxiOS|FBAN|FBAV|Instagram|LinkedInApp|Snapchat|MicroMessenger|GSA\//i.test(ua)) return false;
+  const m = /\b(?:Chrome|Edg|EdgA)\/(\d+)/.exec(ua);
+  return Boolean(m) && Number(m[1]) >= 100;
+}
+
+/**
+ * What kind of automated fetch a request is, or null for a person. `kind` is
+ * derived from the user agent and these request headers, and is stored in
+ * place of the user agent. A request with no Accept-Language is automated, and
+ * so is one that claims a current Chrome or Edge without Sec-Fetch-Mode or
+ * Sec-CH-UA ('headless').
+ * @param {{ userAgent?: string|null, acceptLanguage?: string|null, secFetchMode?: string|null, secChUa?: string|null }} h
+ * @returns {string|null}
+ */
+export function botKind({ userAgent, acceptLanguage, secFetchMode, secChUa } = {}) {
+  const ua = userAgent ?? '';
+  if (!ua) return 'script';
+  for (const [kind, re] of KIND_PATTERNS) if (re.test(ua)) return kind;
+  if (BOT_UA.test(ua)) return 'script';
+  if (claimsModernChromium(ua) && (!secFetchMode || !secChUa)) return 'headless';
+  if (!acceptLanguage) return 'script';
+  return null;
 }
 
 export function deviceOf(userAgent) {
@@ -131,6 +227,17 @@ export function referrerLabel(referer) {
   return 'other';
 }
 
+/** The path of the page a reader came from, when the referrer is this site;
+ *  otherwise null. Path only: no query string, no fragment. */
+export function fromPathOf(referer) {
+  if (referrerLabel(referer) !== 'internal') return null;
+  try {
+    return cleanPath(new URL(referer).pathname);
+  } catch {
+    return null;
+  }
+}
+
 /** Normalise a path: decoded, lower case, single slashes, no trailing ".html"
  *  (Pages serves /research for research.html), no trailing slash except the
  *  root, capped in length. */
@@ -150,12 +257,14 @@ export function hourOf(date) {
 /**
  * Build the row for one logged request.
  * @param {{ url: string, userAgent?: string|null, referer?: string|null, speculative?: boolean,
+ *           acceptLanguage?: string|null, secFetchMode?: string|null, secChUa?: string|null,
  *           cf?: { country?: string, asOrganization?: string, asn?: number } }} req
  * @param {Date} now
  */
-export function buildVisit({ url, userAgent, referer, speculative, cf }, now) {
+export function buildVisit({ url, userAgent, referer, speculative, acceptLanguage, secFetchMode, secChUa, cf }, now) {
   const { pathname } = new URL(url);
-  const bot = isBot(userAgent) ? 1 : speculative ? 2 : 0;
+  const kind = botKind({ userAgent, acceptLanguage, secFetchMode, secChUa });
+  const bot = kind ? 1 : speculative ? 2 : 0;
   return {
     ts: hourOf(now),
     path: cleanPath(pathname),
@@ -163,23 +272,34 @@ export function buildVisit({ url, userAgent, referer, speculative, cf }, now) {
     org: typeof cf?.asOrganization === 'string' ? cf.asOrganization.slice(0, 120) : null,
     asn: Number.isInteger(cf?.asn) ? cf.asn : null,
     referrer: referrerLabel(referer),
+    from_path: fromPathOf(referer),
     device: deviceOf(userAgent),
     bot,
+    bot_kind: kind,
   };
 }
 
 export const INSERT_SQL =
-  'INSERT INTO visits (ts, path, country, org, asn, referrer, device, bot) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)';
+  'INSERT INTO visits (ts, path, country, org, asn, referrer, device, bot, bot_kind, from_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)';
 
-export const PRUNE_SQL = 'DELETE FROM visits WHERE ts < ?1';
+/** Retention, for both tables that hold rows. */
+export const PRUNE_SQLS = [
+  'DELETE FROM visits WHERE ts < ?1',
+  'DELETE FROM reads WHERE ts < ?1',
+];
 
 /** Rows with ts before this are past retention. */
 export function pruneBefore(now) {
   return hourOf(new Date(now.getTime() - RETENTION_DAYS * 86400e3));
 }
 
+/** True on about one write in PRUNE_ONE_IN. `rng` returns a number in [0, 1). */
+export function shouldPrune(rng = Math.random) {
+  return rng() * PRUNE_ONE_IN < 1;
+}
+
 export function insertArgs(v) {
-  return [v.ts, v.path, v.country, v.org, v.asn, v.referrer, v.device, v.bot];
+  return [v.ts, v.path, v.country, v.org, v.asn, v.referrer, v.device, v.bot, v.bot_kind, v.from_path];
 }
 
 /** Opting out: the owner opens /?nolog=1 once per browser so his own visits
