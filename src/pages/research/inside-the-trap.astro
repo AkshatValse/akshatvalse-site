@@ -483,7 +483,8 @@ const TWIN_TRAP = twin('trap');
     </p>
     <Tex block src={String.raw`\Delta_n=\sum_{k=1}^{\min(n,K)}\lambda c_kG_k\,\Delta_{n-k}+h_n,`} />
     <p class="text">
-      with <Tex src={String.raw`h_n\ge 0`} />, <Tex src={String.raw`h_n=0`} /> for <Tex src={String.raw`n\ge K`} />,
+      with <Tex src="K" /> the largest possible turn count (60 for the standard workload),
+      <Tex src={String.raw`h_n\ge 0`} />, <Tex src={String.raw`h_n=0`} /> for <Tex src={String.raw`n\ge K`} />,
       and <Tex src={String.raw`\sum_n h_n=V_{\mathrm{tot}}(u_0)`} />, where <Tex src={String.raw`V_{\mathrm{tot}}`} />
       is the remaining all-miss work of every session present, which changes at rate
       <Tex src={String.raw`\rho-1`} /> while the server is busy. Its growth rate is a Perron root:
