@@ -202,15 +202,18 @@ logging stops and pages keep loading.
 ## Search and social
 
 The link-preview cards are `public/og/<slug>.png` (one per research project, set
-like that project's tile on the Research page: stage label, title and subtitle on
-white, the cover artwork inset in its themed frame) and `public/og/site.png`
-(every other page: name, tagline and portrait). `ProjectLayout` passes the
-project's card to `Base`, which defaults to `site.png`. They are rendered by
+like that project's title page: the title in regular-weight Poppins, the authors
+and affiliation in italics and the venue or stage in small capitals on white,
+with the cover artwork inset in its themed frame) and `public/og/site.png` (every
+other page: name, tagline and portrait). `ProjectLayout` passes the project's card
+to `Base`, which defaults to `site.png`. They are rendered by
 `node scripts/gen-og.mjs` using headless Chrome and Poppins from Google Fonts
 (it needs a network connection and refuses to write a card in a fallback font),
 from the same data as the site (`src/data/projects.ts`, `themes.ts`, the
-cover-art SVGs, the portrait), then committed, so a Linux build box never has to
-reproduce them. Re-run it after changing a project's title, subtitle, stage,
+cover-art SVGs, the portrait, and each project page's `authors`, `affiliation`
+and `info` props), then committed, so a Linux build box never has to reproduce
+them. The site sets its titles in regular weight, so the cards never use bold.
+Re-run it after changing a project's title, subtitle, stage,
 theme or artwork, the tagline or the portrait, and commit the PNGs. Social sites
 cache cards by URL for days: to refresh a card for already-shared links, rename
 the file (and the path in the layout), or re-scrape it in LinkedIn's Post
