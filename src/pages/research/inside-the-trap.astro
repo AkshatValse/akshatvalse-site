@@ -320,7 +320,7 @@ const TWIN_TRAP = twin('trap');
           <tr><td>200-session burst, no cap</td><td>engine at zero cache hits to the end in <b>30 of 30</b> runs</td><td>pre-registered (vLLM: registered)</td></tr>
           <tr><td>Matched runs without the burst</td><td><b>every</b> run stayed good</td><td>same tests</td></tr>
           <tr><td>Client-side session cap from the start</td><td>trap prevented in <b>30 of 30</b> capped runs</td><td>same tests</td></tr>
-          <tr><td>The registered trap rule</td><td>met at <b>9 of 10</b> rates (the tenth failed on backlog growth); it called 23 of the 30 BURST runs trapped</td><td>same tests</td></tr>
+          <tr><td>The registered trap rule</td><td>met at <b>9 of 10</b> rates (the tenth failed on backlog growth); it called 23 of the 30 BURST runs trapped, though all 30 stayed at zero hits (why: Table 1 caption)</td><td>same tests</td></tr>
           <tr><td>Session cap engaged inside an established trap</td><td><b>9 of 9</b> rescued at the same load, no session shed</td><td>pre-registered</td></tr>
           <tr><td>Model F against every stuck run</td><td>served prompt within 3% in <b>50 of 57</b>; completions above the all-miss capacity in every one</td><td>retrospective, nothing fitted to trap data</td></tr>
         </tbody>
@@ -746,7 +746,13 @@ const TWIN_TRAP = twin('trap');
       <b>Table 1.</b> The registered tests, condensed from the paper's Table 1. Rates are nominal
       multiples of each cell's <Tex src={T.lref} />. Seeds 0–2 are shared across tests, so counts across
       tests are descriptive. Across the five E2 tests, 5 + 6 + 4 + 5 + 3 = 23 BURST runs were trapped by the
-      rule.
+      rule. The other 7 of the 30 were also at zero hits; they missed only the rule's backlog-slope
+      condition, since each one's uncached prefill rate was within ±15% of the all-miss rate (paper
+      Table 7 and App. E.5). The slope line is <Tex src={String.raw`0.5(\lambda-\lambda_{\mathrm{ref}})`} />,
+      and at 1.35 <Tex src={T.lref} /> model F puts the true slope only about 25% above it. Six of the 7 runs
+      below the line are seed 1, whose arrival plan delivers 0.8–8.9% fewer arrivals than nominal over the
+      window in every cell and rate (paper App. B). This account is post hoc and changes no registered
+      verdict.
     </p>
   </Container>
 
