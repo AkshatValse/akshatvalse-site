@@ -52,7 +52,7 @@ const section = path === '/' ? '/' : '/' + path.split('/')[1];
 const SITE = Astro.site!;
 const personId = new URL('/#person', SITE).href;
 const websiteId = new URL('/#website', SITE).href;
-const ogImg = new URL(ogImage ?? '/og.png', SITE).href;
+const ogImg = new URL(ogImage ?? '/og/site.png', SITE).href;
 
 /** One JSON-LD graph per page: the person, the site, this page, and its trail. */
 const graph: Record<string, unknown>[] = [

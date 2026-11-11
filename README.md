@@ -201,10 +201,21 @@ logging stops and pages keep loading.
 
 ## Search and social
 
-`public/og.png` is the link-preview card. It is rendered by `node scripts/gen-og.mjs`
-using headless Chrome and the site's own woff2 files, then committed, so a Linux build
-box never has to reproduce it. Its picture is Fig. 1, drawn from the same run as the
-page. Re-run it after changing the name, the tagline or Fig. 1, then rebuild.
+The link-preview cards are `public/og/<slug>.png` (one per research project, set
+like that project's tile on the Research page: stage label, title and subtitle on
+white, the cover artwork inset in its themed frame) and `public/og/site.png`
+(every other page: name, tagline and portrait). `ProjectLayout` passes the
+project's card to `Base`, which defaults to `site.png`. They are rendered by
+`node scripts/gen-og.mjs` using headless Chrome and Poppins from Google Fonts
+(it needs a network connection and refuses to write a card in a fallback font),
+from the same data as the site (`src/data/projects.ts`, `themes.ts`, the
+cover-art SVGs, the portrait), then committed, so a Linux build box never has to
+reproduce them. Re-run it after changing a project's title, subtitle, stage,
+theme or artwork, the tagline or the portrait, and commit the PNGs. Social sites
+cache cards by URL for days: to refresh a card for already-shared links, rename
+the file (and the path in the layout), or re-scrape it in LinkedIn's Post
+Inspector. X draws the page title over the bottom left of a large-image card, so
+the copy stays in the upper part of the left column.
 
 `node scripts/submit-indexnow.mjs` pushes the sitemap's URLs to IndexNow, which covers
 Bing, Yandex, Seznam and Naver, and through Bing also DuckDuckGo and Ecosia. Google has
