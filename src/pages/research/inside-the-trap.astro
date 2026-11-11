@@ -430,7 +430,9 @@ const TWIN_TRAP = twin('trap');
       time. That closing step is a heuristic consistency argument, not part of the theorem, and
       gap/<Tex src={T.RM} /> is a descriptive proxy. Refusing arrivals drains the queue by shedding
       sessions; a session cap holds admitted sessions below the all-miss onset <Tex src={T.nb} />, where
-      turns hit again, and the excess waits at the client. A cut to a rate in
+      turns hit again, and the excess waits at the client. The onset <Tex src={T.nb} /> is the smallest
+      number of sessions at which the all-miss state can exist: the sessions in tool calls at the
+      all-miss rate plus one pool's worth of running sessions, 32.7 at the 300k pool. A cut to a rate in
       <Tex src={String.raw`[\lambda_{\mathrm{miss}},D)`} /> does not empty model F's queue.
     </p>
   </Container>
