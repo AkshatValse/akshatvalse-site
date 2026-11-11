@@ -343,7 +343,8 @@ const TWIN_TRAP = twin('trap');
       Once the burst has passed, why does the engine not recover? Our answer here is a heuristic
       consistency argument, not part of the theorem. In a trap the KV pool turns over every
       <Tex src={String.raw`R_M=M/\mathrm{churn}\approx 26`} />–78 s (a turnover scale, not a pathwise
-      eviction bound), while the gap between a session's turns keeps growing: in every BURST run of the
+      eviction bound; <Tex src="M" /> is the KV pool in tokens, and churn is the rate at which new KV is
+      written: uncached prompt plus completion tokens per second), while the gap between a session's turns keeps growing: in every BURST run of the
       first three registered tests the gap was 4.1–9.7 times <Tex src={T.RM} />, so an idle session's KV
       is overwritten long before it returns. In the good arms the same ratio is 0.010–0.028.
     </p>
