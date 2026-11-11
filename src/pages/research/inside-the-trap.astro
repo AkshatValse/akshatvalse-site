@@ -688,8 +688,23 @@ const TWIN_TRAP = twin('trap');
       <Tex src={String.raw`0.5(\lambda-\lambda_{\mathrm{ref}})`} />. Each test's rule was committed to git
       before its jobs were submitted; there is no third-party registry. <em>Pre-registered</em> means the
       rule was also pushed to GitHub before submission; <em>registered</em> means it was committed before
-      and pushed later.
+      and pushed later. For the blind tests the record is a git tag on each frozen prediction or rule,
+      listed below with its commit and the time GitHub recorded its push (all on 2026-11-05, CST); the rest
+      is in Appendix E.12–E.13 of the paper and in the <code>provenance/</code> folder of
+      <a href={REPO}>the public repository</a>.
     </p>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Tag</th><th>Commit</th><th>Pushed (CST)</th></tr></thead>
+        <tbody>
+          <tr><td><code>icml-trap-pred</code></td><td><code>6b47a6c</code></td><td>00:24:47</td></tr>
+          <tr><td><code>icml-cut-pred</code></td><td><code>2f90267</code></td><td>02:25:43</td></tr>
+          <tr><td><code>r15-reg</code></td><td><code>e05a262</code></td><td>03:18:36</td></tr>
+          <tr><td><code>r15-cut-reg</code></td><td><code>11b0e4e</code></td><td>03:54:49</td></tr>
+          <tr><td><code>r16-mirror-reg</code></td><td><code>bc81ee7</code></td><td>14:07:35</td></tr>
+        </tbody>
+      </table>
+    </div>
     <p class="text">
       The quasi-static baseline rests on the engine's closed-population throughput curve
       <Tex src={String.raw`\mu(n)`} />, the completion rate with <Tex src="n" /> sessions kept running,
