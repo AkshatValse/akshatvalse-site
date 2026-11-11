@@ -31,3 +31,6 @@ CONSISTENCY.md
 
 # Local state from wrangler (pages dev, d1)
 .wrangler/
+
+# Local state of scripts/visitors.mjs (which networks earlier runs saw)
+.visitors-state.json
