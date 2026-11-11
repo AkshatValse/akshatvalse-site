@@ -12,7 +12,7 @@
     "verify:fast": "node scripts/verify-trap.mjs && node scripts/verify-diffusion.mjs && node scripts/verify-raretail.mjs",
     "og": "node scripts/gen-og.mjs",
     "cover-art": "for f in scripts/cover-art/*.mjs; do node \"$f\" || exit 1; done",
-    "test:visits": "node --test analytics/visit.test.mjs analytics/middleware.test.mjs",
+    "test:visits": "node --test analytics/visit.test.mjs analytics/middleware.test.mjs analytics/read.test.mjs analytics/report.test.mjs analytics/beacon.test.mjs analytics/descriptions.test.mjs",
     "visitors": "node scripts/visitors.mjs"
   },
   "dependencies": {

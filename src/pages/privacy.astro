@@ -1,0 +1,77 @@
+---
+/**
+ * What the site logs about readers. Keep this in step with the header of
+ * analytics/visit.js and the README section "Visitor analytics"; the three say
+ * the same things.
+ */
+import Base from '../layouts/Base.astro';
+
+const title = 'Privacy · Akshat Valse';
+const description = 'What akshatvalse.com records about the pages that are read, what it never stores, and how to opt out.';
+const CODE = 'https://github.com/AkshatValse/akshatvalse-site/blob/main/analytics/visit.js';
+---
+
+<Base title={title} description={description} breadcrumbs={[{ name: 'Privacy', path: '/privacy' }]}>
+  <div class="container page" id="first-content">
+    <div class="page-title">
+      <h1 class="title">Privacy</h1>
+      <p>
+        This site counts which pages are read and from which networks. It does not identify readers.
+        Here is exactly what that means.
+      </p>
+    </div>
+    <div class="about-grid">
+      <div class="about-label"><p>01&nbsp;/&nbsp;What is recorded</p></div>
+      <div class="about-body">
+        <p>When a page is requested, the site adds one row to a small database. A row holds:</p>
+        <ul>
+          <li>the hour of the request (not the minute) and the page's path;</li>
+          <li>the country, and the name and number of the network the request came from: a university, a company, or a home or mobile provider;</li>
+          <li>a short label for where the reader came from, such as <code>google</code>, <code>linkedin</code>, a university's domain, or this site, in which case also the page the reader was on;</li>
+          <li>whether the device is a phone or a desktop;</li>
+          <li>whether the request came from a person or an automated client, and for an automated one its kind: a link preview, a search or AI crawler, an AI assistant, a monitor, or a script.</li>
+        </ul>
+        <p>
+          When a page is hidden or closed, a small script sends one more row: the same network details,
+          how long the page was visible, in buckets (under 10 seconds, 10 to 30 seconds, and so on), and
+          how far it was scrolled, in quarters. Downloading the CV is recorded like a page view.
+        </p>
+      </div>
+      <div class="about-label"><p>02&nbsp;/&nbsp;What is never stored</p></div>
+      <div class="about-body">
+        <p>
+          IP addresses, or anything made from one; cookies or any other identifier of a reader;
+          user-agent strings; full referrer addresses; query strings; anything that links one visit to
+          the next. The only cookie this site ever sets is one I set in my own browsers so that my own
+          visits are not counted.
+        </p>
+        <p>
+          A row has no identifier, but on a very small network a few rows in the same hour may be one
+          person. I treat the data that way, and I read it in a terminal, not on a public page.
+        </p>
+      </div>
+      <div class="about-label"><p>03&nbsp;/&nbsp;Opting out</p></div>
+      <div class="about-body">
+        <p>
+          Nothing is recorded for a request that carries Global Privacy Control (<code>Sec-GPC: 1</code>)
+          or Do Not Track (<code>DNT: 1</code>). Turning either on in your browser is enough, and it
+          works in private windows too.
+        </p>
+      </div>
+      <div class="about-label"><p>04&nbsp;/&nbsp;How long</p></div>
+      <div class="about-body">
+        <p>Rows are deleted after 400 days.</p>
+      </div>
+      <div class="about-label"><p>05&nbsp;/&nbsp;Hosting and code</p></div>
+      <div class="about-body">
+        <p>
+          The site is served by Cloudflare Pages. As the host, Cloudflare sees the IP address of every
+          request, as any host does; I never receive it. Cloudflare Web Analytics, which is switched
+          on, counts page views, referrers, countries and devices without cookies. The code that writes
+          the rows is public: <a href={CODE}><code>analytics/visit.js</code></a> lists every field and
+          is the authority if this page and the code ever differ.
+        </p>
+      </div>
+    </div>
+  </div>
+</Base>

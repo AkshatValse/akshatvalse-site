@@ -122,31 +122,82 @@ Two layers, neither using cookies on readers:
   its beacon at deploy time, which the CSP in `public/_headers` allows): page
   views, referrers, countries, devices. Dashboard: Workers & Pages →
   akshatvalse-site → Metrics.
-- **Network log** (`functions/_middleware.js`, `analytics/visit.js`): one row per
-  page view in the D1 database `akshatvalse-visits`, holding the hour, page,
-  country, the network's organisation name and number (a university, company
-  or ISP), a referrer label (`google`, `linkedin`, `stanford.edu`, `internal`,
-  `other`, ...), phone or desktop, and whether the client looked automated or
-  was a prefetch. No IP addresses, user agents, full referrers or query strings.
-  Rows are deleted after 400 days. `analytics/visit.js` documents every field.
+- **Network log** (`functions/_middleware.js`, `functions/api/read.js`,
+  `analytics/visit.js`, `analytics/read.js`): rows in the D1 database
+  `akshatvalse-visits`, with no identifier of a reader. A page view (table
+  `visits`) holds the hour, the page, the country, the network's organisation
+  name and number (a university, company or ISP), a referrer label (`google`,
+  `linkedin`, `stanford.edu`, `internal`, `other`, ...) and, for an internal
+  referrer, the path of the page the reader came from (`from_path`), phone or
+  desktop, and whether the client was a person, a prefetch, or automated (`bot`),
+  with the kind of automated fetch in `bot_kind` (`assistant`, `preview`,
+  `search`, `ai-crawler`, `monitor`, `headless`, `script`) derived from the user
+  agent and stored instead of it. A CV download is logged as a view of the PDF's
+  path. A read (table `reads`) is one beacon sent by `src/scripts/read-beacon.js`
+  when a page is hidden or left: the same network fields plus the visible time
+  and the deepest scroll, in buckets (`<10s`, `10-30s`, `30s-2m`, `2-5m`, `5-15m`,
+  `>15m`; quarters 1 to 4), never raw values. No IP addresses, user agents, full
+  referrers, query strings, cookies' contents or identifiers of a reader are
+  stored. Rows are deleted after 400 days (checked on about one write in fifty).
+  `analytics/visit.js` documents every field; the privacy note at `/privacy`
+  (`src/pages/privacy.astro`, linked from the About page's footer) says the same
+  in plain words. If you change what is stored, change those three together;
+  `npm run test:visits` checks that they still agree with the schema.
+
+What is not logged: a request carrying `Sec-GPC: 1` (Global Privacy Control) or
+`DNT: 1`, a request with the header `X-No-Log: 1` (for scripts that cannot change
+the URL), the owner's opt-out cookie, and any `?nolog=1` request, which returns
+before the database is touched. Turn on Global Privacy Control in your own
+browsers (Firefox, Brave and DuckDuckGo send it; Chrome needs an extension) and
+you are opted out in private windows too, where the cookie is absent. The CV
+PDF is not excluded in `public/_routes.json` on purpose; it is matched in
+`analytics/visit.js` by the pattern `/akshat-valse-cv-YYYY-MM.pdf`, and a test
+fails if `PROFILE.cvPdf` stops matching it. A PDF viewer fetches in ranges: a
+download counts only when the request has no `Range` header or its range starts
+at byte 0.
+
+Automated clients are recorded, not blocked. A request with no `Accept-Language`
+is automated; so is one whose user agent claims Chrome or Edge 100 or later but
+that lacks `Sec-Fetch-Mode` or `Sec-CH-UA` (`headless`; Safari and Firefox are
+not held to this, and neither are iOS browsers or Android web views). The
+beacon script sends nothing when `navigator.webdriver` is true.
 
 `npm run visitors` (or `npm run visitors -- 7` for a week) prints who has been
-reading what. It needs `npx wrangler@4.159.0 login` once. It prints to the
-terminal only; never commit its output, since this repo is public. Open
-`https://akshatvalse.com/?nolog=1` once in each browser you use so your own
-visits are not counted (`?nolog=0` undoes it).
+reading what: reads (a page visible for 10 s or more), page loads with no
+beacon as a weaker line, relay and cloud networks apart, new networks since the
+last run, CV downloads, read-time buckets per page, how readers move between
+pages, and automated fetches by kind. `-- --edu` keeps university and research
+networks; `-- --org "iowa state"` prints one network's page views in order, with
+read time and the page the reader came from. It needs `npx wrangler@4.159.0 login`
+once. It prints to the terminal only; never commit its output, never run it in
+CI (Actions logs on a public repo are public), and keep its two local files out
+of the repository: `.visitors-state.json` is git-ignored, and the optional watch
+list of networks to highlight lives in `~/.config/akshatvalse/watchlist.txt`
+(or the file named by `$VISITORS_WATCHLIST`); the script refuses a watch list
+inside the repo. Open `https://akshatvalse.com/?nolog=1` once in each browser
+you use so your own visits are not counted (`?nolog=0` undoes it).
 
-Setup, already done once: the table comes from `migrations/0001_visits.sql`
-(`npx wrangler@4.159.0 d1 execute akshatvalse-visits --remote --file
-migrations/0001_visits.sql`); the Pages project binds the database as `VISITS`
-for the **Production** environment only (Settings → Bindings), so preview
-deployments never log; and Settings → Runtime → **Fail open** is set, so pages
-keep loading if the free daily Functions quota ever runs out. The function only
-logs requests for akshatvalse.com and swallows every failure (they appear in the
-Functions log), so a missing binding or a D1 outage never affects a page.
-`public/_routes.json` keeps the static folders away from the function.
-`npm run test:visits` (also in CI) covers the logging rules and the middleware's
-failure paths.
+Setup: the tables come from `migrations/0001_visits.sql` and
+`migrations/0002_reads_and_kinds.sql` (`npx wrangler@4.159.0 d1 execute
+akshatvalse-visits --remote --file migrations/000N_....sql`); apply a migration
+to the remote database before deploying the code that uses it. The database was
+created with `wrangler d1 create akshatvalse-visits` on 2026-11-11. The Pages
+project binds it as `VISITS` for the **Production** environment only (Settings →
+Bindings), so preview deployments never log, and Settings → Runtime → **Fail
+open** is set, so pages keep loading if the free daily Functions quota ever runs
+out. The functions only log requests for akshatvalse.com and swallow every
+failure (they appear in the Functions log), so a missing binding or a D1 outage
+never affects a page. `public/_routes.json` keeps the static folders away from
+the middleware. `npm run test:visits` (also in CI) covers the logging rules,
+the beacon endpoint, the report's rules and the failure paths.
+
+Cloudflare's free-plan limits matter here (checked 2026-11-11 against the
+Pages Functions and D1 pricing pages): Functions requests share the Workers Free
+quota of 100,000 per day (static assets are free and unlimited), and D1 allows
+100,000 rows written and 5 million rows read per day, 500 MB per database. Each
+page view costs one Functions request and a few rows written (an insert also
+writes its index row), and a beacon costs another request. When a limit is hit,
+logging stops and pages keep loading.
 
 ## Search and social
 
